@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll } from 'lucide-react';
 
 // ============================================================================
-// LINGUISTIC DATA (Same as before, condensed for space)
+// LINGUISTIC DATA
 // ============================================================================
 
 const linguisticData = {
@@ -333,16 +334,47 @@ const GlowButton = ({ children, onClick, disabled, variant = 'primary', classNam
 
 const Tooltip = ({ content, children }) => {
   const [show, setShow] = useState(false);
+  const [coords, setCoords] = useState({ left: 0, top: 0 });
+  const triggerRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        left: rect.left + window.scrollX + 20, // Offset 20px to the right
+        top: rect.top + window.scrollY - 10    // Offset 10px up
+      });
+      setShow(true);
+    }
+  };
+
   return (
-    <div className="relative inline-block">
-      <div onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} className="cursor-help">{children}</div>
-      {show && (
-        <div className="absolute w-72 p-3 text-sm bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl -top-2 left-8 text-slate-300 animate-in fade-in slide-in-from-left-2 duration-200" style={{ zIndex: 9999 }}>
-          <div className="absolute w-2 h-2 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 -left-1 top-4" />
+    <>
+      <div 
+        ref={triggerRef}
+        onMouseEnter={handleMouseEnter} 
+        onMouseLeave={() => setShow(false)} 
+        className="relative inline-block cursor-help"
+      >
+        {children}
+      </div>
+      {show && createPortal(
+        <div 
+          className="fixed p-3 text-sm bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl text-slate-300 animate-in fade-in zoom-in-95 duration-200 pointer-events-none" 
+          style={{ 
+            zIndex: 99999,
+            left: coords.left,
+            top: coords.top,
+            maxWidth: '18rem'
+          }}
+        >
+          {/* Decorative Arrow */}
+          <div className="absolute w-3 h-3 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 -left-1.5 top-3" />
           {content}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 
@@ -477,7 +509,16 @@ export default function AetherNames() {
               AetherNames
             </h1>
           </div>
-          <p className="text-slate-400 text-lg font-light">Linguistically Authentic Fantasy & Sci-Fi Name Forge</p>
+          
+          <p className="text-slate-400 text-lg font-light mb-6">Linguistically Authentic Fantasy & Sci-Fi Name Forge</p>
+
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 mb-4 backdrop-blur-md">
+            <Cpu className="w-4 h-4 text-indigo-400" />
+            <span className="text-xs md:text-sm font-medium text-slate-300">
+                <span className="text-indigo-400 font-bold">No AI / LLMs involved.</span> Powered by 100% algorithmic Phonotactics & Linguistic Rules.
+            </span>
+          </div>
+
           <div className="mt-4 flex justify-center gap-2">
             {['Phonotactically Accurate', 'Cross-Linguistic', 'Customizable'].map((tag, i) => (
               <span key={i} className="px-3 py-1 text-xs font-medium bg-slate-800/50 border border-slate-700/50 rounded-full text-slate-400">
