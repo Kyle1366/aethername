@@ -341,8 +341,9 @@ const Tooltip = ({ content, children }) => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setCoords({
-        left: rect.left + window.scrollX + 20, // Offset 20px to the right
-        top: rect.top + window.scrollY - 10    // Offset 10px up
+        // We use 'fixed' positioning, so we do NOT add window.scrollY/X
+        left: rect.right + 10, // 10px to the right of the icon
+        top: rect.top          // Aligned with the top of the icon
       });
       setShow(true);
     }
@@ -365,10 +366,11 @@ const Tooltip = ({ content, children }) => {
             zIndex: 99999,
             left: coords.left,
             top: coords.top,
+            width: 'max-content',
             maxWidth: '18rem'
           }}
         >
-          {/* Decorative Arrow */}
+          {/* Decorative Arrow pointing left towards the icon */}
           <div className="absolute w-3 h-3 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 -left-1.5 top-3" />
           {content}
         </div>,
