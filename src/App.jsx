@@ -125,6 +125,34 @@ const toneModifiers = {
   rustic: { preferSounds: ['r', 'n', 'm', 'l', 'd', 'b', 'w'], avoidSounds: ['x', 'z', 'th'], preferLong: false, prefixes: ['Oak', 'Elm', 'Ash', 'Bram', 'Thorn', 'Moss', 'Haw', 'Ald'], suffixes: ['wood', 'dell', 'ford', 'wick', 'ham', 'ton', 'by', 'ley'] }
 };
 
+// Name type specific elements
+const nameTypeElements = {
+  character: {
+    prefixes: [],  // Uses linguistic data
+    suffixes: []
+  },
+  location: {
+    prefixes: ['Fort', 'Port', 'Mount', 'Lake', 'River', 'Shadow', 'Storm', 'Crystal', 'Iron', 'Golden', 'Silver', 'Black', 'White', 'Red', 'Dawn', 'Dusk', 'Moon', 'Sun', 'Star', 'Mist'],
+    suffixes: ['haven', 'hold', 'fell', 'vale', 'dale', 'mere', 'moor', 'peak', 'reach', 'watch', 'guard', 'gate', 'keep', 'spire', 'hollow', 'grove', 'wood', 'ford', 'port', 'heim', 'grad', 'burg', 'ton', 'ville']
+  },
+  faction: {
+    prefixes: ['Order', 'House', 'Clan', 'Guild', 'Legion', 'Circle', 'Court', 'Crown', 'Iron', 'Shadow', 'Storm', 'Blood', 'Silver', 'Golden', 'Crimson', 'Azure', 'Onyx', 'Ivory'],
+    suffixes: ['guard', 'sworn', 'blade', 'hand', 'born', 'blood', 'heart', 'soul', 'watch', 'ward', 'veil', 'pact', 'oath', 'crown', 'throne', 'council', 'covenant', 'syndicate']
+  },
+  item: {
+    prefixes: ['Storm', 'Shadow', 'Doom', 'Soul', 'Spirit', 'Void', 'Star', 'Moon', 'Sun', 'Blood', 'Bone', 'Iron', 'Silver', 'Golden', 'Crystal', 'Frost', 'Flame', 'Thunder', 'Night', 'Dawn', 'Fate', 'Dread', 'Wrath', 'Hope', 'Glory'],
+    suffixes: ['bane', 'bringer', 'slayer', 'reaver', 'render', 'cleaver', 'striker', 'piercer', 'breaker', 'shatter', 'edge', 'fang', 'claw', 'thorn', 'shard', 'spark', 'flame', 'frost', 'song', 'whisper', 'scream', 'fury', 'wrath', 'heart', 'soul', 'caller', 'weaver', 'forged']
+  },
+  starship: {
+    prefixes: ['Star', 'Nova', 'Void', 'Solar', 'Lunar', 'Cosmic', 'Nebula', 'Astral', 'Quantum', 'Hyper', 'Warp', 'Ion', 'Plasma', 'Dark', 'Light', 'Silent', 'Swift', 'Iron', 'Steel', 'Titan'],
+    suffixes: ['runner', 'dancer', 'seeker', 'hunter', 'hawk', 'wing', 'blade', 'storm', 'strike', 'fall', 'rise', 'dawn', 'dusk', 'fury', 'dream', 'spirit', 'phantom', 'specter', 'voyager', 'wanderer', 'herald', 'sentinel']
+  },
+  species: {
+    prefixes: ['Xeno', 'Proto', 'Neo', 'Meta', 'Para', 'Endo', 'Exo', 'Cryo', 'Pyro', 'Hydro', 'Aero', 'Geo', 'Bio', 'Techno', 'Astro', 'Cosmo'],
+    suffixes: ['morph', 'vore', 'pod', 'zoid', 'form', 'kin', 'born', 'spawn', 'oid', 'ian', 'ite', 'ax', 'ex', 'ix', 'oni', 'ari', 'eni', 'oth', 'eth']
+  }
+};
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -156,15 +184,25 @@ const generateSyllable = (lang, patternType, tone = null) => {
 };
 
 const generateName = (config) => {
-  const { regions, tones, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents } = config;
+  const { nameType, regions, tones, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents } = config;
   const regionList = regions.length > 0 ? regions : ['neutral'];
   const primaryLang = linguisticData[regionList[0]] || linguisticData.neutral;
   const primaryTone = tones.length > 0 ? toneModifiers[tones[0]] : null;
+  const typeElements = nameTypeElements[nameType] || nameTypeElements.character;
   const targetSyllables = Math.floor(Math.random() * (maxSyllables - minSyllables + 1)) + minSyllables;
   let name = '', attempts = 0;
+  
   while (attempts < 50) {
     attempts++; name = '';
-    if (Math.random() < 0.35 && primaryLang.elements) {
+    
+    // For items, locations, factions, starships, species - use type-specific naming patterns
+    if (nameType !== 'character' && typeElements.prefixes.length > 0 && Math.random() < 0.7) {
+      // 70% chance to use type-specific compound name
+      const prefix = random(typeElements.prefixes);
+      const suffix = random(typeElements.suffixes);
+      name = prefix + suffix;
+    } else if (Math.random() < 0.35 && primaryLang.elements) {
+      // Use linguistic elements
       if (Math.random() < 0.5) {
         const prefix = primaryTone?.prefixes ? random([...primaryLang.elements.starts, ...primaryTone.prefixes]) : random(primaryLang.elements.starts);
         const suffix = primaryTone?.suffixes ? random([...primaryLang.elements.ends, ...primaryTone.suffixes]) : random(primaryLang.elements.ends);
@@ -177,15 +215,17 @@ const generateName = (config) => {
         }
       }
     } else {
+      // Pure syllable generation
       for (let i = 0; i < targetSyllables; i++) {
         const lang = linguisticData[random(regionList)] || primaryLang;
         name += generateSyllable(lang, weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight)), primaryTone);
       }
       if (Math.random() < 0.25 && primaryLang.endings) { const e = random(primaryLang.endings); if (!name.endsWith(e.charAt(0))) name = name.slice(0, -1) + e; }
     }
+    
     if (seedWord?.length > 1) { const s = seedWord.toLowerCase(); name = Math.random() < 0.5 ? s.slice(0, Math.min(3, s.length)) + name.slice(2) : name.slice(0, Math.floor(name.length / 2)) + s.slice(0, 2) + name.slice(Math.floor(name.length / 2) + 1); }
     const syl = countSyllables(name);
-    if (syl < minSyllables || syl > maxSyllables + 1) continue;
+    if (syl < minSyllables || syl > maxSyllables + 2) continue;  // Allow more flexibility for compound names
     if (mustStartWith && !name.toLowerCase().startsWith(mustStartWith.toLowerCase())) name = mustStartWith + name.slice(mustStartWith.length);
     if (mustContain && !name.toLowerCase().includes(mustContain.toLowerCase())) name = name.slice(0, Math.floor(name.length / 2)) + mustContain + name.slice(Math.floor(name.length / 2));
     if (mustNotContain && name.toLowerCase().includes(mustNotContain.toLowerCase())) continue;
@@ -297,7 +337,7 @@ const Tooltip = ({ content, children }) => {
     <div className="relative inline-block">
       <div onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} className="cursor-help">{children}</div>
       {show && (
-        <div className="absolute z-50 w-72 p-3 text-sm bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl -top-2 left-8 text-slate-300 animate-in fade-in slide-in-from-left-2 duration-200">
+        <div className="absolute w-72 p-3 text-sm bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl -top-2 left-8 text-slate-300 animate-in fade-in slide-in-from-left-2 duration-200" style={{ zIndex: 9999 }}>
           <div className="absolute w-2 h-2 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 -left-1 top-4" />
           {content}
         </div>
