@@ -334,18 +334,28 @@ const GlowButton = ({ children, onClick, disabled, variant = 'primary', classNam
 
 const Tooltip = ({ content, children }) => {
   const [show, setShow] = useState(false);
-  const [coords, setCoords] = useState({ left: 0, top: 0 });
+  const [coords, setCoords] = useState({ left: 0, top: 0, strategy: 'side' });
   const triggerRef = useRef(null);
 
-  const handleMouseEnter = () => {
+  const handleInteraction = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setCoords({
-        // We use 'fixed' positioning, so we do NOT add window.scrollY/X
-        left: rect.right + 10, // 10px to the right of the icon
-        top: rect.top          // Aligned with the top of the icon
-      });
-      setShow(true);
+      const screenWidth = window.innerWidth;
+      
+      // Default: Show to the right
+      let left = rect.right + 10;
+      let top = rect.top;
+      let strategy = 'side';
+
+      // Smart Logic: If screen is small (<768px) OR tooltip would go off-screen
+      if (screenWidth < 768 || left + 250 > screenWidth) {
+        strategy = 'bottom';
+        left = 16; // Align to left screen edge with padding
+        top = rect.bottom + 10; // Push below the icon
+      }
+
+      setCoords({ left, top, strategy });
+      setShow((prev) => !prev); // Toggle on click
     }
   };
 
@@ -353,25 +363,34 @@ const Tooltip = ({ content, children }) => {
     <>
       <div 
         ref={triggerRef}
-        onMouseEnter={handleMouseEnter} 
+        onClick={handleInteraction}
+        onMouseEnter={handleInteraction} 
         onMouseLeave={() => setShow(false)} 
-        className="relative inline-block cursor-help"
+        className="relative inline-block cursor-help active:scale-95 transition-transform"
       >
         {children}
       </div>
       {show && createPortal(
         <div 
-          className="fixed p-3 text-sm bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl text-slate-300 animate-in fade-in zoom-in-95 duration-200 pointer-events-none" 
+          className="fixed p-3 text-sm bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl text-slate-300 animate-in fade-in zoom-in-95 duration-200" 
           style={{ 
             zIndex: 99999,
             left: coords.left,
             top: coords.top,
-            width: 'max-content',
-            maxWidth: '18rem'
+            // Mobile: Fit to screen width minus padding. Desktop: Auto width.
+            width: coords.strategy === 'bottom' ? 'calc(100vw - 32px)' : 'max-content',
+            maxWidth: '20rem',
+            pointerEvents: 'none' 
           }}
         >
-          {/* Decorative Arrow pointing left towards the icon */}
-          <div className="absolute w-3 h-3 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 -left-1.5 top-3" />
+          {/* Decorative Arrow */}
+          <div 
+            className={`absolute w-3 h-3 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 ${
+              coords.strategy === 'bottom' 
+                ? '-top-1.5 left-6 border-l-0 border-b-0 border-t border-l bg-slate-900' // Arrow points UP
+                : '-left-1.5 top-3' // Arrow points LEFT
+            }`} 
+          />
           {content}
         </div>,
         document.body
@@ -500,7 +519,7 @@ export default function AetherNames() {
     <div className="min-h-screen text-slate-100 relative">
       <AnimatedBackground />
       
-      <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8">
+      <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 pb-32">
         {/* Header */}
         <header className={`text-center py-8 mb-8 transition-all duration-1000 ${animateHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
           <div className="inline-flex items-center gap-3 mb-4">
