@@ -1,76 +1,52 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll } from 'lucide-react';
 
 // ============================================================================
-// LINGUISTICALLY AUTHENTIC PHONOTACTIC DATA
-// Each language family follows real-world constraints
+// LINGUISTIC DATA
 // ============================================================================
 
 const linguisticData = {
   western: {
-    onsets: {
-      simple: ['b', 'd', 'f', 'g', 'h', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w'],
-      clusters: ['br', 'bl', 'cr', 'cl', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sl', 'sp', 'st', 'sw', 'tr', 'th', 'sh']
-    },
+    onsets: { simple: ['b', 'd', 'f', 'g', 'h', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w'], clusters: ['br', 'bl', 'cr', 'cl', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sl', 'sp', 'st', 'sw', 'tr', 'th', 'sh'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ae', 'ai', 'ea', 'ei', 'ie', 'oa', 'ou'] },
-    codas: {
-      simple: ['d', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'th'],
-      clusters: ['ld', 'lf', 'lm', 'lt', 'nd', 'ng', 'nk', 'nt', 'rd', 'rk', 'rm', 'rn', 'rt', 'sk', 'st']
-    },
+    codas: { simple: ['d', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'th'], clusters: ['ld', 'lf', 'lm', 'lt', 'nd', 'ng', 'nk', 'nt', 'rd', 'rk', 'rm', 'rn', 'rt', 'sk', 'st'] },
     patterns: [{ type: 'CV', weight: 40 }, { type: 'CVC', weight: 35 }, { type: 'V', weight: 10 }, { type: 'VC', weight: 10 }, { type: 'CCV', weight: 5 }],
     elements: { starts: ['Ald', 'Ber', 'Ed', 'Fre', 'Gar', 'Har', 'Nor', 'Os', 'Ral', 'Sig', 'Wal', 'Wil'], ends: ['ald', 'ard', 'bert', 'fred', 'gard', 'helm', 'mund', 'ric', 'ward', 'win', 'wyn'] },
     endings: ['a', 'an', 'ar', 'en', 'er', 'ia', 'in', 'on', 'or', 'us']
   },
-
   latin: {
-    onsets: {
-      simple: ['b', 'c', 'd', 'f', 'g', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v'],
-      clusters: ['br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sc', 'sp', 'st', 'tr']
-    },
+    onsets: { simple: ['b', 'c', 'd', 'f', 'g', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v'], clusters: ['br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sc', 'sp', 'st', 'tr'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ae', 'au'] },
     codas: { simple: ['m', 'n', 'r', 's', 't', 'x'], clusters: ['ns', 'nt', 'rs', 'rt'] },
     patterns: [{ type: 'CV', weight: 55 }, { type: 'CVC', weight: 25 }, { type: 'V', weight: 10 }, { type: 'CCV', weight: 10 }],
     elements: { starts: ['Aur', 'Cae', 'Cor', 'Fla', 'Jul', 'Luc', 'Mar', 'Max', 'Oct', 'Pub', 'Ser', 'Val'], ends: ['ius', 'ia', 'us', 'a', 'um', 'is', 'or', 'ix', 'ax', 'ex'] },
     endings: ['us', 'a', 'um', 'is', 'ius', 'ia', 'or', 'ax', 'ix', 'ex']
   },
-
   celtic: {
-    onsets: {
-      simple: ['b', 'c', 'd', 'f', 'g', 'l', 'm', 'n', 'p', 'r', 's', 't', 'ch', 'th', 'sh'],
-      clusters: ['br', 'cr', 'dr', 'fr', 'gr', 'pr', 'tr', 'bl', 'cl', 'fl', 'gl', 'gw', 'rh']
-    },
+    onsets: { simple: ['b', 'c', 'd', 'f', 'g', 'l', 'm', 'n', 'p', 'r', 's', 't', 'ch', 'th', 'sh'], clusters: ['br', 'cr', 'dr', 'fr', 'gr', 'pr', 'tr', 'bl', 'cl', 'fl', 'gl', 'gw', 'rh'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u', 'y'], long: ['ae', 'ai', 'ao', 'ea', 'ei', 'ia', 'io', 'oi', 'ua', 'wy'] },
     codas: { simple: ['ch', 'd', 'g', 'l', 'll', 'm', 'n', 'nn', 'r', 's', 'th'], clusters: ['ld', 'nd', 'ng', 'rn', 'rd', 'nt'] },
     patterns: [{ type: 'CV', weight: 40 }, { type: 'CVC', weight: 35 }, { type: 'V', weight: 15 }, { type: 'VC', weight: 10 }],
     elements: { starts: ['Aed', 'Bran', 'Cael', 'Conn', 'Der', 'Fionn', 'Gwen', 'Lugh', 'Mael', 'Niamh', 'Rhi', 'Tal'], ends: ['an', 'wen', 'wyn', 'ach', 'een', 'in', 'aid', 'aith', 'on'] },
     endings: ['an', 'en', 'in', 'on', 'wen', 'wyn', 'ach', 'aith', 'id', 'a']
   },
-
   norse: {
-    onsets: {
-      simple: ['b', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'y'],
-      clusters: ['br', 'dr', 'fr', 'gr', 'kr', 'pr', 'tr', 'bl', 'fl', 'gl', 'kl', 'sk', 'sn', 'sp', 'st', 'sv', 'hj', 'kn']
-    },
+    onsets: { simple: ['b', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'y'], clusters: ['br', 'dr', 'fr', 'gr', 'kr', 'pr', 'tr', 'bl', 'fl', 'gl', 'kl', 'sk', 'sn', 'sp', 'st', 'sv', 'hj', 'kn'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u', 'y'], long: ['ei', 'au'] },
     codas: { simple: ['d', 'f', 'g', 'k', 'l', 'm', 'n', 'r', 's', 't'], clusters: ['ld', 'lf', 'lk', 'lm', 'nd', 'ng', 'nk', 'nn', 'rd', 'rg', 'rk', 'rm', 'rn', 'rt', 'sk', 'st'] },
     patterns: [{ type: 'CVC', weight: 40 }, { type: 'CV', weight: 35 }, { type: 'CVCC', weight: 15 }, { type: 'CCV', weight: 10 }],
     elements: { starts: ['Arn', 'Bjorn', 'Dag', 'Ei', 'Frey', 'Gunn', 'Har', 'Ing', 'Odd', 'Rag', 'Sig', 'Thor', 'Ulf', 'Val'], ends: ['ar', 'ir', 'or', 'ald', 'ulf', 'ard', 'mund', 'leif', 'geir', 'dis', 'hild', 'run', 'stein'] },
     endings: ['ar', 'ir', 'ur', 'or', 'ald', 'ulf', 'ard', 'mund', 'leif', 'geir', 'a', 'i']
   },
-
   slavic: {
-    onsets: {
-      simple: ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z', 'ch', 'sh', 'zh'],
-      clusters: ['br', 'dr', 'gr', 'kr', 'pr', 'tr', 'bl', 'gl', 'kl', 'pl', 'sl', 'sm', 'sn', 'sp', 'st', 'str', 'sv', 'vl', 'vr', 'zd', 'zl', 'zn']
-    },
+    onsets: { simple: ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z', 'ch', 'sh', 'zh'], clusters: ['br', 'dr', 'gr', 'kr', 'pr', 'tr', 'bl', 'gl', 'kl', 'pl', 'sl', 'sm', 'sn', 'sp', 'st', 'str', 'sv', 'vl', 'vr', 'zd', 'zl', 'zn'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u', 'y'], long: ['ia', 'ie', 'io', 'iu'] },
     codas: { simple: ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'z', 'ch', 'sh'], clusters: ['sk', 'st', 'nd', 'nk', 'rk', 'rd', 'rn', 'rt'] },
     patterns: [{ type: 'CV', weight: 35 }, { type: 'CVC', weight: 35 }, { type: 'CCV', weight: 20 }, { type: 'CCVC', weight: 10 }],
     elements: { starts: ['Bog', 'Bor', 'Dob', 'Drag', 'Jar', 'Mir', 'Rad', 'Ros', 'Slav', 'Stan', 'Vlad', 'Vol', 'Yar', 'Zor'], ends: ['mir', 'slav', 'mil', 'rad', 'vid', 'bor', 'gor', 'dan', 'ko', 'ka', 'ov', 'ev'] },
     endings: ['a', 'ya', 'mir', 'slav', 'rad', 'ov', 'ev', 'ko', 'ka', 'an', 'in', 'il']
   },
-
   arabic: {
     onsets: { simple: ['b', 'd', 'f', 'h', 'j', 'k', 'l', 'm', 'n', 'q', 'r', 's', 'sh', 't', 'th', 'w', 'y', 'z', 'kh', 'gh'], clusters: [] },
     vowels: { short: ['a', 'i', 'u'], long: ['aa', 'ii', 'uu', 'ai', 'au'] },
@@ -79,7 +55,6 @@ const linguisticData = {
     elements: { starts: ['Abd', 'Ah', 'Al', 'Am', 'As', 'Fah', 'Far', 'Has', 'Jab', 'Jam', 'Kar', 'Khal', 'Mah', 'Nas', 'Nur', 'Sal', 'Sul', 'Tar', 'Zah'], ends: ['a', 'ah', 'an', 'ar', 'i', 'id', 'il', 'im', 'in', 'ir', 'ud', 'ul', 'um', 'un', 'ur'] },
     endings: ['a', 'ah', 'an', 'ar', 'i', 'id', 'im', 'in', 'ir', 'ud', 'ul', 'um', 'un']
   },
-
   eastasian: {
     onsets: { simple: ['b', 'ch', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'w', 'y', 'z'], clusters: [] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ai', 'ao', 'ei', 'ia', 'ie', 'iu', 'ou', 'ua', 'ue', 'ui', 'uo'] },
@@ -88,7 +63,6 @@ const linguisticData = {
     elements: { starts: ['Chi', 'Fei', 'Hai', 'Hiro', 'Jin', 'Kai', 'Ken', 'Lei', 'Lin', 'Mei', 'Min', 'Rei', 'Ren', 'Ryu', 'Shen', 'Shin', 'Tai', 'Wei', 'Yan', 'Yu'], ends: ['ko', 'ki', 'mi', 'ri', 'chi', 'ka', 'na', 'no', 'shi', 'ta', 'to', 'ya', 'ro', 'ru'] },
     endings: ['a', 'e', 'i', 'o', 'u', 'n', 'ng', 'ko', 'ki', 'mi', 'ri', 'ya', 'no', 'ta']
   },
-
   southasian: {
     onsets: { simple: ['b', 'bh', 'ch', 'd', 'dh', 'g', 'gh', 'h', 'j', 'k', 'kh', 'l', 'm', 'n', 'p', 'ph', 'r', 's', 'sh', 't', 'th', 'v', 'y'], clusters: ['br', 'dr', 'gr', 'kr', 'pr', 'tr', 'shr'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['aa', 'ee', 'ii', 'oo', 'uu', 'ai', 'au'] },
@@ -97,7 +71,6 @@ const linguisticData = {
     elements: { starts: ['Adi', 'Anu', 'Aru', 'Bha', 'Dev', 'Dha', 'Gan', 'Hari', 'Ind', 'Jay', 'Kam', 'Kar', 'Mah', 'Nar', 'Pad', 'Pra', 'Raj', 'Ram', 'San', 'Shan', 'Sur', 'Vik', 'Vish'], ends: ['a', 'an', 'ana', 'endra', 'esh', 'i', 'ika', 'in', 'ini', 'ish', 'ita', 'na', 'raj', 'ya'] },
     endings: ['a', 'i', 'u', 'an', 'in', 'am', 'ya', 'na', 'ta', 'endra', 'esh', 'ika', 'ini']
   },
-
   african: {
     onsets: { simple: ['b', 'ch', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'ny', 'p', 'r', 's', 'sh', 't', 'w', 'y', 'z'], clusters: ['mb', 'nd', 'ng', 'nj', 'nk', 'mp', 'nt', 'nz', 'kw', 'gw', 'bw', 'tw', 'sw'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['aa', 'ee', 'ii', 'oo', 'uu'] },
@@ -106,7 +79,6 @@ const linguisticData = {
     elements: { starts: ['Aba', 'Ade', 'Ama', 'Ami', 'Ayo', 'Chi', 'Ife', 'Kem', 'Kwa', 'Lun', 'Mba', 'Ndi', 'Ngu', 'Oba', 'Obi', 'Olu', 'San', 'Tem', 'Uku', 'Zol', 'Zul'], ends: ['a', 'i', 'u', 'e', 'o', 'wa', 'we', 'wi', 'ya', 'yo', 'ka', 'ki', 'la', 'li', 'na', 'ni', 'ra', 'ri', 'ta', 'ti'] },
     endings: ['a', 'i', 'u', 'e', 'o', 'wa', 'we', 'ya', 'ka', 'la', 'na', 'ra', 'ta']
   },
-
   mesoamerican: {
     onsets: { simple: ['ch', 'h', 'k', 'l', 'm', 'n', 'p', 's', 't', 'tl', 'ts', 'w', 'x', 'y'], clusters: [] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['aa', 'ee', 'ii', 'oo'] },
@@ -115,53 +87,6 @@ const linguisticData = {
     elements: { starts: ['Ah', 'Chak', 'Chi', 'Cit', 'Cuauh', 'Etz', 'Itz', 'Ix', 'Kin', 'Kuk', 'Metz', 'Quet', 'Tek', 'Tep', 'Tla', 'Ton', 'Xal', 'Xip', 'Xoch', 'Yax', 'Yol'], ends: ['al', 'an', 'atl', 'il', 'in', 'itl', 'ol', 'otl', 'tli', 'tl', 'tzin'] },
     endings: ['a', 'i', 'e', 'o', 'tl', 'tli', 'atl', 'in', 'an', 'il', 'al', 'tzin']
   },
-
-  // NEW REGION: Greek
-  greek: {
-    onsets: {
-      simple: ['b', 'd', 'g', 'h', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'th', 'ph', 'ch', 'z', 'x'],
-      clusters: ['br', 'dr', 'gr', 'kr', 'pr', 'tr', 'bl', 'gl', 'kl', 'pl', 'pn', 'ps', 'pt', 'st', 'sp', 'sk', 'sm', 'sph']
-    },
-    vowels: { short: ['a', 'e', 'i', 'o', 'u', 'y'], long: ['ai', 'ei', 'oi', 'au', 'eu', 'ou', 'ae', 'oe'] },
-    codas: { simple: ['n', 's', 'r', 'x', 'ps'], clusters: ['ns', 'rs', 'ks'] },
-    patterns: [{ type: 'CV', weight: 45 }, { type: 'CVC', weight: 30 }, { type: 'CCV', weight: 15 }, { type: 'V', weight: 10 }],
-    elements: { starts: ['Alex', 'Andr', 'Apo', 'Ari', 'Dem', 'Dio', 'Hel', 'Her', 'Hip', 'Leo', 'Nik', 'Phil', 'Soph', 'The', 'Xen', 'Zen'], ends: ['os', 'es', 'is', 'as', 'on', 'eus', 'ios', 'ias', 'ides', 'anes', 'enes'] },
-    endings: ['os', 'es', 'is', 'as', 'on', 'eus', 'ios', 'ia', 'a', 'ides']
-  },
-
-  // NEW REGION: Egyptian
-  egyptian: {
-    onsets: { simple: ['b', 'd', 'f', 'g', 'h', 'k', 'kh', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'th', 'w', 'y'], clusters: [] },
-    vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['aa', 'ee', 'ii'] },
-    codas: { simple: ['b', 'f', 'k', 'm', 'n', 'p', 'r', 's', 't'], clusters: [] },
-    patterns: [{ type: 'CV', weight: 50 }, { type: 'CVC', weight: 40 }, { type: 'V', weight: 10 }],
-    elements: { starts: ['Akh', 'Am', 'An', 'Aten', 'Hor', 'Isis', 'Khe', 'Men', 'Mer', 'Nef', 'Nub', 'Ptah', 'Ra', 'Sat', 'Sek', 'Set', 'Tut', 'User'], ends: ['is', 'it', 'et', 'en', 'un', 'at', 'hotep', 'mose', 'ankh', 'amun', 'aten'] },
-    endings: ['is', 'it', 'et', 'en', 'un', 'at', 'hotep', 'mose', 'ankh', 'amun']
-  },
-
-  // NEW REGION: Persian
-  persian: {
-    onsets: {
-      simple: ['b', 'd', 'f', 'g', 'h', 'j', 'k', 'kh', 'l', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'v', 'y', 'z', 'zh'],
-      clusters: ['br', 'dr', 'fr', 'gr', 'kr', 'pr', 'tr']
-    },
-    vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['aa', 'ee', 'oo', 'ai', 'ei', 'ou'] },
-    codas: { simple: ['b', 'd', 'f', 'g', 'k', 'kh', 'l', 'm', 'n', 'r', 's', 'sh', 't', 'z'], clusters: ['rd', 'rz', 'st', 'nd', 'ng'] },
-    patterns: [{ type: 'CV', weight: 40 }, { type: 'CVC', weight: 40 }, { type: 'CVCC', weight: 15 }, { type: 'V', weight: 5 }],
-    elements: { starts: ['Ar', 'Az', 'Bah', 'Cy', 'Dar', 'Far', 'Jas', 'Kav', 'Khor', 'Mah', 'Meh', 'Mir', 'Nav', 'Par', 'Ros', 'Shah', 'Sor', 'Zar'], ends: ['an', 'ar', 'ash', 'esh', 'in', 'ir', 'ush', 'yar', 'zad', 'var', 'ban', 'dan'] },
-    endings: ['an', 'ar', 'ash', 'esh', 'in', 'ir', 'ush', 'yar', 'zad', 'var']
-  },
-
-  // NEW REGION: Polynesian
-  polynesian: {
-    onsets: { simple: ['h', 'k', 'l', 'm', 'n', 'p', 'r', 't', 'w', 'f', 'v', 'ng'], clusters: [] },
-    vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['aa', 'ee', 'ii', 'oo', 'uu', 'ae', 'ai', 'ao', 'au', 'ei', 'ou'] },
-    codas: { simple: [], clusters: [] },
-    patterns: [{ type: 'CV', weight: 60 }, { type: 'V', weight: 30 }, { type: 'CVV', weight: 10 }],
-    elements: { starts: ['Ka', 'Ke', 'Ki', 'Ko', 'Ku', 'La', 'Ma', 'Mo', 'Na', 'Pa', 'Ta', 'Te', 'Ti', 'To', 'Wa', 'Ha', 'Ho'], ends: ['na', 'ni', 'no', 'ka', 'ki', 'ko', 'la', 'li', 'lo', 'ma', 'mi', 'mo', 'ra', 'ri', 'ro', 'ta', 'ti', 'to', 'a', 'i', 'o'] },
-    endings: ['a', 'i', 'o', 'u', 'e', 'na', 'ni', 'ka', 'ki', 'la', 'li', 'ma', 'ta']
-  },
-
   spaceopera: {
     onsets: { simple: ['b', 'd', 'f', 'g', 'h', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'x', 'z', 'th'], clusters: ['kr', 'tr', 'dr', 'gr', 'pr', 'br', 'str', 'thr', 'vr', 'zr'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ae', 'ai', 'au', 'ei', 'ia', 'io', 'oa', 'oi', 'ua'] },
@@ -170,7 +95,6 @@ const linguisticData = {
     elements: { starts: ['Ax', 'Bel', 'Cor', 'Dax', 'Ex', 'Gal', 'Hex', 'Ion', 'Jax', 'Kir', 'Lex', 'Mor', 'Nex', 'Ori', 'Pax', 'Rex', 'Sol', 'Tor', 'Vex', 'Xan', 'Zed', 'Zor'], ends: ['ax', 'ex', 'ix', 'ox', 'ux', 'ar', 'er', 'ir', 'or', 'ur', 'an', 'en', 'in', 'on', 'ion', 'ius', 'rix', 'xis', 'zar'] },
     endings: ['ax', 'ex', 'ix', 'ox', 'ar', 'or', 'on', 'ion', 'ius', 'rix', 'xis', 'zar', 'an', 'os']
   },
-
   cyberpunk: {
     onsets: { simple: ['b', 'ch', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'v', 'w', 'y', 'z'], clusters: ['bl', 'br', 'chr', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'kr', 'pl', 'pr', 'sc', 'sk', 'sl', 'sp', 'st', 'str', 'tr', 'vr'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u', 'y'], long: ['ai', 'ei', 'ou', 'io'] },
@@ -179,7 +103,6 @@ const linguisticData = {
     elements: { starts: ['Ace', 'Ax', 'Blade', 'Byte', 'Cid', 'Cyber', 'Dex', 'Echo', 'Flux', 'Hex', 'Jin', 'Jolt', 'Kai', 'Kat', 'Kira', 'Max', 'Neo', 'Nix', 'Razor', 'Rex', 'Riko', 'Syn', 'Vec', 'Volt', 'Zero', 'Zik'], ends: ['a', 'ax', 'ex', 'i', 'ik', 'ix', 'o', 'ok', 'ox', 'on', 'or', 'tek', 'syn', 'net'] },
     endings: ['a', 'ax', 'ex', 'i', 'ik', 'ix', 'o', 'ok', 'on', 'or', 'tek', 'syn', 'net']
   },
-
   neutral: {
     onsets: { simple: ['b', 'd', 'f', 'g', 'h', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'y', 'z'], clusters: ['bl', 'br', 'dr', 'fl', 'fr', 'gl', 'gr', 'kl', 'kr', 'pl', 'pr', 'sl', 'sp', 'st', 'tr'] },
     vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ae', 'ai', 'ea', 'ei', 'ia', 'ie', 'oa', 'ou', 'ua', 'ue'] },
@@ -189,10 +112,6 @@ const linguisticData = {
     endings: ['a', 'an', 'ar', 'el', 'en', 'er', 'ia', 'in', 'on', 'or', 'us', 'is']
   }
 };
-
-// ============================================================================
-// TONE MODIFIERS
-// ============================================================================
 
 const toneModifiers = {
   heroic: { preferSounds: ['r', 'l', 'n', 'm', 'v', 'd', 'g'], avoidSounds: ['x', 'z', 'k'], preferLong: true, prefixes: ['Val', 'Gal', 'Lor', 'Her', 'Trium', 'Vic', 'Sol', 'Brav'], suffixes: ['or', 'orn', 'ard', 'ald', 'and', 'ius', 'ion', 'eon'] },
@@ -207,25 +126,12 @@ const toneModifiers = {
   rustic: { preferSounds: ['r', 'n', 'm', 'l', 'd', 'b', 'w'], avoidSounds: ['x', 'z', 'th'], preferLong: false, prefixes: ['Oak', 'Elm', 'Ash', 'Bram', 'Thorn', 'Moss', 'Haw', 'Ald'], suffixes: ['wood', 'dell', 'ford', 'wick', 'ham', 'ton', 'by', 'ley'] }
 };
 
-// ============================================================================
-// TIME PERIOD MODIFIERS - NEW FEATURE
-// ============================================================================
-
-const timePeriodModifiers = {
-  ancient: { prefixes: ['Ur', 'Prim', 'Arch', 'Proto', 'Eld'], suffixes: ['oth', 'orn', 'iel', 'ael', 'um'] },
-  medieval: { prefixes: ['Ser', 'Lord', 'Saint', 'Fitz', 'Von'], suffixes: ['ric', 'helm', 'mund', 'ward', 'gard', 'wyn'] },
-  renaissance: { prefixes: ['Don', 'Donna', 'Signor', 'Conte', 'Duc'], suffixes: ['ello', 'ini', 'etti', 'iano', 'esca'] },
-  industrial: { prefixes: ['Steel', 'Iron', 'Coal', 'Brass', 'Copper'], suffixes: ['ton', 'worth', 'ford', 'wick', 'ham'] },
-  modern: { prefixes: ['Max', 'Alex', 'Kai', 'Zoe', 'Nova'], suffixes: ['son', 'ton', 'ley', 'er', 'en'] },
-  futuristic: { prefixes: ['Neo', 'Cyber', 'Quantum', 'Stellar', 'Nexus'], suffixes: ['ix', 'ax', 'on', 'ex', 'ius', 'tek'] }
-};
-
-// ============================================================================
-// NAME TYPE ELEMENTS
-// ============================================================================
-
+// Name type specific elements
 const nameTypeElements = {
-  character: { prefixes: [], suffixes: [] },
+  character: {
+    prefixes: [],  // Uses linguistic data
+    suffixes: []
+  },
   location: {
     prefixes: ['Fort', 'Port', 'Mount', 'Lake', 'River', 'Shadow', 'Storm', 'Crystal', 'Iron', 'Golden', 'Silver', 'Black', 'White', 'Red', 'Dawn', 'Dusk', 'Moon', 'Sun', 'Star', 'Mist'],
     suffixes: ['haven', 'hold', 'fell', 'vale', 'dale', 'mere', 'moor', 'peak', 'reach', 'watch', 'guard', 'gate', 'keep', 'spire', 'hollow', 'grove', 'wood', 'ford', 'port', 'heim', 'grad', 'burg', 'ton', 'ville']
@@ -253,168 +159,85 @@ const nameTypeElements = {
 // ============================================================================
 
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
 const weightedRandom = (items, weights) => {
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
-  for (let i = 0; i < items.length; i++) {
-    r -= weights[i];
-    if (r <= 0) return items[i];
-  }
+  for (let i = 0; i < items.length; i++) { r -= weights[i]; if (r <= 0) return items[i]; }
   return items[items.length - 1];
 };
-
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-
 const countSyllables = (str) => {
-  const lower = str.toLowerCase().replace(/[^a-z]/g, '');
-  const matches = lower.match(/[aeiouy]+/g);
+  const matches = str.toLowerCase().replace(/[^a-z]/g, '').match(/[aeiouy]+/g);
   return matches ? matches.length : 1;
 };
 
 const generateSyllable = (lang, patternType, tone = null) => {
-  let onset = '';
-  let vowel = '';
-  let coda = '';
-
-  if (patternType.startsWith('CC')) {
-    onset = lang.onsets.clusters.length > 0 ? random(lang.onsets.clusters) : random(lang.onsets.simple);
-  } else if (patternType.startsWith('C') || patternType.startsWith('N')) {
-    const useCluster = lang.onsets.clusters.length > 0 && Math.random() < 0.15;
-    onset = useCluster ? random(lang.onsets.clusters) : random(lang.onsets.simple);
-  }
-
-  if (tone && tone.preferSounds && onset && Math.random() < 0.3) {
-    const matches = lang.onsets.simple.filter(s => tone.preferSounds.some(p => s.includes(p)));
-    if (matches.length > 0) onset = random(matches);
-  }
-
+  let onset = '', vowel = '', coda = '';
+  if (patternType.startsWith('CC')) { onset = lang.onsets.clusters.length > 0 ? random(lang.onsets.clusters) : random(lang.onsets.simple); }
+  else if (patternType.startsWith('C') || patternType.startsWith('N')) { onset = lang.onsets.clusters.length > 0 && Math.random() < 0.15 ? random(lang.onsets.clusters) : random(lang.onsets.simple); }
+  if (tone?.preferSounds && onset && Math.random() < 0.3) { const m = lang.onsets.simple.filter(s => tone.preferSounds.some(p => s.includes(p))); if (m.length > 0) onset = random(m); }
   const useLong = tone?.preferLong ? Math.random() < 0.35 : Math.random() < 0.2;
   vowel = useLong && lang.vowels.long.length > 0 ? random(lang.vowels.long) : random(lang.vowels.short);
-
-  if (patternType.endsWith('CC')) {
-    coda = lang.codas.clusters.length > 0 ? random(lang.codas.clusters) : random(lang.codas.simple);
-  } else if (['CVC', 'CCVC', 'VC', 'CVCC'].includes(patternType)) {
-    const useCluster = lang.codas.clusters.length > 0 && Math.random() < 0.1;
-    coda = useCluster ? random(lang.codas.clusters) : random(lang.codas.simple);
-  } else if (patternType === 'CVN') {
-    const nasals = lang.codas.simple.filter(c => ['n', 'ng', 'm'].includes(c));
-    coda = nasals.length > 0 ? random(nasals) : 'n';
-  }
-
+  if (patternType.endsWith('CC')) { coda = lang.codas.clusters.length > 0 ? random(lang.codas.clusters) : random(lang.codas.simple); }
+  else if (['CVC', 'CCVC', 'VC', 'CVCC'].includes(patternType)) { coda = lang.codas.clusters.length > 0 && Math.random() < 0.1 ? random(lang.codas.clusters) : random(lang.codas.simple); }
+  else if (patternType === 'CVN') { const n = lang.codas.simple.filter(c => ['n', 'ng', 'm'].includes(c)); coda = n.length > 0 ? random(n) : 'n'; }
   return onset + vowel + coda;
 };
-// ============================================================================
-// NAME GENERATION
-// ============================================================================
 
 const generateName = (config) => {
-  const { nameType, regions, tones, timePeriod, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents } = config;
-
+  const { nameType, regions, tones, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents } = config;
   const regionList = regions.length > 0 ? regions : ['neutral'];
   const primaryLang = linguisticData[regionList[0]] || linguisticData.neutral;
   const primaryTone = tones.length > 0 ? toneModifiers[tones[0]] : null;
-  const periodMod = timePeriod && timePeriod !== 'any' ? timePeriodModifiers[timePeriod] : null;
   const typeElements = nameTypeElements[nameType] || nameTypeElements.character;
-
   const targetSyllables = Math.floor(Math.random() * (maxSyllables - minSyllables + 1)) + minSyllables;
-
-  let name = '';
-  let attempts = 0;
-
+  let name = '', attempts = 0;
+  
   while (attempts < 50) {
-    attempts++;
-    name = '';
-
-    // For non-character types, use type-specific elements
+    attempts++; name = '';
+    
+    // For items, locations, factions, starships, species - use type-specific naming patterns
     if (nameType !== 'character' && typeElements.prefixes.length > 0 && Math.random() < 0.7) {
+      // 70% chance to use type-specific compound name
       const prefix = random(typeElements.prefixes);
       const suffix = random(typeElements.suffixes);
       name = prefix + suffix;
-    }
-    // Use time period elements
-    else if (periodMod && Math.random() < 0.3) {
-      const prefix = random(periodMod.prefixes);
-      for (let i = 0; i < targetSyllables; i++) {
-        const lang = linguisticData[random(regionList)] || primaryLang;
-        const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
-        name += generateSyllable(lang, pattern, primaryTone);
-      }
-      name = prefix + name;
-    }
-    // Use language elements
-    else if (Math.random() < 0.35 && primaryLang.elements) {
+    } else if (Math.random() < 0.35 && primaryLang.elements) {
+      // Use linguistic elements
       if (Math.random() < 0.5) {
-        const prefix = primaryTone?.prefixes 
-          ? random([...primaryLang.elements.starts, ...primaryTone.prefixes])
-          : random(primaryLang.elements.starts);
-        const suffix = primaryTone?.suffixes
-          ? random([...primaryLang.elements.ends, ...primaryTone.suffixes])
-          : random(primaryLang.elements.ends);
+        const prefix = primaryTone?.prefixes ? random([...primaryLang.elements.starts, ...primaryTone.prefixes]) : random(primaryLang.elements.starts);
+        const suffix = primaryTone?.suffixes ? random([...primaryLang.elements.ends, ...primaryTone.suffixes]) : random(primaryLang.elements.ends);
         name = prefix + suffix;
       } else {
         name = random(primaryLang.elements.starts);
-        const remaining = Math.max(1, targetSyllables - countSyllables(name));
-        for (let i = 0; i < remaining; i++) {
+        for (let i = 0; i < Math.max(1, targetSyllables - countSyllables(name)); i++) {
           const lang = linguisticData[random(regionList)] || primaryLang;
-          const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
-          name += generateSyllable(lang, pattern, primaryTone);
+          name += generateSyllable(lang, weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight)), primaryTone);
         }
       }
-    }
-    // Pure syllable generation
-    else {
+    } else {
+      // Pure syllable generation
       for (let i = 0; i < targetSyllables; i++) {
         const lang = linguisticData[random(regionList)] || primaryLang;
-        const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
-        name += generateSyllable(lang, pattern, primaryTone);
+        name += generateSyllable(lang, weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight)), primaryTone);
       }
-
-      if (Math.random() < 0.25 && primaryLang.endings) {
-        const ending = random(primaryLang.endings);
-        if (!name.endsWith(ending.charAt(0))) {
-          name = name.slice(0, -1) + ending;
-        }
-      }
+      if (Math.random() < 0.25 && primaryLang.endings) { const e = random(primaryLang.endings); if (!name.endsWith(e.charAt(0))) name = name.slice(0, -1) + e; }
     }
-
-    // Apply seed word
-    if (seedWord && seedWord.length > 1) {
-      const seed = seedWord.toLowerCase();
-      if (Math.random() < 0.5) {
-        name = seed.slice(0, Math.min(3, seed.length)) + name.slice(2);
-      } else {
-        const pos = Math.floor(name.length / 2);
-        name = name.slice(0, pos) + seed.slice(0, 2) + name.slice(pos + 1);
-      }
-    }
-
-    // Check syllable count
-    const syllables = countSyllables(name);
-    if (syllables < minSyllables || syllables > maxSyllables + 2) continue;
-
-    // Apply filters
-    if (mustStartWith && !name.toLowerCase().startsWith(mustStartWith.toLowerCase())) {
-      name = mustStartWith + name.slice(mustStartWith.length);
-    }
-    if (mustContain && !name.toLowerCase().includes(mustContain.toLowerCase())) {
-      const pos = Math.floor(name.length / 2);
-      name = name.slice(0, pos) + mustContain + name.slice(pos);
-    }
+    
+    if (seedWord?.length > 1) { const s = seedWord.toLowerCase(); name = Math.random() < 0.5 ? s.slice(0, Math.min(3, s.length)) + name.slice(2) : name.slice(0, Math.floor(name.length / 2)) + s.slice(0, 2) + name.slice(Math.floor(name.length / 2) + 1); }
+    const syl = countSyllables(name);
+    if (syl < minSyllables || syl > maxSyllables + 2) continue;  // Allow more flexibility for compound names
+    if (mustStartWith && !name.toLowerCase().startsWith(mustStartWith.toLowerCase())) name = mustStartWith + name.slice(mustStartWith.length);
+    if (mustContain && !name.toLowerCase().includes(mustContain.toLowerCase())) name = name.slice(0, Math.floor(name.length / 2)) + mustContain + name.slice(Math.floor(name.length / 2));
     if (mustNotContain && name.toLowerCase().includes(mustNotContain.toLowerCase())) continue;
-
-    // Check for bad clusters
-    if (/[bcdfghjklmnpqrstvwxz]{4,}/i.test(name)) continue;
-    if (/[aeiou]{4,}/i.test(name)) continue;
-
+    if (/[bcdfghjklmnpqrstvwxz]{4,}/i.test(name) || /[aeiou]{4,}/i.test(name)) continue;
     break;
   }
-
-  // Finalize
   name = capitalize(name.toLowerCase());
-
-  // Orthographic features - 100% when enabled
+  
+  // Apply orthographic features - 100% when enabled (user turned it on for a reason!)
   if (allowApostrophes && name.length > 4) {
+    // Find a good spot for apostrophe (before a vowel, not at edges)
     const vowelMatches = [...name.slice(2, -1).matchAll(/[aeiou]/gi)];
     if (vowelMatches.length > 0) {
       const match = vowelMatches[Math.floor(Math.random() * vowelMatches.length)];
@@ -422,9 +245,11 @@ const generateName = (config) => {
       name = name.slice(0, pos) + "'" + name.slice(pos);
     }
   }
-
+  
   if (allowHyphens && name.length > 5) {
+    // Split at a consonant cluster or mid-point
     const mid = Math.floor(name.length / 2);
+    // Try to find a better split point near middle
     let splitPos = mid;
     for (let i = mid - 1; i <= mid + 1; i++) {
       if (i > 1 && i < name.length - 2 && /[bcdfghjklmnpqrstvwxyz]/i.test(name[i])) {
@@ -434,7 +259,7 @@ const generateName = (config) => {
     }
     name = capitalize(name.slice(0, splitPos)) + '-' + capitalize(name.slice(splitPos));
   }
-
+  
   if (allowAccents) {
     const accents = { 
       a: ['á', 'à', 'â', 'ä'], 
@@ -444,6 +269,7 @@ const generateName = (config) => {
       u: ['ú', 'ù', 'û', 'ü'] 
     };
     const chars = name.split('');
+    // Find all vowels and pick one randomly to accent
     const vowelIndices = [];
     for (let i = 1; i < chars.length - 1; i++) {
       if (accents[chars[i].toLowerCase()]) vowelIndices.push(i);
@@ -454,12 +280,12 @@ const generateName = (config) => {
       name = chars.join('');
     }
   }
-
+  
   return name;
 };
 
 // ============================================================================
-// ANIMATED BACKGROUND
+// ANIMATED BACKGROUND COMPONENT
 // ============================================================================
 
 const AnimatedBackground = () => (
@@ -492,8 +318,7 @@ const GlowButton = ({ children, onClick, disabled, variant = 'primary', classNam
   const variants = {
     primary: 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40',
     secondary: 'bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50',
-    ghost: 'bg-transparent hover:bg-slate-800/50',
-    donate: 'bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 hover:from-pink-400 hover:via-red-400 hover:to-orange-400 shadow-lg shadow-red-500/25 hover:shadow-red-500/40'
+    ghost: 'bg-transparent hover:bg-slate-800/50'
   };
   return (
     <button
@@ -501,9 +326,7 @@ const GlowButton = ({ children, onClick, disabled, variant = 'primary', classNam
       disabled={disabled}
       className={`relative px-6 py-3 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
     >
-      {(variant === 'primary' || variant === 'donate') && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-      )}
+      {variant === 'primary' && <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />}
       <span className="relative flex items-center justify-center gap-2">{children}</span>
     </button>
   );
@@ -519,18 +342,20 @@ const Tooltip = ({ content, children }) => {
       const rect = triggerRef.current.getBoundingClientRect();
       const screenWidth = window.innerWidth;
       
+      // Default: Show to the right
       let left = rect.right + 10;
       let top = rect.top;
       let strategy = 'side';
 
+      // Smart Logic: If screen is small (<768px) OR tooltip would go off-screen
       if (screenWidth < 768 || left + 250 > screenWidth) {
         strategy = 'bottom';
-        left = 16;
-        top = rect.bottom + 10;
+        left = 16; // Align to left screen edge with padding
+        top = rect.bottom + 10; // Push below the icon
       }
 
       setCoords({ left, top, strategy });
-      setShow((prev) => !prev);
+      setShow((prev) => !prev); // Toggle on click
     }
   };
 
@@ -552,16 +377,18 @@ const Tooltip = ({ content, children }) => {
             zIndex: 99999,
             left: coords.left,
             top: coords.top,
+            // Mobile: Fit to screen width minus padding. Desktop: Auto width.
             width: coords.strategy === 'bottom' ? 'calc(100vw - 32px)' : 'max-content',
             maxWidth: '20rem',
             pointerEvents: 'none' 
           }}
         >
+          {/* Decorative Arrow */}
           <div 
             className={`absolute w-3 h-3 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 ${
               coords.strategy === 'bottom' 
-                ? '-top-1.5 left-6 border-l-0 border-b-0 border-t border-l bg-slate-900'
-                : '-left-1.5 top-3'
+                ? '-top-1.5 left-6 border-l-0 border-b-0 border-t border-l bg-slate-900' // Arrow points UP
+                : '-left-1.5 top-3' // Arrow points LEFT
             }`} 
           />
           {content}
@@ -576,11 +403,9 @@ const SectionHeader = ({ title, helpText, icon: Icon }) => (
   <div className="flex items-center gap-2 mb-3">
     {Icon && <Icon className="w-4 h-4 text-indigo-400" />}
     <h3 className="text-sm font-semibold text-slate-200 tracking-wide uppercase">{title}</h3>
-    {helpText && (
-      <Tooltip content={helpText}>
-        <HelpCircle className="w-4 h-4 text-slate-500 hover:text-indigo-400 transition-colors" />
-      </Tooltip>
-    )}
+    <Tooltip content={helpText}>
+      <HelpCircle className="w-4 h-4 text-slate-500 hover:text-indigo-400 transition-colors" />
+    </Tooltip>
   </div>
 );
 
@@ -589,9 +414,7 @@ const SelectionChip = ({ selected, onClick, children, color = 'indigo' }) => {
     indigo: selected ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300',
     purple: selected ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-lg shadow-purple-500/10' : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300',
     teal: selected ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-lg shadow-teal-500/10' : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300',
-    amber: selected ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-lg shadow-amber-500/10' : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300',
-    pink: selected ? 'bg-pink-500/20 border-pink-500/50 text-pink-300 shadow-lg shadow-pink-500/10' : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300',
-    emerald: selected ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+    amber: selected ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-lg shadow-amber-500/10' : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300'
   };
   return (
     <button onClick={onClick} className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${colors[color]}`}>
@@ -620,29 +443,17 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied }) =
     </div>
   </div>
 );
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export default function AetherNames() {
   const [config, setConfig] = useState({
-    nameType: 'character',
-    genre: 'fantasy',
-    tones: [],
-    regions: [],
-    timePeriod: 'any',
-    minSyllables: 2,
-    maxSyllables: 3,
-    allowApostrophes: false,
-    allowHyphens: false,
-    allowAccents: false,
-    mustStartWith: '',
-    mustContain: '',
-    mustNotContain: '',
-    seedWord: '',
-    nameCount: 10
+    nameType: 'character', genre: 'fantasy', tones: [], regions: [], minSyllables: 2, maxSyllables: 3,
+    allowApostrophes: false, allowHyphens: false, allowAccents: false,
+    mustStartWith: '', mustContain: '', mustNotContain: '', seedWord: '', nameCount: 10
   });
-
   const [generatedNames, setGeneratedNames] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [copiedName, setCopiedName] = useState(null);
@@ -653,12 +464,7 @@ export default function AetherNames() {
   useEffect(() => { setAnimateHeader(true); }, []);
 
   const updateConfig = (key, value) => setConfig(prev => ({ ...prev, [key]: value }));
-  const toggleArray = (key, value) => {
-    setConfig(prev => ({
-      ...prev,
-      [key]: prev[key].includes(value) ? prev[key].filter(v => v !== value) : [...prev[key], value]
-    }));
-  };
+  const toggleArray = (key, value) => setConfig(prev => ({ ...prev, [key]: prev[key].includes(value) ? prev[key].filter(v => v !== value) : [...prev[key], value] }));
 
   const generate = useCallback(() => {
     setIsGenerating(true);
@@ -677,44 +483,18 @@ export default function AetherNames() {
     }, 100);
   }, [config]);
 
-  const copyToClipboard = async (name) => {
-    await navigator.clipboard.writeText(name);
-    setCopiedName(name);
-    setTimeout(() => setCopiedName(null), 1500);
-  };
-
-  const copyAll = async () => {
-    await navigator.clipboard.writeText(generatedNames.map(n => n.name).join('\n'));
-    setCopiedName('all');
-    setTimeout(() => setCopiedName(null), 1500);
-  };
-
-  const toggleFavorite = (nameObj) => {
-    setFavorites(prev => prev.some(f => f.name === nameObj.name) ? prev.filter(f => f.name !== nameObj.name) : [...prev, nameObj]);
-  };
-
+  const copyToClipboard = async (name) => { await navigator.clipboard.writeText(name); setCopiedName(name); setTimeout(() => setCopiedName(null), 1500); };
+  const copyAll = async () => { await navigator.clipboard.writeText(generatedNames.map(n => n.name).join('\n')); setCopiedName('all'); setTimeout(() => setCopiedName(null), 1500); };
+  const toggleFavorite = (n) => setFavorites(prev => prev.some(f => f.name === n.name) ? prev.filter(f => f.name !== n.name) : [...prev, n]);
   const isFavorite = (name) => favorites.some(f => f.name === name);
-
-  const exportFavorites = () => {
-    const blob = new Blob([favorites.map(f => f.name).join('\n')], { type: 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'aethernames.txt';
-    a.click();
-  };
-
-  // DONATE FUNCTION - Your Ko-fi link
-  const openDonation = () => {
-    window.open('https://ko-fi.com/kylecarmichael', '_blank');
-  };
+  const exportFavorites = () => { const b = new Blob([favorites.map(f => f.name).join('\n')], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'aethernames.txt'; a.click(); };
 
   const helpTexts = {
     nameType: "What you're naming. Each type uses different construction patterns and suffixes.",
-    genre: "Overall aesthetic. Fantasy = melodic and archaic. Sci-Fi = technical and sharp.",
-    tone: "Emotional flavor through sound. Heroic uses resonant sounds. Dark uses harsh gutturals. Select multiple to blend.",
-    region: "Linguistic rules from real languages. Each follows authentic phonotactics.",
-    timePeriod: "Historical era influences name style. Ancient uses archaic patterns, Futuristic uses tech-inspired sounds.",
-    structure: "Target syllable count. Actual may vary ±1.",
+    genre: "Overall aesthetic. Fantasy = melodic and archaic. Sci-Fi = technical and sharp. Mixed = blend of both.",
+    tone: "Emotional flavor through sound. Heroic uses resonant sounds (L, R, N). Dark uses harsh gutturals (K, G, TH). Select multiple to blend.",
+    region: "Linguistic rules from real languages. Arabic = CV only. Japanese = CV + nasal. Norse = complex clusters. Each follows authentic phonotactics.",
+    structure: "Target syllable count. Names like 'Valor' = 2, 'Valorian' = 4. Actual may vary ±1.",
     orthographic: "Visual styling. Apostrophes and accents add exotic flair.",
     filters: "Constrain results. Seed words subtly influence without being obvious.",
     output: "Number of names to generate."
@@ -722,62 +502,17 @@ export default function AetherNames() {
 
   const toneIcons = { heroic: Zap, dark: Skull, ancient: Scroll, arcane: Sparkles, noble: Crown, brutal: Flame, whimsical: Music, alien: Globe, tech: Cpu, rustic: TreePine };
 
-  const nameTypes = [
-    { value: 'character', label: 'Character', icon: '👤' },
-    { value: 'location', label: 'Location', icon: '🏰' },
-    { value: 'faction', label: 'Faction', icon: '⚔️' },
-    { value: 'item', label: 'Item', icon: '💎' },
-    { value: 'starship', label: 'Starship', icon: '🚀' },
-    { value: 'species', label: 'Species', icon: '👽' }
-  ];
-
-  const genres = [
-    { value: 'fantasy', label: 'Fantasy', icon: '🗡️' },
-    { value: 'scifi', label: 'Sci-Fi', icon: '🔮' },
-    { value: 'mixed', label: 'Mixed', icon: '⚡' }
-  ];
-
-  const tones = [
-    { value: 'heroic', label: 'Heroic' },
-    { value: 'dark', label: 'Dark' },
-    { value: 'ancient', label: 'Ancient' },
-    { value: 'arcane', label: 'Arcane' },
-    { value: 'noble', label: 'Noble' },
-    { value: 'brutal', label: 'Brutal' },
-    { value: 'whimsical', label: 'Whimsical' },
-    { value: 'alien', label: 'Alien' },
-    { value: 'tech', label: 'Tech' },
-    { value: 'rustic', label: 'Rustic' }
-  ];
-
+  const nameTypes = [{ value: 'character', label: 'Character', icon: '👤' }, { value: 'location', label: 'Location', icon: '🏰' }, { value: 'faction', label: 'Faction', icon: '⚔️' }, { value: 'item', label: 'Item', icon: '💎' }, { value: 'starship', label: 'Starship', icon: '🚀' }, { value: 'species', label: 'Species', icon: '👽' }];
+  const genres = [{ value: 'fantasy', label: 'Fantasy', icon: '🗡️' }, { value: 'scifi', label: 'Sci-Fi', icon: '🔮' }, { value: 'mixed', label: 'Mixed', icon: '⚡' }];
+  const tones = [{ value: 'heroic', label: 'Heroic' }, { value: 'dark', label: 'Dark' }, { value: 'ancient', label: 'Ancient' }, { value: 'arcane', label: 'Arcane' }, { value: 'noble', label: 'Noble' }, { value: 'brutal', label: 'Brutal' }, { value: 'whimsical', label: 'Whimsical' }, { value: 'alien', label: 'Alien' }, { value: 'tech', label: 'Tech' }, { value: 'rustic', label: 'Rustic' }];
   const regions = [
-    { value: 'western', label: 'Western', desc: 'English/French/German', flag: '🇬🇧' },
-    { value: 'latin', label: 'Latin', desc: 'Classical Roman', flag: '🏛️' },
-    { value: 'greek', label: 'Greek', desc: 'Hellenic', flag: '🇬🇷' },
-    { value: 'celtic', label: 'Celtic', desc: 'Irish/Welsh', flag: '☘️' },
-    { value: 'norse', label: 'Norse', desc: 'Viking/Icelandic', flag: '⚔️' },
-    { value: 'slavic', label: 'Slavic', desc: 'Russian/Polish', flag: '🪆' },
-    { value: 'arabic', label: 'Arabic', desc: 'Semitic CV', flag: '🕌' },
-    { value: 'persian', label: 'Persian', desc: 'Iranian', flag: '🇮🇷' },
-    { value: 'egyptian', label: 'Egyptian', desc: 'Ancient Nile', flag: '🏺' },
-    { value: 'eastasian', label: 'East Asian', desc: 'Chinese/Japanese', flag: '🏯' },
-    { value: 'southasian', label: 'South Asian', desc: 'Sanskrit/Hindi', flag: '🕉️' },
-    { value: 'african', label: 'African', desc: 'Bantu/Swahili', flag: '🌍' },
-    { value: 'polynesian', label: 'Polynesian', desc: 'Pacific Islands', flag: '🌺' },
-    { value: 'mesoamerican', label: 'Mesoamerican', desc: 'Nahuatl/Maya', flag: '🗿' },
-    { value: 'spaceopera', label: 'Space Opera', desc: 'Classic Alien', flag: '🌌' },
-    { value: 'cyberpunk', label: 'Cyberpunk', desc: 'Tech-Noir', flag: '🤖' },
+    { value: 'western', label: 'Western', desc: 'English/French/German', flag: '🇬🇧' }, { value: 'latin', label: 'Latin', desc: 'Classical Roman', flag: '🏛️' },
+    { value: 'celtic', label: 'Celtic', desc: 'Irish/Welsh', flag: '☘️' }, { value: 'norse', label: 'Norse', desc: 'Viking/Icelandic', flag: '⚔️' },
+    { value: 'slavic', label: 'Slavic', desc: 'Russian/Polish', flag: '🪆' }, { value: 'arabic', label: 'Arabic', desc: 'Semitic CV', flag: '🕌' },
+    { value: 'eastasian', label: 'East Asian', desc: 'Chinese/Japanese', flag: '🏯' }, { value: 'southasian', label: 'South Asian', desc: 'Sanskrit/Hindi', flag: '🕉️' },
+    { value: 'african', label: 'African', desc: 'Bantu/Swahili', flag: '🌍' }, { value: 'mesoamerican', label: 'Mesoamerican', desc: 'Nahuatl/Maya', flag: '🏛️' },
+    { value: 'spaceopera', label: 'Space Opera', desc: 'Classic Alien', flag: '🌌' }, { value: 'cyberpunk', label: 'Cyberpunk', desc: 'Tech-Noir', flag: '🤖' },
     { value: 'neutral', label: 'Neutral', desc: 'Universal', flag: '🌐' }
-  ];
-
-  const timePeriods = [
-    { value: 'any', label: 'Any Era' },
-    { value: 'ancient', label: 'Ancient' },
-    { value: 'medieval', label: 'Medieval' },
-    { value: 'renaissance', label: 'Renaissance' },
-    { value: 'industrial', label: 'Industrial' },
-    { value: 'modern', label: 'Modern' },
-    { value: 'futuristic', label: 'Futuristic' }
   ];
 
   return (
@@ -792,31 +527,26 @@ export default function AetherNames() {
               <Wand2 className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
-              AetherName
+              AetherNames
             </h1>
           </div>
           
-          <p className="text-slate-400 text-lg font-light mb-4">Linguistically Authentic Fantasy & Sci-Fi Name Forge</p>
+          <p className="text-slate-400 text-lg font-light mb-6">Linguistically Authentic Fantasy & Sci-Fi Name Forge</p>
 
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 mb-4 backdrop-blur-md">
             <Cpu className="w-4 h-4 text-indigo-400" />
             <span className="text-xs md:text-sm font-medium text-slate-300">
-              <span className="text-indigo-400 font-bold">No AI / LLMs.</span> 100% algorithmic phonotactics.
+                <span className="text-indigo-400 font-bold">No AI / LLMs involved.</span> Powered by 100% algorithmic Phonotactics & Linguistic Rules.
             </span>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <div className="mt-4 flex justify-center gap-2">
             {['Phonotactically Accurate', 'Cross-Linguistic', 'Customizable'].map((tag, i) => (
               <span key={i} className="px-3 py-1 text-xs font-medium bg-slate-800/50 border border-slate-700/50 rounded-full text-slate-400">
                 {tag}
               </span>
             ))}
           </div>
-
-          <GlowButton variant="donate" onClick={openDonation} className="px-8">
-            <Heart className="w-5 h-5" />
-            Support the Creator
-          </GlowButton>
         </header>
 
         <div className="grid lg:grid-cols-5 gap-6">
@@ -851,18 +581,6 @@ export default function AetherNames() {
                 </div>
               </div>
 
-              {/* Time Period */}
-              <div className="mb-6">
-                <SectionHeader title="Time Period" helpText={helpTexts.timePeriod} icon={Scroll} />
-                <div className="flex flex-wrap gap-2">
-                  {timePeriods.map(t => (
-                    <SelectionChip key={t.value} selected={config.timePeriod === t.value} onClick={() => updateConfig('timePeriod', t.value)} color="emerald">
-                      {t.label}
-                    </SelectionChip>
-                  ))}
-                </div>
-              </div>
-
               {/* Tone */}
               <div className="mb-6">
                 <SectionHeader title="Tone" helpText={helpTexts.tone} icon={Music} />
@@ -884,7 +602,7 @@ export default function AetherNames() {
               {/* Region */}
               <div className="mb-6">
                 <SectionHeader title="Linguistic Influence" helpText={helpTexts.region} icon={Globe} />
-                <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
+                <div className="max-h-48 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                   {regions.map(r => (
                     <SelectionChip key={r.value} selected={config.regions.includes(r.value)} onClick={() => toggleArray('regions', r.value)} color="teal">
                       <div className="flex items-center gap-2 w-full">
@@ -904,14 +622,14 @@ export default function AetherNames() {
                 <SectionHeader title="Structure" helpText={helpTexts.structure} />
                 <div className="flex gap-4 items-center">
                   <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
-                    <span className="text-xs text-slate-500 uppercase">Min</span>
+                    <span className="text-xs text-slate-500 uppercase tracking-wider">Min</span>
                     <select value={config.minSyllables} onChange={e => updateConfig('minSyllables', parseInt(e.target.value))} className="bg-transparent border-none text-white font-bold text-lg focus:outline-none cursor-pointer">
                       {[1, 2, 3, 4].map(n => <option key={n} value={n} className="bg-slate-900">{n}</option>)}
                     </select>
                   </div>
-                  <span className="text-slate-600">—</span>
+                  <div className="text-slate-600">—</div>
                   <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
-                    <span className="text-xs text-slate-500 uppercase">Max</span>
+                    <span className="text-xs text-slate-500 uppercase tracking-wider">Max</span>
                     <select value={config.maxSyllables} onChange={e => updateConfig('maxSyllables', parseInt(e.target.value))} className="bg-transparent border-none text-white font-bold text-lg focus:outline-none cursor-pointer">
                       {[2, 3, 4, 5].map(n => <option key={n} value={n} className="bg-slate-900">{n}</option>)}
                     </select>
@@ -920,15 +638,11 @@ export default function AetherNames() {
                 </div>
               </div>
 
-              {/* Style */}
+              {/* Orthographic */}
               <div className="mb-6">
                 <SectionHeader title="Style" helpText={helpTexts.orthographic} />
                 <div className="flex gap-2">
-                  {[
-                    { key: 'allowApostrophes', label: "Ka'ri", example: "apostrophes" },
-                    { key: 'allowHyphens', label: 'Val-Kir', example: "hyphens" },
-                    { key: 'allowAccents', label: 'Élara', example: "accents" }
-                  ].map(o => (
+                  {[{ key: 'allowApostrophes', label: "Ka'ri", example: "apostrophes" }, { key: 'allowHyphens', label: 'Val-Kir', example: "hyphens" }, { key: 'allowAccents', label: 'Élara', example: "accents" }].map(o => (
                     <SelectionChip key={o.key} selected={config[o.key]} onClick={() => updateConfig(o.key, !config[o.key])} color="amber">
                       <div className="flex flex-col items-center">
                         <span className="font-semibold">{o.label}</span>
@@ -943,19 +657,9 @@ export default function AetherNames() {
               <div className="mb-6">
                 <SectionHeader title="Filters" helpText={helpTexts.filters} />
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { key: 'mustStartWith', placeholder: 'Starts with...' },
-                    { key: 'mustContain', placeholder: 'Contains...' },
-                    { key: 'mustNotContain', placeholder: 'Excludes...' },
-                    { key: 'seedWord', placeholder: 'Seed word...' }
-                  ].map(f => (
-                    <input
-                      key={f.key}
-                      value={config[f.key]}
-                      onChange={e => updateConfig(f.key, e.target.value)}
-                      placeholder={f.placeholder}
-                      className="bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
-                    />
+                  {[{ key: 'mustStartWith', placeholder: 'Starts with...' }, { key: 'mustContain', placeholder: 'Contains...' }, { key: 'mustNotContain', placeholder: 'Excludes...' }, { key: 'seedWord', placeholder: 'Seed word...' }].map(f => (
+                    <input key={f.key} value={config[f.key]} onChange={e => updateConfig(f.key, e.target.value)} placeholder={f.placeholder}
+                      className="bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/25 transition-all" />
                   ))}
                 </div>
               </div>
@@ -1003,17 +707,8 @@ export default function AetherNames() {
               {generatedNames.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="px-2 py-1 text-xs bg-indigo-500/20 text-indigo-300 rounded-md">{generatedNames.length} names</span>
-                  {config.regions.length > 0 && (
-                    <span className="px-2 py-1 text-xs bg-teal-500/20 text-teal-300 rounded-md">
-                      {config.regions.slice(0, 3).join(', ')}{config.regions.length > 3 ? ` +${config.regions.length - 3}` : ''}
-                    </span>
-                  )}
-                  {config.tones.length > 0 && (
-                    <span className="px-2 py-1 text-xs bg-purple-500/20 text-purple-300 rounded-md">{config.tones.join(', ')}</span>
-                  )}
-                  {config.timePeriod !== 'any' && (
-                    <span className="px-2 py-1 text-xs bg-emerald-500/20 text-emerald-300 rounded-md">{config.timePeriod}</span>
-                  )}
+                  {config.regions.length > 0 && <span className="px-2 py-1 text-xs bg-teal-500/20 text-teal-300 rounded-md">{config.regions.join(', ')}</span>}
+                  {config.tones.length > 0 && <span className="px-2 py-1 text-xs bg-purple-500/20 text-purple-300 rounded-md">{config.tones.join(', ')}</span>}
                 </div>
               )}
 
@@ -1028,15 +723,7 @@ export default function AetherNames() {
                   </div>
                 ) : (
                   generatedNames.map(n => (
-                    <NameCard
-                      key={n.id}
-                      name={n.name}
-                      syllables={n.syllables}
-                      isFavorite={isFavorite(n.name)}
-                      onCopy={() => copyToClipboard(n.name)}
-                      onFavorite={() => toggleFavorite(n)}
-                      copied={copiedName === n.name}
-                    />
+                    <NameCard key={n.id} name={n.name} syllables={n.syllables} isFavorite={isFavorite(n.name)} onCopy={() => copyToClipboard(n.name)} onFavorite={() => toggleFavorite(n)} copied={copiedName === n.name} />
                   ))
                 )}
               </div>
@@ -1056,9 +743,7 @@ export default function AetherNames() {
                     {favorites.map(f => (
                       <div key={f.name} className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm text-yellow-300">
                         {f.name}
-                        <button onClick={() => toggleFavorite(f)} className="text-yellow-500/50 hover:text-red-400 transition-colors">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                        <button onClick={() => toggleFavorite(f)} className="text-yellow-500/50 hover:text-red-400 transition-colors"><X className="w-3.5 h-3.5" /></button>
                       </div>
                     ))}
                   </div>
@@ -1066,42 +751,38 @@ export default function AetherNames() {
               )}
             </div>
 
-            {/* How It Works */}
+            {/* Instructions */}
             <div className="mt-6">
-              <button
-                onClick={() => setShowInstructions(!showInstructions)}
-                className="flex items-center gap-2 w-full bg-slate-900/50 backdrop-blur-xl hover:bg-slate-800/50 border border-slate-800/50 rounded-2xl p-4 text-left transition-all"
-              >
+              <button onClick={() => setShowInstructions(!showInstructions)} className="flex items-center gap-2 w-full bg-slate-900/50 backdrop-blur-xl hover:bg-slate-800/50 border border-slate-800/50 rounded-2xl p-4 text-left transition-all">
                 {showInstructions ? <ChevronUp className="w-5 h-5 text-indigo-400" /> : <ChevronDown className="w-5 h-5 text-indigo-400" />}
-                <span className="font-semibold text-indigo-400">How It Works</span>
+                <span className="font-semibold text-indigo-400">How It Works — Linguistic Deep Dive</span>
               </button>
-
               {showInstructions && (
                 <div className="bg-slate-900/50 backdrop-blur-xl border border-t-0 border-slate-800/50 rounded-b-2xl p-6 -mt-2">
-                  <div className="grid md:grid-cols-3 gap-6 text-sm text-slate-400">
+                  <div className="grid md:grid-cols-2 gap-6 text-sm text-slate-400">
                     <div>
-                      <h4 className="font-bold text-indigo-400 mb-2">Phonotactics</h4>
-                      <p>Each language follows real linguistic constraints. Arabic uses only CV syllables. Norse allows complex clusters like "Bjorn".</p>
+                      <h4 className="font-bold text-indigo-400 mb-3 flex items-center gap-2"><Globe className="w-4 h-4" /> Phonotactics</h4>
+                      <p className="mb-3">Each language follows <span className="text-white font-medium">real linguistic constraints</span>:</p>
+                      <div className="space-y-2">
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-teal-400 font-mono">Arabic</span> — Only CV syllables, no clusters (Fa-rid, Ka-rim)</div>
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-teal-400 font-mono">Japanese</span> — CV + nasal codas only (Ka-zu-ki, Rei-ko)</div>
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-teal-400 font-mono">Norse</span> — Complex clusters allowed (Bjorn, Ragnar)</div>
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-teal-400 font-mono">Latin</span> — Prefers open syllables (Ju-li-us)</div>
+                      </div>
                     </div>
                     <div>
-                      <h4 className="font-bold text-purple-400 mb-2">Tone System</h4>
-                      <p>Tones influence sounds. Heroic uses resonant sounds (L, R, N). Dark uses harsh gutturals (K, G, TH).</p>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-emerald-400 mb-2">Time Periods</h4>
-                      <p>Ancient names use archaic prefixes. Medieval adds titles. Futuristic uses tech-inspired sounds.</p>
+                      <h4 className="font-bold text-purple-400 mb-3 flex items-center gap-2"><Music className="w-4 h-4" /> Tone System</h4>
+                      <p className="mb-3">Tones influence which <span className="text-white font-medium">sounds are preferred</span>:</p>
+                      <div className="space-y-2">
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-purple-400 font-mono">Heroic</span> — Resonant: L, R, N, M → Valorian, Galdric</div>
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-purple-400 font-mono">Dark</span> — Harsh: K, G, TH → Morthos, Kragath</div>
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-purple-400 font-mono">Noble</span> — Elegant: flowing sounds → Aurelian, Celeste</div>
+                        <div className="p-2 bg-slate-800/50 rounded-lg"><span className="text-purple-400 font-mono">Brutal</span> — Hard stops → Groknak, Zuggoth</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Footer */}
-            <div className="mt-6 text-center text-slate-600 text-sm">
-              <p>Made with ❤️ for writers, game masters, and worldbuilders</p>
-              <button onClick={openDonation} className="mt-2 text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1 mx-auto">
-                <Heart className="w-4 h-4" /> Support this project on Ko-fi
-              </button>
             </div>
           </div>
         </div>
