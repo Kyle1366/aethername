@@ -489,15 +489,40 @@ const generateName = (config) => {
       const suffix = random(typeElements.suffixes);
       name = prefix + suffix;
     }
-    // Use time period elements
-    else if (periodMod && Math.random() < 0.3) {
-      const prefix = random(periodMod.prefixes);
-      for (let i = 0; i < targetSyllables; i++) {
-        const lang = linguisticData[random(regionList)] || primaryLang;
-        const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
-        name += generateSyllable(lang, pattern, primaryTone);
+    // Use time period elements - ALWAYS apply if user selected one (characters only)
+    else if (periodMod && nameType === 'character') {
+      const usePrefix = Math.random() < 0.5;
+      
+      // Build a good base name using language elements
+      if (primaryLang.elements && Math.random() < 0.7) {
+        const start = random(primaryLang.elements.starts);
+        const end = random(primaryLang.elements.ends);
+        name = start + end;
+      } else {
+        for (let i = 0; i < targetSyllables; i++) {
+          const lang = linguisticData[random(regionList)] || primaryLang;
+          const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
+          name += generateSyllable(lang, pattern, primaryTone);
+        }
+        if (primaryLang.endings) {
+          name = name.replace(/[aeiou]$/, '') + random(primaryLang.endings);
+        }
       }
-      name = prefix + name;
+      
+      // Apply time period modifier
+      name = capitalize(name);
+      if (usePrefix) {
+        const prefix = random(periodMod.prefixes);
+        // Add space for title-style prefixes
+        if (['Ser', 'Lord', 'Saint', 'Don', 'Donna', 'Signor', 'Conte', 'Duc'].includes(prefix)) {
+          name = prefix + ' ' + name;
+        } else {
+          name = prefix + name.toLowerCase();
+          name = capitalize(name);
+        }
+      } else {
+        name = name.replace(/[aeiou]$/, '') + random(periodMod.suffixes);
+      }
     }
     // Use language elements
     else if (Math.random() < 0.35 && primaryLang.elements) {
@@ -560,9 +585,11 @@ const generateName = (config) => {
     }
     if (mustNotContain && name.toLowerCase().includes(mustNotContain.toLowerCase())) continue;
 
-    // Validate name for the linguistic region
-    const primaryRegion = regions.length > 0 ? regions[0] : 'neutral';
-    if (!validateName(name, primaryRegion)) continue;
+    // Validate name for the linguistic region (skip for time period names)
+    if (!(periodMod && nameType === 'character')) {
+      const primaryRegion = regions.length > 0 ? regions[0] : 'neutral';
+      if (!validateName(name, primaryRegion)) continue;
+    }
 
     break;
   }
