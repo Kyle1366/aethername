@@ -389,9 +389,9 @@ const generateName = (config) => {
       }
     }
 
-    // Check syllable count
+    // Check syllable count - strict enforcement
     const syllables = countSyllables(name);
-    if (syllables < minSyllables || syllables > maxSyllables + 2) continue;
+    if (syllables < minSyllables || syllables > maxSyllables) continue;
 
     // Apply filters
     if (mustStartWith && !name.toLowerCase().startsWith(mustStartWith.toLowerCase())) {
