@@ -1081,6 +1081,10 @@ export default function AetherNames() {
       if (prev.some(n => n.name === nameObj.name)) {
         return prev.filter(n => n.name !== nameObj.name);
       } else if (prev.length < 4) {
+        // Auto-favorite when adding to refine selection
+        if (!favorites.some(f => f.name === nameObj.name)) {
+          setFavorites(favs => [...favs, nameObj]);
+        }
         return [...prev, nameObj];
       }
       return prev;
