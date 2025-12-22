@@ -637,17 +637,18 @@ const generateName = (config) => {
       }
       
       // Apply time period modifier
-      name = capitalize(name);
       if (usePrefix) {
         const prefix = random(periodMod.prefixes);
         // Add space for title-style prefixes
         if (['Ser', 'Lord', 'Saint', 'Don', 'Donna', 'Signor', 'Conte', 'Duc'].includes(prefix)) {
-          name = prefix + ' ' + capitalize(name);
+          const baseName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+          name = prefix + ' ' + baseName;
         } else {
           name = prefix + name.toLowerCase();
           name = capitalize(name);
         }
       } else {
+        name = capitalize(name);
         name = name.replace(/[aeiou]$/, '') + random(periodMod.suffixes);
       }
     }
@@ -721,8 +722,13 @@ const generateName = (config) => {
     break;
   }
 
-  // Finalize
-  name = capitalize(name.toLowerCase());
+  // Finalize - preserve titles with spaces
+  if (name.includes(' ')) {
+    const parts = name.split(' ');
+    name = parts.map(p => capitalize(p.toLowerCase())).join(' ');
+  } else {
+    name = capitalize(name.toLowerCase());
+  }
 
   // Orthographic features - 100% when enabled
   if (allowApostrophes && name.length > 4) {
@@ -773,27 +779,38 @@ const generateName = (config) => {
 // ANIMATED BACKGROUND
 // ============================================================================
 
-const AnimatedBackground = () => (
-  <div className="fixed inset-0 overflow-hidden pointer-events-none">
-    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950/50 to-purple-950/30" />
-    {[...Array(20)].map((_, i) => (
-      <div
-        key={i}
-        className="absolute rounded-full mix-blend-screen filter blur-xl opacity-30 animate-pulse"
-        style={{
-          width: Math.random() * 300 + 100,
-          height: Math.random() * 300 + 100,
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          background: `radial-gradient(circle, ${['#6366f1', '#8b5cf6', '#a855f7', '#3b82f6', '#06b6d4'][Math.floor(Math.random() * 5)]}40 0%, transparent 70%)`,
-          animationDuration: `${Math.random() * 10 + 10}s`,
-          animationDelay: `${Math.random() * 5}s`
-        }}
-      />
-    ))}
-    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
-  </div>
-);
+const AnimatedBackground = () => {
+  // Pre-generate static positions to avoid re-renders
+  const orbs = React.useMemo(() => 
+    [...Array(8)].map((_, i) => ({
+      width: 150 + (i * 50) % 200,
+      height: 150 + (i * 50) % 200,
+      left: `${(i * 13) % 100}%`,
+      top: `${(i * 17) % 100}%`,
+      color: ['#6366f1', '#8b5cf6', '#a855f7', '#3b82f6'][i % 4]
+    })), []
+  );
+
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950/50 to-purple-950/30" />
+      {orbs.map((orb, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full opacity-20"
+          style={{
+            width: orb.width,
+            height: orb.height,
+            left: orb.left,
+            top: orb.top,
+            background: `radial-gradient(circle, ${orb.color}40 0%, transparent 70%)`,
+            filter: 'blur(40px)'
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 // ============================================================================
 // UI COMPONENTS
