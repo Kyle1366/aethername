@@ -468,8 +468,10 @@ const generateSyllable = (lang, patternType, tone = null) => {
 const generateName = (config) => {
   const { nameType, regions, tones, timePeriod, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents } = config;
 
-  const regionList = regions.length > 0 ? regions : ['neutral'];
-  const primaryLang = linguisticData[regionList[0]] || linguisticData.neutral;
+  const regionList = regions.length > 0 ? regions.slice(0, 4) : ['neutral'];
+  // Pick ONE region for this entire name based on equal probability
+  const selectedRegion = regionList[Math.floor(Math.random() * regionList.length)];
+  const primaryLang = linguisticData[selectedRegion] || linguisticData.neutral;
   const primaryTone = tones.length > 0 ? toneModifiers[tones[0]] : null;
   const periodMod = timePeriod && timePeriod !== 'any' ? timePeriodModifiers[timePeriod] : null;
   const typeElements = nameTypeElements[nameType] || nameTypeElements.character;
@@ -500,7 +502,7 @@ const generateName = (config) => {
         name = start + end;
       } else {
         for (let i = 0; i < targetSyllables; i++) {
-          const lang = linguisticData[random(regionList)] || primaryLang;
+          const lang = primaryLang;
           const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
           name += generateSyllable(lang, pattern, primaryTone);
         }
@@ -851,10 +853,19 @@ export default function AetherNames() {
 
   const updateConfig = (key, value) => setConfig(prev => ({ ...prev, [key]: value }));
   const toggleArray = (key, value) => {
-    setConfig(prev => ({
-      ...prev,
-      [key]: prev[key].includes(value) ? prev[key].filter(v => v !== value) : [...prev[key], value]
-    }));
+    setConfig(prev => {
+      const current = prev[key];
+      if (current.includes(value)) {
+        // Always allow removal
+        return { ...prev, [key]: current.filter(v => v !== value) };
+      } else {
+        // For regions, limit to 4 max
+        if (key === 'regions' && current.length >= 4) {
+          return prev; // Don't add more
+        }
+        return { ...prev, [key]: [...current, value] };
+      }
+    });
   };
 
   const generate = useCallback(() => {
@@ -1122,7 +1133,7 @@ export default function AetherNames() {
 
               {/* Region */}
               <div className="mb-6">
-                <SectionHeader title="Linguistic Influence" helpText={helpTexts.region} icon={Globe} />
+                <SectionHeader title="Linguistic Influence (max 4)" helpText={helpTexts.region} icon={Globe} />
                 <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
                   {regions.map(r => (
                     <SelectionChip key={r.value} selected={config.regions.includes(r.value)} onClick={() => toggleArray('regions', r.value)} color="teal">
