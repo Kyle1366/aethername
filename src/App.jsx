@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2 } from 'lucide-react';
 
 // ============================================================================
 // LINGUISTICALLY AUTHENTIC PHONOTACTIC DATA
@@ -600,26 +600,38 @@ const SelectionChip = ({ selected, onClick, children, color = 'indigo' }) => {
   );
 };
 
-const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied }) => (
-  <div className="group relative p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">
-    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-    <div className="relative flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <button onClick={onFavorite} className={`transition-all duration-200 ${isFavorite ? 'text-yellow-400 scale-110' : 'text-slate-600 hover:text-yellow-400 hover:scale-110'}`}>
-          <Star className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-        </button>
-        <div>
-          <span className="text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">{name}</span>
-          <span className="ml-2 text-xs text-slate-500 font-mono">({syllables} syl)</span>
+const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied }) => {
+  const speakName = () => {
+    const utterance = new SpeechSynthesisUtterance(name);
+    utterance.rate = 0.8;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  return (
+    <div className="group relative p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="relative flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onFavorite} className={`transition-all duration-200 ${isFavorite ? 'text-yellow-400 scale-110' : 'text-slate-600 hover:text-yellow-400 hover:scale-110'}`}>
+            <Star className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+          </button>
+          <button onClick={speakName} className="text-slate-600 hover:text-cyan-400 hover:scale-110 transition-all duration-200">
+            <Volume2 className="w-5 h-5" />
+          </button>
+          <div>
+            <span className="text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">{name}</span>
+            <span className="ml-2 text-xs text-slate-500 font-mono">({syllables} syl)</span>
+          </div>
         </div>
+        <button onClick={onCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${copied ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30'}`}>
+          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
       </div>
-      <button onClick={onCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${copied ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30'}`}>
-        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-        {copied ? 'Copied!' : 'Copy'}
-      </button>
     </div>
-  </div>
-);
+  );
+};
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -683,8 +695,24 @@ export default function AetherNames() {
     setTimeout(() => setCopiedName(null), 1500);
   };
 
+  const [copyFormat, setCopyFormat] = useState('plain');
+
   const copyAll = async () => {
-    await navigator.clipboard.writeText(generatedNames.map(n => n.name).join('\n'));
+    let text;
+    switch (copyFormat) {
+      case 'bullets':
+        text = generatedNames.map(n => `• ${n.name}`).join('\n');
+        break;
+      case 'numbered':
+        text = generatedNames.map((n, i) => `${i + 1}. ${n.name}`).join('\n');
+        break;
+      case 'comma':
+        text = generatedNames.map(n => n.name).join(', ');
+        break;
+      default:
+        text = generatedNames.map(n => n.name).join('\n');
+    }
+    await navigator.clipboard.writeText(text);
     setCopiedName('all');
     setTimeout(() => setCopiedName(null), 1500);
   };
@@ -902,21 +930,25 @@ export default function AetherNames() {
               {/* Structure */}
               <div className="mb-6">
                 <SectionHeader title="Structure" helpText={helpTexts.structure} />
-                <div className="flex gap-4 items-center">
-                  <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
-                    <span className="text-xs text-slate-500 uppercase">Min</span>
-                    <select value={config.minSyllables} onChange={e => updateConfig('minSyllables', parseInt(e.target.value))} className="bg-transparent border-none text-white font-bold text-lg focus:outline-none cursor-pointer">
-                      {[1, 2, 3, 4].map(n => <option key={n} value={n} className="bg-slate-900">{n}</option>)}
-                    </select>
-                  </div>
-                  <span className="text-slate-600">—</span>
-                  <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
-                    <span className="text-xs text-slate-500 uppercase">Max</span>
-                    <select value={config.maxSyllables} onChange={e => updateConfig('maxSyllables', parseInt(e.target.value))} className="bg-transparent border-none text-white font-bold text-lg focus:outline-none cursor-pointer">
-                      {[2, 3, 4, 5].map(n => <option key={n} value={n} className="bg-slate-900">{n}</option>)}
-                    </select>
-                  </div>
-                  <span className="text-sm text-slate-500">syllables</span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'Short', min: 1, max: 2 },
+                    { label: 'Medium', min: 2, max: 3 },
+                    { label: 'Long', min: 3, max: 4 },
+                    { label: 'Epic', min: 4, max: 5 }
+                  ].map(preset => (
+                    <SelectionChip
+                      key={preset.label}
+                      selected={config.minSyllables === preset.min && config.maxSyllables === preset.max}
+                      onClick={() => {
+                        updateConfig('minSyllables', preset.min);
+                        updateConfig('maxSyllables', preset.max);
+                      }}
+                      color="pink"
+                    >
+                      {preset.label} ({preset.min}-{preset.max})
+                    </SelectionChip>
+                  ))}
                 </div>
               </div>
 
@@ -993,10 +1025,22 @@ export default function AetherNames() {
                   <Wand2 className="w-5 h-5 text-purple-400" /> Generated Names
                 </h2>
                 {generatedNames.length > 0 && (
-                  <button onClick={copyAll} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-indigo-400 transition-colors">
-                    {copiedName === 'all' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                    Copy All
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={copyFormat}
+                      onChange={e => setCopyFormat(e.target.value)}
+                      className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value="plain" className="bg-slate-800">Plain</option>
+                      <option value="bullets" className="bg-slate-800">• Bullets</option>
+                      <option value="numbered" className="bg-slate-800">1. Numbered</option>
+                      <option value="comma" className="bg-slate-800">Comma</option>
+                    </select>
+                    <button onClick={copyAll} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-indigo-400 transition-colors">
+                      {copiedName === 'all' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                      Copy All
+                    </button>
+                  </div>
                 )}
               </div>
 
