@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2 } from 'lucide-react';
 
 // ============================================================================
 // LINGUISTICALLY AUTHENTIC PHONOTACTIC DATA
@@ -429,131 +429,6 @@ const classifyGender = (name) => {
   return 'neutral';
 };
 
-const analyzePatterns = (names) => {
-  if (names.length === 0) return null;
-  
-  const patterns = {
-    endings: {},
-    startSounds: {},
-    syllableCounts: {},
-    avgLength: 0,
-    vowelRatios: []
-  };
-  
-  names.forEach(n => {
-    const name = n.name.toLowerCase().replace(/[^a-z]/g, '');
-    
-    // Track endings (last 2-3 chars)
-    if (name.length >= 2) {
-      const end2 = name.slice(-2);
-      const end3 = name.length >= 3 ? name.slice(-3) : null;
-      patterns.endings[end2] = (patterns.endings[end2] || 0) + 1;
-      if (end3) patterns.endings[end3] = (patterns.endings[end3] || 0) + 1;
-    }
-    
-    // Track starting sounds (first 1-2 chars)
-    const start1 = name.charAt(0);
-    const start2 = name.slice(0, 2);
-    patterns.startSounds[start1] = (patterns.startSounds[start1] || 0) + 1;
-    patterns.startSounds[start2] = (patterns.startSounds[start2] || 0) + 1;
-    
-    // Track syllable counts
-    const sylCount = countSyllables(name);
-    patterns.syllableCounts[sylCount] = (patterns.syllableCounts[sylCount] || 0) + 1;
-    
-    // Track length and vowel ratio
-    patterns.avgLength += name.length;
-    const vowels = (name.match(/[aeiou]/g) || []).length;
-    patterns.vowelRatios.push(vowels / name.length);
-  });
-  
-  patterns.avgLength = Math.round(patterns.avgLength / names.length);
-  patterns.avgVowelRatio = patterns.vowelRatios.reduce((a, b) => a + b, 0) / patterns.vowelRatios.length;
-  
-  // Get most common patterns
-  const topEndings = Object.entries(patterns.endings)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(e => e[0]);
-  
-  const topStarts = Object.entries(patterns.startSounds)
-    .filter(s => s[0].length === 1)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(s => s[0]);
-  
-  const topSyllables = Object.entries(patterns.syllableCounts)
-    .sort((a, b) => b[1] - a[1])
-    .map(s => parseInt(s[0]));
-  
-  return {
-    endings: topEndings,
-    startSounds: topStarts,
-    syllableRange: [Math.min(...topSyllables), Math.max(...topSyllables)],
-    avgLength: patterns.avgLength,
-    avgVowelRatio: patterns.avgVowelRatio
-  };
-};
-
-const generateRefinedName = (config, patterns) => {
-  const { regions, tones } = config;
-  
-  const regionList = regions.length > 0 ? regions.slice(0, 4) : ['neutral'];
-  const selectedRegion = regionList[Math.floor(Math.random() * regionList.length)];
-  const primaryLang = linguisticData[selectedRegion] || linguisticData.neutral;
-  const primaryTone = tones.length > 0 ? toneModifiers[tones[0]] : null;
-  
-  const [minSyl, maxSyl] = patterns.syllableRange;
-  const targetSyllables = Math.floor(Math.random() * (maxSyl - minSyl + 1)) + minSyl;
-  
-  let name = '';
-  let attempts = 0;
-  
-  while (attempts < 50) {
-    attempts++;
-    name = '';
-    
-    // Favor starting with analyzed start sounds (70% chance)
-    if (patterns.startSounds.length > 0 && Math.random() < 0.7) {
-      const startSound = patterns.startSounds[Math.floor(Math.random() * patterns.startSounds.length)];
-      // Find an onset that starts with this sound
-      const matchingOnsets = primaryLang.onsets.simple.filter(o => o.startsWith(startSound));
-      if (matchingOnsets.length > 0) {
-        name += random(matchingOnsets);
-        name += random(primaryLang.vowels.short);
-      }
-    }
-    
-    // Generate remaining syllables
-    const currentSyllables = countSyllables(name);
-    const remaining = Math.max(0, targetSyllables - currentSyllables);
-    
-    for (let i = 0; i < remaining; i++) {
-      const pattern = weightedRandom(primaryLang.patterns.map(p => p.type), primaryLang.patterns.map(p => p.weight));
-      name += generateSyllable(primaryLang, pattern, primaryTone);
-    }
-    
-    // Apply analyzed ending (80% chance)
-    if (patterns.endings.length > 0 && Math.random() < 0.8) {
-      const ending = patterns.endings[Math.floor(Math.random() * patterns.endings.length)];
-      // Remove last 1-2 chars and add the ending
-      const charsToRemove = Math.min(ending.length, Math.floor(name.length / 3));
-      name = name.slice(0, -charsToRemove) + ending;
-    }
-    
-    // Check length is reasonable
-    if (name.length < 3 || name.length > 15) continue;
-    
-    // Check syllable count
-    const syllables = countSyllables(name);
-    if (syllables < minSyl || syllables > maxSyl + 1) continue;
-    
-    break;
-  }
-  
-  return capitalize(name.toLowerCase());
-};
-
 const generateSyllable = (lang, patternType, tone = null) => {
   let onset = '';
   let vowel = '';
@@ -911,7 +786,7 @@ const SelectionChip = ({ selected, onClick, children, color = 'indigo' }) => {
   );
 };
 
-const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isSelectedForRefine, onRefineSelect }) => {
+const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied }) => {
   const speakName = () => {
     const utterance = new SpeechSynthesisUtterance(name);
     utterance.rate = 0.8;
@@ -920,15 +795,12 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
   };
 
   return (
-    <div className={`group relative p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border rounded-xl hover:shadow-lg transition-all duration-300 ${isSelectedForRefine ? 'border-teal-500/50 shadow-teal-500/10' : 'border-slate-700/50 hover:border-indigo-500/30 hover:shadow-indigo-500/5'}`}>
+    <div className="group relative p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={onFavorite} className={`transition-all duration-200 ${isFavorite ? 'text-yellow-400 scale-110' : 'text-slate-600 hover:text-yellow-400 hover:scale-110'}`}>
             <Star className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
-          <button onClick={onRefineSelect} className={`transition-all duration-200 ${isSelectedForRefine ? 'text-teal-400 scale-110' : 'text-slate-600 hover:text-teal-400 hover:scale-110'}`}>
-            <FlaskConical className={`w-5 h-5`} />
           </button>
           <button onClick={speakName} className="text-slate-600 hover:text-cyan-400 hover:scale-110 transition-all duration-200">
             <Volume2 className="w-5 h-5" />
@@ -973,7 +845,6 @@ export default function AetherNames() {
   const [generatedNames, setGeneratedNames] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [copiedName, setCopiedName] = useState(null);
-  const [refineSelections, setRefineSelections] = useState([]);
   const [showInstructions, setShowInstructions] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [animateHeader, setAnimateHeader] = useState(false);
@@ -1058,48 +929,6 @@ export default function AetherNames() {
     a.download = 'aethernames.txt';
     a.click();
   };
-
-  const toggleRefineSelection = (nameObj) => {
-    setRefineSelections(prev => {
-      if (prev.some(n => n.name === nameObj.name)) {
-        return prev.filter(n => n.name !== nameObj.name);
-      } else if (prev.length < 4) {
-        return [...prev, nameObj];
-      }
-      return prev;
-    });
-  };
-
-  const isSelectedForRefine = (name) => refineSelections.some(n => n.name === name);
-
-  const generateRefined = useCallback(() => {
-    if (refineSelections.length === 0) return;
-    
-    setIsGenerating(true);
-    setTimeout(() => {
-      const patterns = analyzePatterns(refineSelections);
-      const names = [];
-      let attempts = 0;
-      
-      while (names.length < config.nameCount && attempts < config.nameCount * 50) {
-        attempts++;
-        const name = generateRefinedName(config, patterns);
-        if (!names.some(n => n.name.toLowerCase() === name.toLowerCase()) && 
-            !refineSelections.some(n => n.name.toLowerCase() === name.toLowerCase()) &&
-            name.length >= 3 && name.length <= 20) {
-          const gender = classifyGender(name);
-          if (config.genderLean === 'any' || gender === config.genderLean || gender === 'neutral') {
-            names.push({ id: Date.now() + Math.random(), name, syllables: countSyllables(name), gender });
-          }
-        }
-      }
-      
-      setGeneratedNames(names);
-      setIsGenerating(false);
-    }, 100);
-  }, [config, refineSelections]);
-
-  const clearRefineSelections = () => setRefineSelections([]);
 
   // DONATE FUNCTION - Your Ko-fi link
   const openDonation = () => {
@@ -1220,49 +1049,6 @@ export default function AetherNames() {
               <Heart className="w-5 h-5" />
               Support the Creator
             </GlowButton>
-          </div>
-
-          {/* Quick Guide Dropdown */}
-          <div className="mt-6 max-w-2xl mx-auto">
-            <details className="group bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-xl">
-              <summary className="flex items-center justify-between p-4 cursor-pointer list-none">
-                <span className="font-semibold text-indigo-400 flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5" /> Quick Guide
-                </span>
-                <ChevronDown className="w-5 h-5 text-indigo-400 group-open:rotate-180 transition-transform" />
-              </summary>
-              <div className="px-4 pb-4 text-sm text-slate-400 space-y-4">
-                <div>
-                  <h4 className="font-semibold text-slate-200 mb-1">Getting Started</h4>
-                  <p>Choose your settings on the left panel, then click "Generate Names". Each name is built using real linguistic rules from the regions you select.</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-200 mb-1">Key Settings</h4>
-                  <ul className="space-y-1 ml-4">
-                    <li><span className="text-teal-400">Linguistic Influence</span> — The language family that shapes how your names sound. Select up to 4 for blended results.</li>
-                    <li><span className="text-purple-400">Tone</span> — Adds emotional flavor. "Dark" uses harsh sounds, "Noble" uses elegant flowing sounds.</li>
-                    <li><span className="text-emerald-400">Time Period</span> — Adds era-appropriate prefixes/suffixes. Medieval adds titles like "Ser" and "Lord".</li>
-                    <li><span className="text-pink-400">Gender Lean</span> — Filters results by masculine/feminine sound patterns based on endings.</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-200 mb-1">Name Card Icons</h4>
-                  <ul className="space-y-1 ml-4">
-                    <li><Star className="w-4 h-4 inline text-yellow-400" /> <span className="text-yellow-400">Star</span> — Add to favorites. Favorites are saved at the bottom and can be exported.</li>
-                    <li><FlaskConical className="w-4 h-4 inline text-teal-400" /> <span className="text-teal-400">Flask</span> — Select for refinement. Pick 2-4 names you like, then generate similar ones.</li>
-                    <li><Volume2 className="w-4 h-4 inline text-cyan-400" /> <span className="text-cyan-400">Speaker</span> — Hear an approximate pronunciation of the name.</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-200 mb-1">Tips</h4>
-                  <ul className="space-y-1 ml-4">
-                    <li>Use the "Refine" feature when you find names you almost like — it analyzes patterns and generates variations.</li>
-                    <li>Combine multiple tones for unique blends (e.g., "Noble" + "Dark" for morally gray characters).</li>
-                    <li>The copy format dropdown lets you export as plain text, bullets, numbered list, or comma-separated.</li>
-                  </ul>
-                </div>
-              </div>
-            </details>
           </div>
         </header>
 
@@ -1516,40 +1302,10 @@ export default function AetherNames() {
                       onCopy={() => copyToClipboard(n.name)}
                       onFavorite={() => toggleFavorite(n)}
                       copied={copiedName === n.name}
-                      isSelectedForRefine={isSelectedForRefine(n.name)}
-                      onRefineSelect={() => toggleRefineSelection(n)}
                     />
                   ))
                 )}
               </div>
-
-              {/* Refine Section */}
-              {refineSelections.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-slate-800/50">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-teal-400 flex items-center gap-2">
-                      <FlaskConical className="w-4 h-4" /> Refine Selection ({refineSelections.length}/4)
-                    </h3>
-                    <button onClick={clearRefineSelections} className="text-xs text-slate-400 hover:text-red-400 transition-colors">
-                      Clear
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {refineSelections.map(n => (
-                      <div key={n.name} className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/30 rounded-full text-sm text-teal-300">
-                        {n.name}
-                        <button onClick={() => toggleRefineSelection(n)} className="text-teal-500/50 hover:text-red-400 transition-colors">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <GlowButton onClick={generateRefined} disabled={isGenerating} className="w-full">
-                    <FlaskConical className="w-5 h-5" />
-                    Generate Similar Names
-                  </GlowButton>
-                </div>
-              )}
 
               {/* Favorites */}
               {favorites.length > 0 && (
