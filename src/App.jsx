@@ -272,6 +272,163 @@ const countSyllables = (str) => {
   return matches ? matches.length : 1;
 };
 
+const validateName = (name, region) => {
+  const lower = name.toLowerCase().replace(/[^a-z]/g, '');
+  
+  // Universal rules - reject obviously bad names
+  if (/[aeiou]{4,}/.test(lower)) return false; // 4+ vowels in a row
+  if (/[bcdfghjklmnpqrstvwxz]{4,}/.test(lower)) return false; // 4+ consonants in a row
+  
+  // Count diphthongs (two-letter vowel combos)
+  const diphthongs = (lower.match(/[aeiou]{2}/g) || []).length;
+  
+  // Region-specific validation
+  const rules = {
+    western: () => {
+      if (diphthongs > 1) return false;
+      // Should end in consonant or common Western endings
+      if (!/(?:[bcdfgklmnprst]|a|ia|ea|en|er|or|us|is|an|on)$/.test(lower)) return false;
+      return true;
+    },
+    latin: () => {
+      if (diphthongs > 1) return false;
+      // Latin endings
+      if (!/(?:us|a|um|is|or|ix|ax|ex|ius|ia)$/.test(lower)) return false;
+      return true;
+    },
+    celtic: () => {
+      if (diphthongs > 2) return false; // Celtic allows more diphthongs
+      if (!/(?:[dlnrth]|an|en|in|on|wen|wyn|ach|aith|id|a)$/.test(lower)) return false;
+      return true;
+    },
+    norse: () => {
+      if (diphthongs > 1) return false;
+      // Norse is consonant-heavy, should end strong
+      if (!/(?:[rndlkft]|ar|ir|ur|or|ald|ulf|mund|leif|geir)$/.test(lower)) return false;
+      // Reject vowel-heavy names
+      const vowelRatio = (lower.match(/[aeiou]/g) || []).length / lower.length;
+      if (vowelRatio > 0.5) return false;
+      return true;
+    },
+    slavic: () => {
+      if (diphthongs > 1) return false;
+      if (!/(?:[aeiou]|mir|slav|rad|ov|ev|ko|ka|an|in|il)$/.test(lower)) return false;
+      return true;
+    },
+    arabic: () => {
+      // Arabic: no consonant clusters allowed
+      if (/[bcdfghjklmnpqrstvwxz]{2,}/.test(lower)) return false;
+      if (diphthongs > 1) return false;
+      if (!/(?:[aiu]|ah|an|ar|id|il|im|in|ir|ud|ul|um|un)$/.test(lower)) return false;
+      return true;
+    },
+    eastasian: () => {
+      // Must end in vowel or n/ng only
+      if (!/(?:[aeiou]|n|ng)$/.test(lower)) return false;
+      // No consonant clusters
+      if (/[bcdfghjklmpqrstvwxz]{2,}/.test(lower)) return false;
+      return true;
+    },
+    southasian: () => {
+      if (diphthongs > 2) return false;
+      if (!/(?:[aeiou]|an|in|am|ya|na|ta|esh|raj)$/.test(lower)) return false;
+      return true;
+    },
+    african: () => {
+      // Bantu: mostly CV patterns, ends in vowel
+      if (!/[aeiou]$/.test(lower)) return false;
+      // Only prenasalized clusters allowed (mb, nd, ng, etc)
+      const invalidClusters = lower.match(/[bcdfghjklpqrstvwxz]{2,}/g) || [];
+      for (const cluster of invalidClusters) {
+        if (!/^(?:mb|nd|ng|nj|nk|mp|nt|nz|kw|gw|bw|tw|sw|ny)/.test(cluster)) return false;
+      }
+      return true;
+    },
+    mesoamerican: () => {
+      if (diphthongs > 1) return false;
+      // Allow tl, ts clusters
+      if (!/(?:[aeiou]|tl|tli|atl|in|an|il|al|tzin)$/.test(lower)) return false;
+      return true;
+    },
+    greek: () => {
+      if (diphthongs > 2) return false; // Greek has many diphthongs
+      if (!/(?:os|es|is|as|on|eus|ios|ia|a|ides)$/.test(lower)) return false;
+      return true;
+    },
+    egyptian: () => {
+      if (diphthongs > 1) return false;
+      // No clusters
+      if (/[bcdfghjklmnpqrstvwxz]{3,}/.test(lower)) return false;
+      if (!/(?:[aeiou]|is|it|et|en|un|at|hotep|mose|ankh|amun)$/.test(lower)) return false;
+      return true;
+    },
+    persian: () => {
+      if (diphthongs > 1) return false;
+      if (!/(?:[aeiou]|an|ar|ash|esh|in|ir|ush|yar|zad|var)$/.test(lower)) return false;
+      return true;
+    },
+    polynesian: () => {
+      // Must end in vowel - no exceptions
+      if (!/[aeiou]$/.test(lower)) return false;
+      // No consonant clusters at all
+      if (/[bcdfghjklmnpqrstvwxz]{2,}/.test(lower)) return false;
+      // High vowel ratio
+      const vowelRatio = (lower.match(/[aeiou]/g) || []).length / lower.length;
+      if (vowelRatio < 0.45) return false;
+      return true;
+    },
+    spaceopera: () => {
+      if (diphthongs > 1) return false;
+      if (!/(?:[xzrkst]|ax|ex|ix|ox|ar|or|on|ion|ius|rix|xis|zar)$/.test(lower)) return false;
+      return true;
+    },
+    cyberpunk: () => {
+      if (diphthongs > 1) return false;
+      // Tech feel - ends in hard sounds
+      if (!/(?:[xkzt]|ax|ex|ix|ok|on|or|tek|syn|net)$/.test(lower)) return false;
+      return true;
+    },
+    neutral: () => {
+      if (diphthongs > 1) return false;
+      // General pleasant endings
+      if (!/(?:[aeiou]|[lnrst]|an|ar|el|en|er|ia|in|on|or|us|is)$/.test(lower)) return false;
+      return true;
+    }
+  };
+
+  // Run region-specific validation, default to neutral
+  const validator = rules[region] || rules.neutral;
+  return validator();
+};
+
+const classifyGender = (name) => {
+  const lower = name.toLowerCase().replace(/[^a-z]/g, '');
+  let femScore = 0;
+  let mascScore = 0;
+
+  // Feminine endings
+  if (/(?:a|ia|ella|ette|ine|elle|ana|ina|ya|ie|lee|ley|ly|ri|mi|ki)$/.test(lower)) femScore += 3;
+  if (/(?:i|e)$/.test(lower)) femScore += 1;
+
+  // Masculine endings
+  if (/(?:us|or|ar|ard|mund|ric|ulf|ak|ok|orn|ek|ox|ax|ur|ir|ius|os|on|er|an|im)$/.test(lower)) mascScore += 3;
+  if (/(?:k|d|r|x|th)$/.test(lower)) mascScore += 1;
+
+  // Sound balance
+  const softSounds = (lower.match(/[lmn]/g) || []).length;
+  const hardSounds = (lower.match(/[kgrdx]/g) || []).length;
+  const vowelRatio = (lower.match(/[aeiou]/g) || []).length / lower.length;
+
+  if (vowelRatio > 0.45) femScore += 1;
+  if (vowelRatio < 0.35) mascScore += 1;
+  if (softSounds > hardSounds) femScore += 1;
+  if (hardSounds > softSounds) mascScore += 1;
+
+  if (femScore > mascScore + 1) return 'feminine';
+  if (mascScore > femScore + 1) return 'masculine';
+  return 'neutral';
+};
+
 const generateSyllable = (lang, patternType, tone = null) => {
   let onset = '';
   let vowel = '';
@@ -403,9 +560,9 @@ const generateName = (config) => {
     }
     if (mustNotContain && name.toLowerCase().includes(mustNotContain.toLowerCase())) continue;
 
-    // Check for bad clusters
-    if (/[bcdfghjklmnpqrstvwxz]{4,}/i.test(name)) continue;
-    if (/[aeiou]{4,}/i.test(name)) continue;
+    // Validate name for the linguistic region
+    const primaryRegion = regions.length > 0 ? regions[0] : 'neutral';
+    if (!validateName(name, primaryRegion)) continue;
 
     break;
   }
@@ -645,6 +802,7 @@ export default function AetherNames() {
     timePeriod: 'any',
     minSyllables: 2,
     maxSyllables: 3,
+    genderLean: 'any',
     allowApostrophes: false,
     allowHyphens: false,
     allowAccents: false,
@@ -677,11 +835,14 @@ export default function AetherNames() {
     setTimeout(() => {
       const names = [];
       let attempts = 0;
-      while (names.length < config.nameCount && attempts < config.nameCount * 20) {
+      while (names.length < config.nameCount && attempts < config.nameCount * 50) {
         attempts++;
         const name = generateName(config);
         if (!names.some(n => n.name.toLowerCase() === name.toLowerCase()) && name.length >= 3 && name.length <= 20) {
-          names.push({ id: Date.now() + Math.random(), name, syllables: countSyllables(name) });
+          const gender = classifyGender(name);
+          if (config.genderLean === 'any' || gender === config.genderLean || gender === 'neutral') {
+            names.push({ id: Date.now() + Math.random(), name, syllables: countSyllables(name), gender });
+          }
         }
       }
       setGeneratedNames(names);
@@ -820,7 +981,7 @@ export default function AetherNames() {
               <Wand2 className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
-              AetherName
+              AetherNames
             </h1>
           </div>
           
@@ -841,10 +1002,16 @@ export default function AetherNames() {
             ))}
           </div>
 
-          <GlowButton variant="donate" onClick={openDonation} className="px-8">
-            <Heart className="w-5 h-5" />
-            Support the Creator
-          </GlowButton>
+          <div className="flex flex-wrap justify-center gap-3">
+            <GlowButton onClick={generate} disabled={isGenerating} className="px-8">
+              <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+              {isGenerating ? 'Forging...' : 'Generate Names'}
+            </GlowButton>
+            <GlowButton variant="donate" onClick={openDonation} className="px-8">
+              <Heart className="w-5 h-5" />
+              Support the Creator
+            </GlowButton>
+          </div>
         </header>
 
         <div className="grid lg:grid-cols-5 gap-6">
@@ -886,6 +1053,23 @@ export default function AetherNames() {
                   {timePeriods.map(t => (
                     <SelectionChip key={t.value} selected={config.timePeriod === t.value} onClick={() => updateConfig('timePeriod', t.value)} color="emerald">
                       {t.label}
+                    </SelectionChip>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gender Lean */}
+              <div className="mb-6">
+                <SectionHeader title="Gender Lean" helpText="Filter names by masculine/feminine sound patterns based on endings and phonetics. Does not change generation, only filters results." />
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'any', label: 'Any' },
+                    { value: 'feminine', label: '♀ Feminine' },
+                    { value: 'masculine', label: '♂ Masculine' },
+                    { value: 'neutral', label: '⚖ Neutral' }
+                  ].map(g => (
+                    <SelectionChip key={g.value} selected={config.genderLean === g.value} onClick={() => updateConfig('genderLean', g.value)} color="pink">
+                      {g.label}
                     </SelectionChip>
                   ))}
                 </div>
