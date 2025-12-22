@@ -642,7 +642,7 @@ const generateName = (config) => {
         const prefix = random(periodMod.prefixes);
         // Add space for title-style prefixes
         if (['Ser', 'Lord', 'Saint', 'Don', 'Donna', 'Signor', 'Conte', 'Duc'].includes(prefix)) {
-          name = prefix + ' ' + name;
+          name = prefix + ' ' + capitalize(name);
         } else {
           name = prefix + name.toLowerCase();
           name = capitalize(name);
