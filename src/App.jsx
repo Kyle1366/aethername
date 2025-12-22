@@ -1063,8 +1063,16 @@ export default function AetherNames() {
   };
 
   const toggleFavorite = (nameObj) => {
-    setFavorites(prev => prev.some(f => f.name === nameObj.name) ? prev.filter(f => f.name !== nameObj.name) : [...prev, nameObj]);
+    setFavorites(prev => {
+      if (prev.some(f => f.name === nameObj.name)) {
+        return prev.filter(f => f.name !== nameObj.name);
+      } else {
+        return [...prev, { ...nameObj, id: Date.now() + Math.random() }];
+      }
+    });
   };
+
+  const clearFavorites = () => setFavorites([]);
 
   const isFavorite = (name) => favorites.some(f => f.name === name);
 
@@ -1081,10 +1089,6 @@ export default function AetherNames() {
       if (prev.some(n => n.name === nameObj.name)) {
         return prev.filter(n => n.name !== nameObj.name);
       } else if (prev.length < 4) {
-        // Auto-favorite when adding to refine selection
-        if (!favorites.some(f => f.name === nameObj.name)) {
-          setFavorites(favs => [...favs, nameObj]);
-        }
         return [...prev, nameObj];
       }
       return prev;
@@ -1095,6 +1099,17 @@ export default function AetherNames() {
 
   const generateRefined = useCallback(() => {
     if (refineSelections.length === 0) return;
+    
+    // Add refine selections to favorites before generating
+    setFavorites(prev => {
+      const newFavs = [...prev];
+      refineSelections.forEach(sel => {
+        if (!newFavs.some(f => f.name === sel.name)) {
+          newFavs.push({ ...sel, id: Date.now() + Math.random() });
+        }
+      });
+      return newFavs;
+    });
     
     setIsGenerating(true);
     setTimeout(() => {
@@ -1579,15 +1594,20 @@ export default function AetherNames() {
                     <h3 className="font-semibold text-yellow-400 flex items-center gap-2">
                       <Star className="w-4 h-4 fill-current" /> Favorites ({favorites.length})
                     </h3>
-                    <button onClick={exportFavorites} className="flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-400 transition-colors">
-                      <Download className="w-3.5 h-3.5" /> Export
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button onClick={clearFavorites} className="text-xs text-slate-400 hover:text-red-400 transition-colors">
+                        Clear
+                      </button>
+                      <button onClick={exportFavorites} className="flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-400 transition-colors">
+                        <Download className="w-3.5 h-3.5" /> Export
+                      </button>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {favorites.map(f => (
-                      <div key={f.name} className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm text-yellow-300">
+                      <div key={f.id || f.name} className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm text-yellow-300">
                         {f.name}
-                        <button onClick={() => toggleFavorite(f)} className="text-yellow-500/50 hover:text-red-400 transition-colors">
+                        <button onClick={() => setFavorites(prev => prev.filter(fav => fav.name !== f.name))} className="text-yellow-500/50 hover:text-red-400 transition-colors">
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
