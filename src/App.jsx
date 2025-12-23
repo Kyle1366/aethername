@@ -992,6 +992,7 @@ export default function AetherNames() {
   const [copiedName, setCopiedName] = useState(null);
   const [refineSelections, setRefineSelections] = useState([]);
   const [showInstructions, setShowInstructions] = useState(false);
+  const resultsRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [animateHeader, setAnimateHeader] = useState(false);
 
@@ -1016,6 +1017,9 @@ export default function AetherNames() {
 
   const generate = useCallback(() => {
     setIsGenerating(true);
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
     setTimeout(() => {
       const names = [];
       let attempts = 0;
@@ -1490,7 +1494,7 @@ export default function AetherNames() {
           </div>
 
           {/* Results Panel */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3" ref={resultsRef}>
             <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 shadow-xl">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -1533,7 +1537,7 @@ export default function AetherNames() {
                 </div>
               )}
 
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[calc(100vh-300px)] min-h-[400px] overflow-y-auto pr-2">
                 {generatedNames.length === 0 ? (
                   <div className="text-center py-20">
                     <div className="inline-flex p-6 rounded-full bg-slate-800/50 mb-4">
@@ -1648,7 +1652,7 @@ export default function AetherNames() {
             </div>
 
             {/* Footer */}
-            <div className="mt-6 text-center text-slate-600 text-sm">
+            <div className="mt-6 pb-20 lg:pb-0 text-center text-slate-600 text-sm">
               <p>Made with ❤️ for writers, game masters, and worldbuilders</p>
               <button onClick={openDonation} className="mt-2 text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1 mx-auto">
                 <Heart className="w-4 h-4" /> Support this project on Ko-fi
@@ -1656,6 +1660,14 @@ export default function AetherNames() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Floating Generate Button - Mobile */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 z-50">
+        <GlowButton onClick={generate} disabled={isGenerating} className="w-full">
+          <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+          {isGenerating ? 'Forging...' : 'Generate Names'}
+        </GlowButton>
       </div>
     </div>
   );
