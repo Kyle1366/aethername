@@ -1256,9 +1256,46 @@ export default function AetherNames() {
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 pb-32">
         {/* Header */}
         <header className={`text-center py-8 mb-8 transition-all duration-1000 ${animateHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-purple-500/30">
-              <Wand2 className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center gap-4 mb-4">
+            <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0">
+              {/* Soft glow effect */}
+              <div className="absolute inset-0 blur-2xl bg-purple-500/30 rounded-full scale-150 pointer-events-none" />
+              
+              {/* Animated twinkles - scattered around logo */}
+              <div className="absolute inset-0 overflow-visible pointer-events-none">
+                {[
+                  { top: '-10%', left: '20%', size: 3, color: '#a855f7', duration: 3, delay: 0 },
+                  { top: '5%', left: '85%', size: 2, color: '#22d3ee', duration: 4, delay: 0.5 },
+                  { top: '30%', left: '-5%', size: 2.5, color: '#6366f1', duration: 3.5, delay: 1 },
+                  { top: '70%', left: '0%', size: 2, color: '#f472b6', duration: 4.5, delay: 0.3 },
+                  { top: '85%', left: '30%', size: 3, color: '#818cf8', duration: 3, delay: 0.8 },
+                  { top: '90%', left: '75%', size: 2, color: '#2dd4bf', duration: 4, delay: 1.2 },
+                  { top: '50%', left: '95%', size: 2.5, color: '#c084fc', duration: 3.5, delay: 0.6 },
+                  { top: '15%', left: '50%', size: 2, color: '#67e8f9', duration: 5, delay: 1.5 },
+                ].map((star, i) => (
+                  <div
+                    key={i}
+                    className="absolute rounded-full animate-twinkle"
+                    style={{
+                      width: `${star.size}px`,
+                      height: `${star.size}px`,
+                      background: star.color,
+                      top: star.top,
+                      left: star.left,
+                      animationDuration: `${star.duration}s`,
+                      animationDelay: `${star.delay}s`,
+                      boxShadow: `0 0 ${star.size * 3}px ${star.size}px ${star.color}40`
+                    }}
+                  />
+                ))}
+              </div>
+              
+              {/* Logo */}
+              <img 
+                src="/logo.png" 
+                alt="AetherNames Logo" 
+                className="absolute inset-0 w-full h-full drop-shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+              />
             </div>
             <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
               AetherNames
