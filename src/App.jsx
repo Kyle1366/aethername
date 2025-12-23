@@ -928,6 +928,23 @@ const SelectionChip = ({ selected, onClick, children, color = 'indigo' }) => {
   );
 };
 
+const SkeletonCard = () => (
+  <div className="relative p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-5 h-5 rounded bg-slate-700/50 animate-pulse" />
+        <div className="w-5 h-5 rounded bg-slate-700/50 animate-pulse" />
+        <div className="w-5 h-5 rounded bg-slate-700/50 animate-pulse" />
+        <div className="flex flex-col gap-1">
+          <div className="h-6 w-32 rounded bg-slate-700/50 animate-pulse" />
+        </div>
+      </div>
+      <div className="h-8 w-20 rounded-lg bg-slate-700/50 animate-pulse" />
+    </div>
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-slate-700/10 to-transparent" />
+  </div>
+);
+
 const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isSelectedForRefine, onRefineSelect }) => {
   const speakName = () => {
     const utterance = new SpeechSynthesisUtterance(name);
@@ -1037,6 +1054,20 @@ export default function AetherNames() {
       setIsGenerating(false);
     }, 100);
   }, [config]);
+
+  // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to generate
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!isGenerating) {
+          generate();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [generate, isGenerating]);
 
   const copyToClipboard = async (name) => {
     await navigator.clipboard.writeText(name);
@@ -1253,8 +1284,13 @@ export default function AetherNames() {
 
           <div className="flex flex-wrap justify-center gap-3">
             <GlowButton onClick={generate} disabled={isGenerating} className="px-8">
-              <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
-              {isGenerating ? 'Forging...' : 'Generate Names'}
+              <div className="flex flex-col items-center">
+                <span className="flex items-center gap-2">
+                  <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+                  {isGenerating ? 'Forging...' : 'Generate Names'}
+                </span>
+                <span className="text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
+              </div>
             </GlowButton>
             <GlowButton variant="donate" onClick={openDonation} className="px-8">
               <Heart className="w-5 h-5" />
@@ -1483,8 +1519,13 @@ export default function AetherNames() {
               {/* Generate Button */}
               <div className="flex gap-3">
                 <GlowButton onClick={generate} disabled={isGenerating} className="flex-1">
-                  <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
-                  {isGenerating ? 'Forging...' : 'Generate Names'}
+                  <div className="flex flex-col items-center">
+                    <span className="flex items-center gap-2">
+                      <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+                      {isGenerating ? 'Forging...' : 'Generate Names'}
+                    </span>
+                    <span className="text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
+                  </div>
                 </GlowButton>
                 <GlowButton variant="secondary" onClick={() => setGeneratedNames([])}>
                   <X className="w-5 h-5" />
@@ -1538,7 +1579,9 @@ export default function AetherNames() {
               )}
 
               <div className="space-y-3 max-h-[calc(100vh-300px)] min-h-[400px] overflow-y-auto pr-2">
-                {generatedNames.length === 0 ? (
+                {isGenerating ? (
+                  [...Array(config.nameCount)].map((_, i) => <SkeletonCard key={i} />)
+                ) : generatedNames.length === 0 ? (
                   <div className="text-center py-20">
                     <div className="inline-flex p-6 rounded-full bg-slate-800/50 mb-4">
                       <Wand2 className="w-12 h-12 text-slate-600" />
