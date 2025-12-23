@@ -1174,7 +1174,7 @@ export default function AetherNames() {
 
   // DONATE FUNCTION - Your Ko-fi link
   const openDonation = () => {
-    window.open('https://ko-fi.com/kylecarmichael', '_blank');
+    window.open('https://ko-fi.com/aethernames', '_blank');
   };
 
   const helpTexts = {
