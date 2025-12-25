@@ -7,6 +7,70 @@ import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Dow
 // Each language family follows real-world constraints
 // ============================================================================
 
+// ============================================================================
+// THEME CONFIGURATIONS
+// ============================================================================
+
+const themeConfig = {
+  fantasy: {
+    background: 'from-amber-950 via-stone-900 to-stone-950',
+    orbs: ['#d97706', '#b45309', '#a855f7', '#7c3aed'],
+    accent: 'amber',
+    glow: 'amber-500',
+    font: "'Cinzel', serif",
+    buttonGradient: 'from-amber-600 via-orange-600 to-red-600',
+    buttonHover: 'from-amber-500 via-orange-500 to-red-500',
+    buttonShadow: 'shadow-orange-500/25 hover:shadow-orange-500/40',
+    cardBorder: 'border-amber-500/30 hover:border-amber-500/50',
+    chipSelected: {
+      indigo: 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-lg shadow-amber-500/10',
+      purple: 'bg-orange-500/20 border-orange-500/50 text-orange-300 shadow-lg shadow-orange-500/10',
+      teal: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 shadow-lg shadow-yellow-500/10',
+      amber: 'bg-red-500/20 border-red-500/50 text-red-300 shadow-lg shadow-red-500/10',
+      pink: 'bg-rose-500/20 border-rose-500/50 text-rose-300 shadow-lg shadow-rose-500/10',
+      emerald: 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-lg shadow-amber-500/10'
+    }
+  },
+  scifi: {
+    background: 'from-cyan-950 via-slate-900 to-black',
+    orbs: ['#06b6d4', '#0891b2', '#3b82f6', '#6366f1'],
+    accent: 'cyan',
+    glow: 'cyan-500',
+    font: "'Orbitron', sans-serif",
+    buttonGradient: 'from-cyan-600 via-blue-600 to-indigo-600',
+    buttonHover: 'from-cyan-500 via-blue-500 to-indigo-500',
+    buttonShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
+    cardBorder: 'border-cyan-500/30 hover:border-cyan-500/50',
+    chipSelected: {
+      indigo: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-lg shadow-cyan-500/10',
+      purple: 'bg-blue-500/20 border-blue-500/50 text-blue-300 shadow-lg shadow-blue-500/10',
+      teal: 'bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-lg shadow-teal-500/10',
+      amber: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 shadow-lg shadow-indigo-500/10',
+      pink: 'bg-violet-500/20 border-violet-500/50 text-violet-300 shadow-lg shadow-violet-500/10',
+      emerald: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-lg shadow-cyan-500/10'
+    }
+  },
+  mixed: {
+    background: 'from-slate-950 via-indigo-950/50 to-purple-950/30',
+    orbs: ['#6366f1', '#8b5cf6', '#a855f7', '#3b82f6'],
+    accent: 'indigo',
+    glow: 'purple-500',
+    font: "'Inter', sans-serif",
+    buttonGradient: 'from-indigo-600 via-purple-600 to-pink-600',
+    buttonHover: 'from-indigo-500 via-purple-500 to-pink-500',
+    buttonShadow: 'shadow-purple-500/25 hover:shadow-purple-500/40',
+    cardBorder: 'border-indigo-500/30 hover:border-indigo-500/50',
+    chipSelected: {
+      indigo: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 shadow-lg shadow-indigo-500/10',
+      purple: 'bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-lg shadow-purple-500/10',
+      teal: 'bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-lg shadow-teal-500/10',
+      amber: 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-lg shadow-amber-500/10',
+      pink: 'bg-pink-500/20 border-pink-500/50 text-pink-300 shadow-lg shadow-pink-500/10',
+      emerald: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10'
+    }
+  }
+};
+
 const linguisticData = {
   western: {
     onsets: {
@@ -779,21 +843,22 @@ const generateName = (config) => {
 // ANIMATED BACKGROUND
 // ============================================================================
 
-const AnimatedBackground = () => {
-  // Pre-generate static positions to avoid re-renders
+const AnimatedBackground = ({ theme }) => {
+  const currentTheme = themeConfig[theme] || themeConfig.mixed;
+  
   const orbs = React.useMemo(() => 
     [...Array(8)].map((_, i) => ({
       width: 150 + (i * 50) % 200,
       height: 150 + (i * 50) % 200,
       left: `${(i * 13) % 100}%`,
       top: `${(i * 17) % 100}%`,
-      color: ['#6366f1', '#8b5cf6', '#a855f7', '#3b82f6'][i % 4]
-    })), []
+      color: currentTheme.orbs[i % 4]
+    })), [currentTheme.orbs]
   );
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950/50 to-purple-950/30" />
+      <div className={`absolute inset-0 bg-gradient-to-br ${currentTheme.background}`} />
       {orbs.map((orb, i) => (
         <div
           key={i}
@@ -816,9 +881,11 @@ const AnimatedBackground = () => {
 // UI COMPONENTS
 // ============================================================================
 
-const GlowButton = ({ children, onClick, disabled, variant = 'primary', className = '' }) => {
+const GlowButton = ({ children, onClick, disabled, variant = 'primary', className = '', theme = 'mixed' }) => {
+  const currentTheme = themeConfig[theme] || themeConfig.mixed;
+  
   const variants = {
-    primary: 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40',
+    primary: `bg-gradient-to-r ${currentTheme.buttonGradient} hover:${currentTheme.buttonHover} shadow-lg ${currentTheme.buttonShadow}`,
     secondary: 'bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50',
     ghost: 'bg-transparent hover:bg-slate-800/50',
     donate: 'bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 hover:from-pink-400 hover:via-red-400 hover:to-orange-400 shadow-lg shadow-red-500/25 hover:shadow-red-500/40'
@@ -830,7 +897,7 @@ const GlowButton = ({ children, onClick, disabled, variant = 'primary', classNam
       className={`relative px-6 py-3 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
     >
       {(variant === 'primary' || variant === 'donate') && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+        <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${currentTheme.buttonGradient} blur-xl opacity-50 group-hover:opacity-75 transition-opacity`} />
       )}
       <span className="relative flex items-center justify-center gap-2">{children}</span>
     </button>
@@ -1249,9 +1316,11 @@ export default function AetherNames() {
     { value: 'futuristic', label: 'Futuristic' }
   ];
 
+  const currentTheme = themeConfig[config.genre] || themeConfig.mixed;
+
   return (
-    <div className="min-h-screen text-slate-100 relative">
-      <AnimatedBackground />
+    <div className="min-h-screen text-slate-100 relative" style={{ fontFamily: currentTheme.font }}>
+      <AnimatedBackground theme={config.genre} />
       
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 pb-32">
         {/* Header */}
@@ -1320,7 +1389,7 @@ export default function AetherNames() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-3">
-            <GlowButton onClick={generate} disabled={isGenerating} className="px-8">
+            <GlowButton onClick={generate} disabled={isGenerating} className="px-8" theme={config.genre}>
               <div className="flex flex-col items-center">
                 <span className="flex items-center gap-2">
                   <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
@@ -1329,7 +1398,7 @@ export default function AetherNames() {
                 <span className="text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
               </div>
             </GlowButton>
-            <GlowButton variant="donate" onClick={openDonation} className="px-8">
+            <GlowButton variant="donate" onClick={openDonation} className="px-8" theme={config.genre}>
               <Heart className="w-5 h-5" />
               Support the Creator
             </GlowButton>
@@ -1555,7 +1624,7 @@ export default function AetherNames() {
 
               {/* Generate Button */}
               <div className="flex gap-3">
-                <GlowButton onClick={generate} disabled={isGenerating} className="flex-1">
+                <GlowButton onClick={generate} disabled={isGenerating} className="flex-1" theme={config.genre}>
                   <div className="flex flex-col items-center">
                     <span className="flex items-center gap-2">
                       <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
@@ -1564,7 +1633,7 @@ export default function AetherNames() {
                     <span className="text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
                   </div>
                 </GlowButton>
-                <GlowButton variant="secondary" onClick={() => setGeneratedNames([])}>
+                <GlowButton variant="secondary" onClick={() => setGeneratedNames([])} theme={config.genre}>
                   <X className="w-5 h-5" />
                 </GlowButton>
               </div>
@@ -1664,7 +1733,7 @@ export default function AetherNames() {
                       </div>
                     ))}
                   </div>
-                  <GlowButton onClick={generateRefined} disabled={isGenerating} className="w-full">
+                  <GlowButton onClick={generateRefined} disabled={isGenerating} className="w-full" theme={config.genre}>
                     <FlaskConical className="w-5 h-5" />
                     Generate Similar Names
                   </GlowButton>
@@ -1744,7 +1813,7 @@ export default function AetherNames() {
 
       {/* Floating Generate Button - Mobile */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 z-50">
-        <GlowButton onClick={generate} disabled={isGenerating} className="w-full">
+        <GlowButton onClick={generate} disabled={isGenerating} className="w-full" theme={config.genre}>
           <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
           {isGenerating ? 'Forging...' : 'Generate Names'}
         </GlowButton>
