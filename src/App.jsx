@@ -1021,26 +1021,28 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
   };
 
   return (
-    <div className={`group relative p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border rounded-xl hover:shadow-lg transition-all duration-300 ${isSelectedForRefine ? 'border-teal-500/50 shadow-teal-500/10' : 'border-slate-700/50 hover:border-indigo-500/30 hover:shadow-indigo-500/5'}`}>
+    <div className={`group relative p-3 md:p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border rounded-xl hover:shadow-lg transition-all duration-300 ${isSelectedForRefine ? 'border-teal-500/50 shadow-teal-500/10' : 'border-slate-700/50 hover:border-indigo-500/30 hover:shadow-indigo-500/5'}`}>
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={onFavorite} className={`transition-all duration-200 ${isFavorite ? 'text-yellow-400 scale-110' : 'text-slate-600 hover:text-yellow-400 hover:scale-110'}`}>
-            <Star className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
-          <button onClick={onRefineSelect} className={`transition-all duration-200 ${isSelectedForRefine ? 'text-teal-400 scale-110' : 'text-slate-600 hover:text-teal-400 hover:scale-110'}`}>
-            <FlaskConical className={`w-5 h-5`} />
-          </button>
-          <button onClick={speakName} className="text-slate-600 hover:text-cyan-400 hover:scale-110 transition-all duration-200">
-            <Volume2 className="w-5 h-5" />
-          </button>
-          <div>
-            <span className="text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">{name}</span>
-            <span className="ml-2 text-xs text-slate-500 font-mono">({syllables} syl)</span>
+      <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button onClick={onFavorite} className={`p-1 transition-all duration-200 ${isFavorite ? 'text-yellow-400 scale-110' : 'text-slate-600 hover:text-yellow-400 hover:scale-110'}`}>
+              <Star className={`w-4 h-4 md:w-5 md:h-5 ${isFavorite ? 'fill-current' : ''}`} />
+            </button>
+            <button onClick={onRefineSelect} className={`p-1 transition-all duration-200 ${isSelectedForRefine ? 'text-teal-400 scale-110' : 'text-slate-600 hover:text-teal-400 hover:scale-110'}`}>
+              <FlaskConical className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            <button onClick={speakName} className="p-1 text-slate-600 hover:text-cyan-400 hover:scale-110 transition-all duration-200">
+              <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-base md:text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent break-all">{name}</span>
+            <span className="ml-1 md:ml-2 text-[10px] md:text-xs text-slate-500 font-mono">({syllables})</span>
           </div>
         </div>
-        <button onClick={onCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${copied ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30'}`}>
-          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+        <button onClick={onCopy} className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${copied ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30'}`}>
+          {copied ? <Check className="w-3 h-3 md:w-4 md:h-4" /> : <Copy className="w-3 h-3 md:w-4 md:h-4" />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
@@ -1459,7 +1461,7 @@ export default function AetherNames() {
               {/* Name Type */}
               <div className="mb-6">
                 <SectionHeader title="Name Type" helpText={helpTexts.nameType} icon={Sparkles} />
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {nameTypes.map(t => (
                     <SelectionChip key={t.value} selected={config.nameType === t.value} onClick={() => updateConfig('nameType', t.value)}>
                       <span className="mr-1">{t.icon}</span> {t.label}
@@ -1512,7 +1514,7 @@ export default function AetherNames() {
               {/* Tone */}
               <div className="mb-6">
                 <SectionHeader title="Tone" helpText={helpTexts.tone} icon={Music} />
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                   {tones.map(t => {
                     const Icon = toneIcons[t.value];
                     return (
@@ -1604,7 +1606,7 @@ export default function AetherNames() {
                       value={config[f.key]}
                       onChange={e => updateConfig(f.key, e.target.value)}
                       placeholder={f.placeholder}
-                      className="bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+                      className="bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2.5 md:py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
                     />
                   ))}
                 </div>
@@ -1643,12 +1645,12 @@ export default function AetherNames() {
           {/* Results Panel */}
           <div className="lg:col-span-3" ref={resultsRef}>
             <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 shadow-xl">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <Wand2 className="w-5 h-5 text-purple-400" /> Generated Names
                 </h2>
                 {generatedNames.length > 0 && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <select
                       value={copyFormat}
                       onChange={e => setCopyFormat(e.target.value)}
@@ -1725,8 +1727,8 @@ export default function AetherNames() {
                   </div>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {refineSelections.map(n => (
-                      <div key={n.name} className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/30 rounded-full text-sm text-teal-300">
-                        {n.name}
+                      <div key={n.name} className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/30 rounded-full text-sm text-teal-300 max-w-[200px]">
+                        <span className="truncate">{n.name}</span>
                         <button onClick={() => toggleRefineSelection(n)} className="text-teal-500/50 hover:text-red-400 transition-colors">
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1758,8 +1760,8 @@ export default function AetherNames() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {favorites.map(f => (
-                      <div key={f.id || f.name} className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm text-yellow-300">
-                        {f.name}
+                      <div key={f.id || f.name} className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm text-yellow-300 max-w-[200px]">
+                        <span className="truncate">{f.name}</span>
                         <button onClick={() => setFavorites(prev => prev.filter(fav => fav.name !== f.name))} className="text-yellow-500/50 hover:text-red-400 transition-colors">
                           <X className="w-3.5 h-3.5" />
                         </button>
