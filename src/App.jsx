@@ -846,21 +846,35 @@ const generateName = (config, returnMetadata = false) => {
     else if (Math.random() < 0.35 && primaryLang.elements) {
       if (Math.random() < 0.5) {
         metadata.method = 'elements';
+        // Pick regions for start and end elements
+        const startRegion = regionList[0];
+        const endRegion = regionList.length > 1 ? regionList[1] : regionList[0];
+        const startLang = linguisticData[startRegion] || primaryLang;
+        const endLang = linguisticData[endRegion] || primaryLang;
+        
         const prefix = primaryTone?.prefixes 
-          ? random([...primaryLang.elements.starts, ...primaryTone.prefixes])
-          : random(primaryLang.elements.starts);
+          ? random([...startLang.elements.starts, ...primaryTone.prefixes])
+          : random(startLang.elements.starts);
         const suffix = primaryTone?.suffixes
-          ? random([...primaryLang.elements.ends, ...primaryTone.suffixes])
-          : random(primaryLang.elements.ends);
-        metadata.elements = { start: prefix, end: suffix };
+          ? random([...endLang.elements.ends, ...primaryTone.suffixes])
+          : random(endLang.elements.ends);
+        metadata.elements = { start: prefix, startRegion: startRegion, end: suffix, endRegion: endRegion };
         name = prefix + suffix;
       } else {
-        name = random(primaryLang.elements.starts);
+        metadata.method = 'mixed';
+        const startRegion = regionList[0];
+        const startLang = linguisticData[startRegion] || primaryLang;
+        const startElement = random(startLang.elements.starts);
+        metadata.parts = [{ text: startElement, type: 'element', region: startRegion }];
+        name = startElement;
         const remaining = Math.max(1, targetSyllables - countSyllables(name));
         for (let i = 0; i < remaining; i++) {
-          const lang = linguisticData[random(regionList)] || primaryLang;
+          const regionForSyllable = regionList[(i + 1) % regionList.length];
+          const lang = linguisticData[regionForSyllable] || primaryLang;
           const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
-          name += generateSyllable(lang, pattern, primaryTone);
+          const syllable = generateSyllable(lang, pattern, primaryTone);
+          metadata.parts.push({ text: syllable, type: 'syllable', region: regionForSyllable, pattern: pattern });
+          name += syllable;
         }
       }
     }
@@ -868,10 +882,12 @@ const generateName = (config, returnMetadata = false) => {
     else {
       metadata.method = 'syllable';
       for (let i = 0; i < targetSyllables; i++) {
-        const lang = linguisticData[random(regionList)] || primaryLang;
+        // Rotate through regions - each syllable from a different region
+        const regionForSyllable = regionList[i % regionList.length];
+        const lang = linguisticData[regionForSyllable] || primaryLang;
         const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
         const syllable = generateSyllable(lang, pattern, primaryTone);
-        metadata.syllables.push({ text: syllable, pattern: pattern });
+        metadata.syllables.push({ text: syllable, pattern: pattern, region: regionForSyllable });
         name += syllable;
       }
 
@@ -1268,17 +1284,32 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
   
   const copyStats = () => {
     if (!metadata) return;
+    const letterCount = name.replace(/[^a-zA-Z]/g, '').length;
+    const vowelCount = (name.toLowerCase().match(/[aeiou]/g) || []).length;
     const stats = [
+      `=== AetherNames Bug Report ===`,
       `Name: ${name}`,
-      `Breakdown: ${breakIntoSyllables(name).join(' · ')}`,
-      `Region Used: ${metadata.selectedRegion}`,
+      ``,
+      `--- Settings ---`,
+      `Language: ${metadata.selectedRegion}`,
       metadata.allRegions?.length > 1 ? `Region Pool: ${metadata.allRegions.join(', ')}` : null,
-      `Method: ${metadata.method || 'mixed'}`,
-      metadata.tones?.length > 0 ? `Tones: ${metadata.tones.join(', ')}` : null,
+      metadata.tones?.length > 0 ? `Tone: ${metadata.tones.join(', ')}` : null,
       metadata.timePeriod !== 'any' ? `Era: ${metadata.timePeriod}` : null,
-      metadata.elements?.start ? `Elements: ${metadata.elements.start} + ${metadata.elements.end}` : null,
-      metadata.syllables?.length > 0 ? `Raw syllables: ${metadata.syllables.map(s => `${s.text}(${s.pattern})`).join(' -> ')}` : null,
-      metadata.modifications?.length > 0 ? `Modifications: ${metadata.modifications.join(', ')}` : null
+      ``,
+      `--- Construction ---`,
+      `Method: ${metadata.method || 'mixed'}`,
+      metadata.elements?.start ? `Word parts: "${metadata.elements.start}" (${metadata.elements.startRegion || 'unknown'}) + "${metadata.elements.end}" (${metadata.elements.endRegion || 'unknown'})` : null,
+      metadata.syllables?.length > 0 ? `Syllables: ${metadata.syllables.map(s => `"${s.text}" (${s.region || 'neutral'})`).join(' + ')}` : null,
+      metadata.parts?.length > 0 ? `Parts: ${metadata.parts.map(p => `"${p.text}" (${p.region}, ${p.type})`).join(' + ')}` : null,
+      ``,
+      `--- Post-processing ---`,
+      metadata.modifications?.length > 0 ? `Styling applied: ${metadata.modifications.join(', ')}` : 'Styling applied: none',
+      ``,
+      `--- Analysis ---`,
+      `Syllable count: ${syllables}`,
+      `Letter count: ${letterCount}`,
+      `Vowel ratio: ${Math.round(vowelCount / letterCount * 100)}%`,
+      `Gender lean: ${classifyGender(name)}`,
     ].filter(Boolean).join('\n');
     navigator.clipboard.writeText(stats).then(() => {
       setStatsCopied(true);
@@ -1325,59 +1356,125 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
       
       {/* Stats for Nerds Panel */}
       {showStats && metadata && (
-        <div className="mt-3 pt-3 border-t border-slate-700/50 text-xs text-slate-400 space-y-2">
-          <div className="flex flex-wrap gap-2">
-            <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded">Used: {metadata.selectedRegion}</span>
-            {metadata.allRegions?.length > 1 && (
-              <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded">Pool: {metadata.allRegions.join(', ')}</span>
-            )}
-            <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded">Method: {metadata.method || 'mixed'}</span>
-            {metadata.tones?.length > 0 && (
-              <span className="px-2 py-0.5 bg-pink-500/20 text-pink-300 rounded">Tones: {metadata.tones.join(', ')}</span>
-            )}
-            {metadata.timePeriod !== 'any' && (
-              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded">Era: {metadata.timePeriod}</span>
-            )}
+        <div className="mt-3 pt-3 border-t border-slate-700/50 text-xs space-y-3">
+          {/* Section 1: What settings were used */}
+          <div className="bg-slate-800/30 rounded-lg p-2">
+            <div className="text-slate-500 font-semibold mb-1.5">⚙️ Settings Used</div>
+            <div className="grid grid-cols-2 gap-1 text-slate-400">
+              <div>Regions: <span className="text-indigo-300">{metadata.allRegions?.join(', ') || metadata.selectedRegion}</span></div>
+              {metadata.tones?.length > 0 && (
+                <div>Tone: <span className="text-pink-300">{metadata.tones.join(', ')}</span></div>
+              )}
+              {metadata.timePeriod !== 'any' && (
+                <div>Era: <span className="text-emerald-300">{metadata.timePeriod}</span></div>
+              )}
+            </div>
           </div>
-          {metadata.elements?.start && (
-            <div className="text-slate-500">
-              <span className="text-slate-400">Built from:</span> <span className="text-amber-400 font-mono">{metadata.elements.start}</span> + <span className="text-amber-400 font-mono">{metadata.elements.end}</span>
+
+          {/* Section 2: How it was built */}
+          <div className="bg-slate-800/30 rounded-lg p-2">
+            <div className="text-slate-500 font-semibold mb-1.5">🔨 How It Was Built</div>
+            <div className="text-slate-400 space-y-2">
+              {metadata.method === 'elements' && metadata.elements?.start ? (
+                <div>
+                  <div className="text-slate-500 text-[10px] mb-1">Combined word elements:</div>
+                  <div className="flex flex-wrap items-start gap-2">
+                    <div className="flex flex-col items-center">
+                      <span className="px-2 py-1 bg-amber-500/20 text-amber-300 rounded font-mono">{metadata.elements.start}</span>
+                      <span className="text-[9px] text-amber-500/70">{metadata.elements.startRegion || 'element'}</span>
+                    </div>
+                    <span className="text-slate-600 self-center">+</span>
+                    <div className="flex flex-col items-center">
+                      <span className="px-2 py-1 bg-amber-500/20 text-amber-300 rounded font-mono">{metadata.elements.end}</span>
+                      <span className="text-[9px] text-amber-500/70">{metadata.elements.endRegion || 'element'}</span>
+                    </div>
+                    <span className="text-slate-600 self-center">=</span>
+                    <span className="text-white font-mono self-center">{name.replace(/[^a-zA-Z]/g, '')}</span>
+                  </div>
+                </div>
+              ) : metadata.method === 'syllable' && metadata.syllables?.length > 0 ? (
+                <div>
+                  <div className="text-slate-500 text-[10px] mb-1">Generated from syllable patterns:</div>
+                  <div className="flex flex-wrap items-start gap-2">
+                    {metadata.syllables.map((s, i) => (
+                      <React.Fragment key={i}>
+                        <div className="flex flex-col items-center">
+                          <span className="px-2 py-1 bg-cyan-500/20 text-cyan-300 rounded font-mono">{s.text}</span>
+                          <span className="text-[9px] text-cyan-500/70">{s.region || 'neutral'}</span>
+                        </div>
+                        {i < metadata.syllables.length - 1 && <span className="text-slate-600 self-center">+</span>}
+                      </React.Fragment>
+                    ))}
+                    <span className="text-slate-600 self-center">=</span>
+                    <span className="text-white font-mono self-center">{metadata.syllables.map(s => s.text).join('')}</span>
+                  </div>
+                </div>
+              ) : metadata.method === 'mixed' && metadata.parts?.length > 0 ? (
+                <div>
+                  <div className="text-slate-500 text-[10px] mb-1">Mixed element + syllables:</div>
+                  <div className="flex flex-wrap items-start gap-2">
+                    {metadata.parts.map((p, i) => (
+                      <React.Fragment key={i}>
+                        <div className="flex flex-col items-center">
+                          <span className={`px-2 py-1 rounded font-mono ${p.type === 'element' ? 'bg-amber-500/20 text-amber-300' : 'bg-cyan-500/20 text-cyan-300'}`}>{p.text}</span>
+                          <span className={`text-[9px] ${p.type === 'element' ? 'text-amber-500/70' : 'text-cyan-500/70'}`}>{p.region}</span>
+                        </div>
+                        {i < metadata.parts.length - 1 && <span className="text-slate-600 self-center">+</span>}
+                      </React.Fragment>
+                    ))}
+                    <span className="text-slate-600 self-center">=</span>
+                    <span className="text-white font-mono self-center">{metadata.parts.map(p => p.text).join('')}</span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-slate-500 text-[10px] mb-1">Construction details unavailable</div>
+                  <span className="text-white font-mono">{name}</span>
+                </div>
+              )}
             </div>
-          )}
-          {metadata.syllables?.length > 0 && (
-            <div className="text-slate-500">
-              <span className="text-slate-400">Raw syllables:</span> {metadata.syllables.map((s, i) => (
-                <span key={i} className="inline-flex items-center">
-                  <span className="text-cyan-400 font-mono">{s.text}</span>
-                  <span className="text-slate-600 text-[10px] ml-0.5">({s.pattern})</span>
-                  {i < metadata.syllables.length - 1 && <span className="mx-1 text-slate-600">→</span>}
-                </span>
-              ))}
-            </div>
-          )}
-          {metadata.modifications?.length > 0 && (
-            <div className="text-slate-500">
-              <span className="text-slate-400">Style applied:</span> {metadata.modifications.map((m, i) => (
-                <span key={i} className="px-1.5 py-0.5 bg-slate-700/50 text-orange-400 rounded text-[10px] ml-1">{m}</span>
-              ))}
-            </div>
-          )}
-          <div className="text-slate-500">
-            <span className="text-slate-400">Breakdown:</span>{' '}
-            <span className="text-green-400 font-mono">{breakIntoSyllables(name).join(' · ')}</span>
           </div>
+
+          {/* Section 3: Post-processing */}
           {metadata.modifications?.length > 0 && (
-            <div className="text-slate-600 text-[10px] italic">
-              Note: Final name modified by validation, cleanup, and/or styling.
+            <div className="bg-slate-800/30 rounded-lg p-2">
+              <div className="text-slate-500 font-semibold mb-1.5">✨ Styling Applied</div>
+              <div className="text-slate-400 space-y-1">
+                {metadata.modifications.map((mod, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-orange-400">•</span>
+                    <span>
+                      {mod === 'hyphen' && 'Added hyphen between parts'}
+                      {mod === 'apostrophe' && 'Added apostrophe for exotic feel'}
+                      {mod === 'accent' && 'Added accent mark on vowel'}
+                      {mod === 'cluster-cleanup' && 'Simplified consonant cluster'}
+                      {!['hyphen', 'apostrophe', 'accent', 'cluster-cleanup'].includes(mod) && mod}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Section 4: Analysis */}
+          <div className="bg-slate-800/30 rounded-lg p-2">
+            <div className="text-slate-500 font-semibold mb-1.5">📊 Name Analysis</div>
+            <div className="grid grid-cols-2 gap-1 text-slate-400">
+              <div>Syllables: <span className="text-green-300">{syllables}</span></div>
+              <div>Letters: <span className="text-green-300">{name.replace(/[^a-zA-Z]/g, '').length}</span></div>
+              <div>Vowel %: <span className="text-green-300">{Math.round((name.toLowerCase().match(/[aeiou]/g) || []).length / name.replace(/[^a-zA-Z]/g, '').length * 100)}%</span></div>
+              <div>Gender lean: <span className={`${classifyGender(name) === 'feminine' ? 'text-pink-300' : classifyGender(name) === 'masculine' ? 'text-blue-300' : 'text-slate-300'}`}>{classifyGender(name)}</span></div>
+            </div>
+          </div>
+
+          {/* Copy button */}
           <button
             type="button"
             onClick={copyStats}
-            className={`mt-2 flex items-center gap-1.5 px-2 py-1 rounded text-[10px] transition-colors ${statsCopied ? 'bg-green-500/20 text-green-400' : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-slate-300'}`}
+            className={`w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[11px] transition-colors cursor-pointer ${statsCopied ? 'bg-green-500/20 text-green-400' : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-slate-300'}`}
           >
             {statsCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            {statsCopied ? 'Copied!' : 'Copy Stats for Bug Report'}
+            {statsCopied ? 'Copied!' : '📋 Copy Stats for Bug Report'}
           </button>
         </div>
       )}
