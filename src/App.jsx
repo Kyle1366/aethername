@@ -846,23 +846,50 @@ const generateName = (config) => {
 const AnimatedBackground = ({ theme }) => {
   const currentTheme = themeConfig[theme] || themeConfig.mixed;
   
+  const backgroundImages = {
+    fantasy: '/bg-fantasy.png',
+    scifi: '/bg-scifi.png',
+    mixed: '/bg-mixed.png'
+  };
+
   const orbs = React.useMemo(() => 
-    [...Array(8)].map((_, i) => ({
+    [...Array(6)].map((_, i) => ({
       width: 150 + (i * 50) % 200,
       height: 150 + (i * 50) % 200,
-      left: `${(i * 13) % 100}%`,
-      top: `${(i * 17) % 100}%`,
+      left: `${(i * 17) % 100}%`,
+      top: `${(i * 19) % 100}%`,
       color: currentTheme.orbs[i % 4]
     })), [currentTheme.orbs]
   );
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {/* Base gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${currentTheme.background}`} />
+      
+      {/* Pixel art background images */}
+      {['fantasy', 'scifi', 'mixed'].map((t) => (
+        <div
+          key={t}
+          className={`absolute inset-0 transition-opacity duration-1000 ${theme === t ? 'opacity-30 md:opacity-35' : 'opacity-0'}`}
+          style={{ 
+            backgroundImage: `url(${backgroundImages[t]})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center bottom',
+            backgroundRepeat: 'no-repeat',
+            imageRendering: 'auto'
+          }}
+        />
+      ))}
+      
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/50" />
+      
+      {/* Subtle floating orbs */}
       {orbs.map((orb, i) => (
         <div
           key={i}
-          className="absolute rounded-full opacity-20"
+          className="absolute rounded-full opacity-10"
           style={{
             width: orb.width,
             height: orb.height,
