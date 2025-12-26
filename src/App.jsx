@@ -118,39 +118,39 @@ const linguisticData = {
     },
     vowels: { short: ['a', 'e', 'i', 'o', 'u', 'y'], long: ['ei', 'au'] },
     codas: { simple: ['d', 'f', 'g', 'k', 'l', 'm', 'n', 'r', 's', 't'], clusters: ['ld', 'lf', 'lk', 'lm', 'nd', 'ng', 'nk', 'nn', 'rd', 'rg', 'rk', 'rm', 'rn', 'rt', 'sk', 'st'] },
-    patterns: [{ type: 'CVC', weight: 40 }, { type: 'CV', weight: 35 }, { type: 'CVCC', weight: 15 }, { type: 'CCV', weight: 10 }],
+    patterns: [{ type: 'CVC', weight: 45 }, { type: 'CV', weight: 35 }, { type: 'CVCC', weight: 10 }, { type: 'CCV', weight: 10 }],
     elements: { starts: ['Arn', 'Bjorn', 'Dag', 'Ei', 'Frey', 'Gunn', 'Har', 'Ing', 'Odd', 'Rag', 'Sig', 'Thor', 'Ulf', 'Val'], ends: ['ar', 'ir', 'or', 'ald', 'ulf', 'ard', 'mund', 'leif', 'geir', 'dis', 'hild', 'run', 'stein'] },
     endings: ['ar', 'ir', 'ur', 'or', 'ald', 'ulf', 'ard', 'mund', 'leif', 'geir', 'a', 'i']
   },
 
   slavic: {
     onsets: {
-      simple: ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z', 'ch', 'sh', 'zh'],
-      clusters: ['br', 'dr', 'gr', 'kr', 'pr', 'tr', 'bl', 'gl', 'kl', 'pl', 'sl', 'sm', 'sn', 'sp', 'st', 'str', 'sv', 'vl', 'vr', 'zd', 'zl', 'zn']
+      simple: ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z'],
+      clusters: ['br', 'dr', 'gr', 'kr', 'pr', 'tr', 'bl', 'gl', 'kl', 'pl', 'sl', 'sv', 'vl', 'zl']
     },
-    vowels: { short: ['a', 'e', 'i', 'o', 'u', 'y'], long: ['ia', 'ie', 'io', 'iu'] },
-    codas: { simple: ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'z', 'ch', 'sh'], clusters: ['sk', 'st', 'nd', 'nk', 'rk', 'rd', 'rn', 'rt'] },
-    patterns: [{ type: 'CV', weight: 35 }, { type: 'CVC', weight: 35 }, { type: 'CCV', weight: 20 }, { type: 'CCVC', weight: 10 }],
-    elements: { starts: ['Bog', 'Bor', 'Dob', 'Drag', 'Jar', 'Mir', 'Rad', 'Ros', 'Slav', 'Stan', 'Vlad', 'Vol', 'Yar', 'Zor'], ends: ['mir', 'slav', 'mil', 'rad', 'vid', 'bor', 'gor', 'dan', 'ko', 'ka', 'ov', 'ev'] },
-    endings: ['a', 'ya', 'mir', 'slav', 'rad', 'ov', 'ev', 'ko', 'ka', 'an', 'in', 'il']
+    vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ia', 'io'] },
+    codas: { simple: ['d', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v'], clusters: ['st', 'nd', 'rn'] },
+    patterns: [{ type: 'CV', weight: 50 }, { type: 'CVC', weight: 35 }, { type: 'CCV', weight: 12 }, { type: 'CCVC', weight: 3 }],
+    elements: { starts: ['Bel', 'Bog', 'Bor', 'Dob', 'Drag', 'Jar', 'Lad', 'Lub', 'Mil', 'Mir', 'Rad', 'Slav', 'Stan', 'Svet', 'Vlad', 'Vol', 'Yar', 'Zar', 'Zlat'], ends: ['mir', 'slav', 'mil', 'rad', 'vid', 'bor', 'gor', 'dan', 'yar', 'zar'] },
+    endings: ['a', 'mir', 'slav', 'rad', 'ov', 'ko', 'ka', 'an', 'in', 'il', 'vid', 'yar']
   },
 
   arabic: {
-    onsets: { simple: ['b', 'd', 'f', 'h', 'j', 'k', 'l', 'm', 'n', 'q', 'r', 's', 'sh', 't', 'th', 'w', 'y', 'z', 'kh', 'gh'], clusters: [] },
+    onsets: { simple: ['b', 'd', 'f', 'h', 'j', 'k', 'l', 'm', 'n', 'q', 'r', 's', 'sh', 't', 'w', 'y', 'z', 'kh', 'gh'], clusters: [] },
     vowels: { short: ['a', 'i', 'u'], long: ['aa', 'ii', 'uu', 'ai', 'au'] },
-    codas: { simple: ['b', 'd', 'f', 'h', 'k', 'l', 'm', 'n', 'r', 's', 't', 'z'], clusters: [] },
-    patterns: [{ type: 'CV', weight: 50 }, { type: 'CVC', weight: 45 }, { type: 'V', weight: 5 }],
+    codas: { simple: ['b', 'd', 'f', 'h', 'k', 'l', 'm', 'n', 'r', 's', 't'], clusters: [] },
+    patterns: [{ type: 'CV', weight: 60 }, { type: 'CVC', weight: 35 }, { type: 'V', weight: 5 }],
     elements: { starts: ['Abd', 'Ah', 'Al', 'Am', 'As', 'Fah', 'Far', 'Has', 'Jab', 'Jam', 'Kar', 'Khal', 'Mah', 'Nas', 'Nur', 'Sal', 'Sul', 'Tar', 'Zah'], ends: ['a', 'ah', 'an', 'ar', 'i', 'id', 'il', 'im', 'in', 'ir', 'ud', 'ul', 'um', 'un', 'ur'] },
     endings: ['a', 'ah', 'an', 'ar', 'i', 'id', 'im', 'in', 'ir', 'ud', 'ul', 'um', 'un']
   },
 
   eastasian: {
     onsets: { simple: ['b', 'ch', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'w', 'y', 'z'], clusters: [] },
-    vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ai', 'ao', 'ei', 'ia', 'ie', 'iu', 'ou', 'ua', 'ue', 'ui', 'uo'] },
-    codas: { simple: ['n', 'ng'], clusters: [] },
-    patterns: [{ type: 'CV', weight: 65 }, { type: 'V', weight: 20 }, { type: 'CVN', weight: 15 }],
-    elements: { starts: ['Chi', 'Fei', 'Hai', 'Hiro', 'Jin', 'Kai', 'Ken', 'Lei', 'Lin', 'Mei', 'Min', 'Rei', 'Ren', 'Ryu', 'Shen', 'Shin', 'Tai', 'Wei', 'Yan', 'Yu'], ends: ['ko', 'ki', 'mi', 'ri', 'chi', 'ka', 'na', 'no', 'shi', 'ta', 'to', 'ya', 'ro', 'ru'] },
-    endings: ['a', 'e', 'i', 'o', 'u', 'n', 'ng', 'ko', 'ki', 'mi', 'ri', 'ya', 'no', 'ta']
+    vowels: { short: ['a', 'e', 'i', 'o', 'u'], long: ['ai', 'ao', 'ei', 'ia', 'ie', 'ou', 'ue', 'ui'] },
+    codas: { simple: ['n'], clusters: [] },
+    patterns: [{ type: 'CV', weight: 75 }, { type: 'V', weight: 15 }, { type: 'CVN', weight: 10 }],
+    elements: { starts: ['Chi', 'Fei', 'Hai', 'Hiro', 'Jin', 'Kai', 'Ken', 'Lei', 'Lin', 'Mei', 'Min', 'Rei', 'Ren', 'Ryu', 'Shen', 'Shin', 'Tai', 'Wei', 'Yan', 'Yu', 'Aki', 'Hana', 'Kazu', 'Miko', 'Nori', 'Saku', 'Taka', 'Yuki'], ends: ['ko', 'ki', 'mi', 'ri', 'chi', 'ka', 'na', 'no', 'shi', 'ta', 'to', 'ya', 'ro', 'ru', 'ke', 'ra', 'ma'] },
+    endings: ['a', 'e', 'i', 'o', 'u', 'n', 'ko', 'ki', 'mi', 'ri', 'ya', 'no', 'ta', 'ka', 'ra']
   },
 
   southasian: {
@@ -318,6 +318,39 @@ const nameTypeElements = {
 
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+const cleanConsonantClusters = (name, region) => {
+  const maxClusters = {
+    arabic: 1,
+    eastasian: 1,
+    polynesian: 1,
+    african: 2,
+    egyptian: 2,
+    southasian: 2,
+    latin: 2,
+    greek: 2,
+    celtic: 2,
+    mesoamerican: 2,
+    western: 3,
+    norse: 3,
+    slavic: 3,
+    persian: 3,
+    spaceopera: 3,
+    cyberpunk: 3,
+    neutral: 3
+  };
+  
+  const max = maxClusters[region] || 3;
+  const consonantRun = /[bcdfghjklmnpqrstvwxyz]{2,}/gi;
+  
+  return name.replace(consonantRun, (match) => {
+    if (match.length <= max) return match;
+    const vowels = ['a', 'e', 'i', 'o', 'u'];
+    const midpoint = Math.floor(match.length / 2);
+    const vowel = vowels[Math.floor(Math.random() * vowels.length)];
+    return match.slice(0, midpoint) + vowel + match.slice(midpoint);
+  });
+};
+
 const weightedRandom = (items, weights) => {
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
@@ -376,7 +409,9 @@ const validateName = (name, region) => {
     },
     slavic: () => {
       if (diphthongs > 1) return false;
-      if (!/(?:[aeiou]|mir|slav|rad|ov|ev|ko|ka|an|in|il)$/.test(lower)) return false;
+      if (!/(?:[aeiou]|mir|slav|rad|ov|ev|ko|ka|an|in|il|vid|yar|zar)$/.test(lower)) return false;
+      if (/[bcdfghjklmnpqrstvwxz]{4,}/.test(lower)) return false;
+      if (/e$/.test(lower)) return false;
       return true;
     },
     arabic: () => {
@@ -746,8 +781,23 @@ const generateName = (config) => {
 
       if (Math.random() < 0.25 && primaryLang.endings) {
         const ending = random(primaryLang.endings);
-        if (!name.endsWith(ending.charAt(0))) {
+        const lastChar = name.slice(-1).toLowerCase();
+        const endingFirstChar = ending.charAt(0).toLowerCase();
+        const isLastCharVowel = /[aeiou]/.test(lastChar);
+        const isEndingStartsVowel = /[aeiou]/.test(endingFirstChar);
+        
+        if (isLastCharVowel && !isEndingStartsVowel) {
+          name = name + ending;
+        } else if (!isLastCharVowel && isEndingStartsVowel) {
+          name = name + ending;
+        } else if (isLastCharVowel && isEndingStartsVowel) {
           name = name.slice(0, -1) + ending;
+        } else {
+          if (Math.random() < 0.5) {
+            name = name + 'a' + ending;
+          } else {
+            name = name.slice(0, -1) + ending;
+          }
         }
       }
     }
@@ -777,10 +827,15 @@ const generateName = (config) => {
     }
     if (mustNotContain && name.toLowerCase().includes(mustNotContain.toLowerCase())) continue;
 
+    // Clean up consonant clusters based on region rules
+    const primaryRegion = regions.length > 0 ? regions[0] : 'neutral';
+    name = cleanConsonantClusters(name, primaryRegion);
+
     // Validate name for the linguistic region (skip for time period names)
     if (!(periodMod && nameType === 'character')) {
-      const primaryRegion = regions.length > 0 ? regions[0] : 'neutral';
-      if (!validateName(name, primaryRegion)) continue;
+      const regionsToCheck = regions.length > 0 ? regions : ['neutral'];
+      const isValidForAnyRegion = regionsToCheck.some(r => validateName(name, r));
+      if (!isValidForAnyRegion) continue;
     }
 
     break;
