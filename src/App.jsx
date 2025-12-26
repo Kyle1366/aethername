@@ -432,7 +432,23 @@ const breakIntoSyllables = (str) => {
     prevWasVowel = isVowel;
   }
   
-  if (current) syllables.push(current);
+  if (current) {
+    // Check if the final chunk has multiple vowel groups that should be split
+    // e.g., "osen" should become "os" + "en"
+    const finalVowelGroups = current.match(/[aeiouy]+/g);
+    if (finalVowelGroups && finalVowelGroups.length > 1) {
+      // Find the split point - after the first vowel group and its following consonants
+      const firstVowelMatch = current.match(/^([^aeiouy]*[aeiouy]+[^aeiouy]?)(.+)$/);
+      if (firstVowelMatch && firstVowelMatch[2] && /[aeiouy]/.test(firstVowelMatch[2])) {
+        syllables.push(firstVowelMatch[1]);
+        syllables.push(firstVowelMatch[2]);
+      } else {
+        syllables.push(current);
+      }
+    } else {
+      syllables.push(current);
+    }
+  }
   
   return syllables.length > 0 ? syllables : [str];
 };
@@ -763,7 +779,7 @@ const generateSyllable = (lang, patternType, tone = null) => {
 // ============================================================================
 
 const generateName = (config, returnMetadata = false) => {
-  const { nameType, regions, tones, timePeriod, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents } = config;
+  const { nameType, regions, tones, timePeriod, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents, nameStyle } = config;
 
   const regionList = regions.length > 0 ? regions.slice(0, 4) : ['neutral'];
   // Pick ONE region for this entire name based on equal probability
@@ -801,10 +817,26 @@ const generateName = (config, returnMetadata = false) => {
     metadata.modifications = [];
 
     // For non-character types, use type-specific elements
-    if (nameType !== 'character' && typeElements.prefixes.length > 0 && Math.random() < 0.7) {
+    // If nameStyle is set (not default), always use type elements for consistency
+    const useTypeElements = nameType !== 'character' && typeElements.prefixes.length > 0;
+    const forceTypeElements = nameStyle && nameStyle !== 'default';
+    
+    if (useTypeElements && (forceTypeElements || Math.random() < 0.7)) {
       const prefix = random(typeElements.prefixes);
       const suffix = random(typeElements.suffixes);
-      name = prefix + suffix;
+      
+      // Apply name style
+      if (nameStyle === 'spaced') {
+        name = prefix + ' ' + capitalize(suffix);
+      } else if (nameStyle === 'title') {
+        name = 'The ' + prefix + ' ' + capitalize(suffix);
+      } else {
+        // compound or default - join directly
+        name = prefix + suffix;
+      }
+      metadata.method = 'type-elements';
+      metadata.elements = { start: prefix, end: suffix };
+      metadata.skipClusterCleanup = true; // These are real English words, don't mangle them
     }
     // Use time period elements - ALWAYS apply if user selected one (characters only)
     else if (periodMod && nameType === 'character') {
@@ -959,11 +991,14 @@ const generateName = (config, returnMetadata = false) => {
     if (mustNotContain && name.toLowerCase().includes(mustNotContain.toLowerCase())) continue;
 
     // Clean up consonant clusters based on region rules
+    // Skip for type-element names since they use real English words
     const primaryRegion = regions.length > 0 ? regions[0] : 'neutral';
-    const beforeCleanup = name;
-    name = cleanConsonantClusters(name, primaryRegion);
-    if (name !== beforeCleanup) {
-      metadata.modifications.push('cluster-cleanup');
+    if (!metadata.skipClusterCleanup) {
+      const beforeCleanup = name;
+      name = cleanConsonantClusters(name, primaryRegion);
+      if (name !== beforeCleanup) {
+        metadata.modifications.push('cluster-cleanup');
+      }
     }
 
     // Validate name for the linguistic region (skip for time period names)
@@ -1174,8 +1209,9 @@ const Tooltip = ({ content, children }) => {
   const [show, setShow] = useState(false);
   const [coords, setCoords] = useState({ left: 0, top: 0, strategy: 'side' });
   const triggerRef = useRef(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  const handleInteraction = () => {
+  const updatePosition = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       const screenWidth = window.innerWidth;
@@ -1191,17 +1227,46 @@ const Tooltip = ({ content, children }) => {
       }
 
       setCoords({ left, top, strategy });
-      setShow((prev) => !prev);
     }
   };
+
+  const handleMouseEnter = () => {
+    if (!isMobile) {
+      updatePosition();
+      setShow(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isMobile) {
+      setShow(false);
+    }
+  };
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (isMobile) {
+      updatePosition();
+      setShow(prev => !prev);
+    }
+  };
+
+  // Close on outside click for mobile
+  useEffect(() => {
+    if (isMobile && show) {
+      const handleOutsideClick = () => setShow(false);
+      document.addEventListener('click', handleOutsideClick);
+      return () => document.removeEventListener('click', handleOutsideClick);
+    }
+  }, [isMobile, show]);
 
   return (
     <>
       <div 
         ref={triggerRef}
-        onClick={handleInteraction}
-        onMouseEnter={handleInteraction} 
-        onMouseLeave={() => setShow(false)} 
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter} 
+        onMouseLeave={handleMouseLeave} 
         className="relative inline-block cursor-help active:scale-95 transition-transform"
       >
         {children}
@@ -1233,7 +1298,7 @@ const Tooltip = ({ content, children }) => {
   );
 };
 
-const SectionHeader = ({ title, helpText, icon: Icon }) => (
+const SectionHeader = ({ title, helpText, icon: Icon, isLocked, onToggleLock, lockKey }) => (
   <div className="flex items-center gap-2 mb-3">
     {Icon && <Icon className="w-4 h-4 text-indigo-400" />}
     <h3 className="text-sm font-semibold text-slate-200 tracking-wide uppercase">{title}</h3>
@@ -1241,6 +1306,23 @@ const SectionHeader = ({ title, helpText, icon: Icon }) => (
       <Tooltip content={helpText}>
         <HelpCircle className="w-4 h-4 text-slate-500 hover:text-indigo-400 transition-colors" />
       </Tooltip>
+    )}
+    {onToggleLock && (
+      <button 
+        onClick={() => onToggleLock(lockKey)}
+        className={`ml-auto p-1 rounded transition-all ${isLocked ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'}`}
+        title={isLocked ? 'Unlock (will change on Surprise Me)' : 'Lock (won\'t change on Surprise Me)'}
+      >
+        {isLocked ? (
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+          </svg>
+        )}
+      </button>
     )}
   </div>
 );
@@ -1278,9 +1360,260 @@ const SkeletonCard = () => (
   </div>
 );
 
-const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isSelectedForRefine, onRefineSelect, metadata }) => {
+const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
+  const [selectedIndices, setSelectedIndices] = useState(new Set());
+  const [coords, setCoords] = useState({ left: 0, top: 0 });
+  const triggerRef = useRef(null);
+  const popoverRef = useRef(null);
+
+  // Update position
+  const updatePosition = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const popoverWidth = 280;
+      const popoverHeight = 220;
+      
+      // Position above the button, aligned to the right
+      let left = rect.right - popoverWidth;
+      let top = rect.top - popoverHeight - 8;
+      
+      // If too far left, align to left edge of button
+      if (left < 16) {
+        left = rect.left;
+      }
+      
+      // If too high, show below instead
+      if (top < 16) {
+        top = rect.bottom + 8;
+      }
+      
+      // Keep within viewport
+      const maxLeft = window.innerWidth - popoverWidth - 16;
+      if (left > maxLeft) left = maxLeft;
+      
+      setCoords({ left, top });
+    }
+  }, []);
+
+  // Update position on scroll, close on outside click
+  useEffect(() => {
+    if (isOpen) {
+      const handleOutsideClick = (e) => {
+        if (triggerRef.current && triggerRef.current.contains(e.target)) return;
+        if (popoverRef.current && popoverRef.current.contains(e.target)) return;
+        setIsOpen(false);
+        setSelectedIndices(new Set());
+      };
+      const handleScroll = () => {
+        updatePosition();
+      };
+      document.addEventListener('mousedown', handleOutsideClick);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', updatePosition);
+      return () => {
+        document.removeEventListener('mousedown', handleOutsideClick);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [isOpen, updatePosition]);
+
+  const handleOpen = () => {
+    if (!isOpen) {
+      updatePosition();
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+      setSelectedIndices(new Set());
+    }
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setSelectedIndices(new Set());
+  };
+
+  // Update position when opened or when name changes
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+    }
+  }, [isOpen, name, updatePosition]);
+
+  // Parse the name into tweakable parts - updates when name/metadata changes
+  const getParts = useCallback(() => {
+    // Check if name has spaces (for spaced/title style)
+    const hasSpaces = name.includes(' ');
+    
+    if (hasSpaces) {
+      // Split by spaces and treat each word as a part
+      const words = name.split(' ').filter(w => w.length > 0);
+      return words.map((word, i) => ({
+        id: `word-${i}`,
+        text: word,
+        type: 'word',
+        region: metadata?.selectedRegion || 'neutral',
+        isTitle: word.toLowerCase() === 'the'
+      }));
+    } else if (metadata?.method === 'syllable' && metadata.syllables?.length > 0) {
+      return metadata.syllables.map((s, i) => ({
+        id: `syl-${i}`,
+        text: s.text,
+        type: 'syllable',
+        region: s.region
+      }));
+    } else if (metadata?.method === 'elements' && metadata.elements?.start) {
+      return [
+        { id: 'el-start', text: metadata.elements.start, type: 'element', region: metadata.elements.startRegion },
+        { id: 'el-end', text: metadata.elements.end, type: 'element', region: metadata.elements.endRegion }
+      ];
+    } else if (metadata?.method === 'mixed' && metadata.parts?.length > 0) {
+      return metadata.parts.map((p, i) => ({
+        id: `mix-${i}`,
+        text: p.text,
+        type: p.type,
+        region: p.region
+      }));
+    } else if (metadata?.method === 'type-elements' && metadata.elements?.start) {
+      return [
+        { id: 'type-start', text: metadata.elements.start, type: 'type-prefix', region: metadata?.selectedRegion },
+        { id: 'type-end', text: metadata.elements.end, type: 'type-suffix', region: metadata?.selectedRegion }
+      ];
+    } else {
+      // Fallback: break into syllables manually
+      const syllables = breakIntoSyllables(name);
+      return syllables.map((s, i) => ({
+        id: `auto-${i}`,
+        text: s,
+        type: 'syllable',
+        region: metadata?.selectedRegion || 'neutral'
+      }));
+    }
+  }, [name, metadata]);
+
+  const parts = getParts();
+
+  const togglePart = (index) => {
+    setSelectedIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIndices.size === parts.length) {
+      setSelectedIndices(new Set());
+    } else {
+      setSelectedIndices(new Set(parts.map((_, i) => i)));
+    }
+  };
+
+  const handleTweak = () => {
+    const partsToChange = selectedIndices.size === 0 
+      ? parts.map(p => p.id) // If none selected, tweak all
+      : Array.from(selectedIndices).map(i => parts[i]?.id).filter(Boolean);
+    onTweak(partsToChange, parts);
+    // Keep popover open AND keep selection so user can keep tweaking the same parts
+    // Selection indices are preserved - they'll map to the new parts at the same positions
+  };
+
+  return (
+    <>
+      <button 
+        ref={triggerRef}
+        onClick={handleOpen} 
+        className={`p-1 transition-all duration-200 ${isOpen ? 'text-purple-400 scale-110' : 'text-slate-600 hover:text-purple-400 hover:scale-110'}`}
+        title="Tweak this name"
+      >
+        <RefreshCw className="w-4 h-4 md:w-5 md:h-5" />
+      </button>
+      
+      {isOpen && createPortal(
+        <div 
+          ref={popoverRef}
+          className="fixed bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-3 min-w-[280px] animate-in fade-in zoom-in-95 duration-150"
+          style={{ 
+            left: coords.left, 
+            top: coords.top,
+            zIndex: 99999 
+          }}
+        >
+          {/* Header with close button */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-slate-500 font-medium">Click parts to tweak:</div>
+            <button 
+              onClick={handleClose}
+              className="p-1 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          
+          {/* Current name preview */}
+          <div className="text-center mb-2 py-1.5 px-2 bg-slate-800/30 rounded-lg">
+            <span className="text-sm font-semibold text-slate-200">{name}</span>
+          </div>
+          
+          {/* Name parts */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3">
+            {parts.map((part, i) => (
+              <React.Fragment key={`part-${i}`}>
+                <button
+                  onClick={() => togglePart(i)}
+                  className={`px-2.5 py-1.5 rounded-lg font-mono text-sm transition-all ${
+                    selectedIndices.has(i)
+                      ? 'bg-purple-500/30 border-purple-500/50 text-purple-300 border shadow-lg shadow-purple-500/10'
+                      : 'bg-slate-800/50 border-slate-700/50 text-slate-300 border hover:border-purple-500/30 hover:text-purple-300'
+                  }`}
+                >
+                  {part.text}
+                </button>
+                {i < parts.length - 1 && (
+                  <span className="text-slate-600 text-xs">·</span>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={selectAll}
+              className="flex-1 px-2 py-1.5 text-xs rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-slate-300 hover:border-slate-600 transition-colors"
+            >
+              {selectedIndices.size === parts.length ? 'Deselect All' : 'Select All'}
+            </button>
+            <button
+              onClick={handleTweak}
+              className="flex-1 px-2 py-1.5 text-xs rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-300 hover:bg-purple-500/30 transition-colors font-medium"
+            >
+              <span className="flex items-center justify-center gap-1">
+                <RefreshCw className="w-3 h-3" />
+                Tweak {selectedIndices.size === 0 ? 'All' : `(${selectedIndices.size})`}
+              </span>
+            </button>
+          </div>
+          
+          {/* Hint */}
+          <div className="text-[10px] text-slate-600 mt-2 text-center">
+            {selectedIndices.size === 0 ? 'No selection = tweak entire name' : `${selectedIndices.size} part${selectedIndices.size > 1 ? 's' : ''} selected`}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+};
+
+const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isSelectedForRefine, onRefineSelect, metadata, onRerollSiblings }) => {
   const [showStats, setShowStats] = useState(false);
   const [statsCopied, setStatsCopied] = useState(false);
+  const [tweakPopoverOpen, setTweakPopoverOpen] = useState(false);
   
   const copyStats = () => {
     if (!metadata) return;
@@ -1325,7 +1658,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
   };
 
   return (
-    <div className={`group relative p-3 md:p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border rounded-xl hover:shadow-lg transition-all duration-300 ${isSelectedForRefine ? 'border-teal-500/50 shadow-teal-500/10' : 'border-slate-700/50 hover:border-indigo-500/30 hover:shadow-indigo-500/5'}`}>
+    <div className={`group relative p-3 md:p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border rounded-xl hover:shadow-lg transition-all duration-300 overflow-visible ${isSelectedForRefine ? 'border-teal-500/50 shadow-teal-500/10' : 'border-slate-700/50 hover:border-indigo-500/30 hover:shadow-indigo-500/5'}`}>
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -1342,6 +1675,15 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
             <button onClick={() => setShowStats(!showStats)} className={`p-1 transition-all duration-200 ${showStats ? 'text-amber-400 scale-110' : 'text-slate-600 hover:text-amber-400 hover:scale-110'}`}>
               <Glasses className="w-4 h-4 md:w-5 md:h-5" />
             </button>
+            {onRerollSiblings && (
+              <TweakPopover 
+                name={name} 
+                metadata={metadata} 
+                onTweak={onRerollSiblings} 
+                isOpen={tweakPopoverOpen}
+                setIsOpen={setTweakPopoverOpen}
+              />
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <span className="text-base md:text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent break-all">{name}</span>
@@ -1495,6 +1837,7 @@ export default function AetherNames() {
     minSyllables: 2,
     maxSyllables: 3,
     genderLean: 'any',
+    nameStyle: 'default', // default, compound, spaced, title
     allowApostrophes: false,
     allowHyphens: false,
     allowAccents: false,
@@ -1506,6 +1849,20 @@ export default function AetherNames() {
   });
 
   const [generatedNames, setGeneratedNames] = useState([]);
+  const [nameHistory, setNameHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [lockedSettings, setLockedSettings] = useState({
+    nameType: false,
+    genre: false,
+    timePeriod: false,
+    genderLean: false,
+    tones: false,
+    regions: false,
+    structure: false,
+    style: false,
+    filters: false,
+    output: false
+  });
   const [favorites, setFavorites] = useState([]);
   const [copiedName, setCopiedName] = useState(null);
   const [refineSelections, setRefineSelections] = useState([]);
@@ -1517,6 +1874,7 @@ export default function AetherNames() {
   useEffect(() => { setAnimateHeader(true); }, []);
 
   const updateConfig = (key, value) => setConfig(prev => ({ ...prev, [key]: value }));
+  const toggleLock = (key) => setLockedSettings(prev => ({ ...prev, [key]: !prev[key] }));
   const toggleArray = (key, value) => {
     setConfig(prev => {
       const current = prev[key];
@@ -1554,10 +1912,18 @@ export default function AetherNames() {
           }
         }
       }
+      // Save to history before updating
+      setNameHistory(prev => {
+        const newHistory = [...prev.slice(0, historyIndex + 1), names];
+        // Keep only last 10 generations
+        return newHistory.slice(-10);
+      });
+      setHistoryIndex(prev => Math.min(prev + 1, 9));
+      
       setGeneratedNames(names);
       setIsGenerating(false);
     }, 100);
-  }, [config]);
+  }, [config, historyIndex]);
 
   // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to generate
   useEffect(() => {
@@ -1675,6 +2041,293 @@ export default function AetherNames() {
   }, [config, refineSelections]);
 
   const clearRefineSelections = () => setRefineSelections([]);
+
+  // History navigation
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < nameHistory.length - 1;
+
+  const undo = () => {
+    if (canUndo) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setGeneratedNames(nameHistory[newIndex]);
+    }
+  };
+
+  const redo = () => {
+    if (canRedo) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setGeneratedNames(nameHistory[newIndex]);
+    }
+  };
+
+  // TWEAK NAME - Generate a variation based on which parts user selected
+  const tweakName = useCallback((nameObj, nameIndex, selectedPartIds, allParts) => {
+    if (!nameObj.metadata) return;
+    
+    const metadata = nameObj.metadata;
+    const regions = metadata.allRegions || [metadata.selectedRegion];
+    const primaryRegion = regions[0];
+    const lang = linguisticData[primaryRegion] || linguisticData.neutral;
+    const tone = metadata.tones?.[0] ? toneModifiers[metadata.tones[0]] : null;
+    
+    // If called with part selection info, use targeted tweaking
+    if (selectedPartIds && allParts) {
+      const partsToChange = new Set(selectedPartIds);
+      const newParts = allParts.map(part => {
+        if (!partsToChange.has(part.id)) {
+          return part; // Keep unchanged
+        }
+        
+        // Generate a new part based on type
+        const partRegion = part.region || primaryRegion;
+        const partLang = linguisticData[partRegion] || lang;
+        
+        if (part.isTitle) {
+          // Don't change "The"
+          return part;
+        }
+        
+        if (part.type === 'type-prefix') {
+          // Use type-specific prefixes
+          const nameType = metadata.nameType || 'location';
+          const typeElems = nameTypeElements[nameType] || nameTypeElements.location;
+          if (typeElems.prefixes?.length > 0) {
+            const newText = random(typeElems.prefixes.filter(p => p !== part.text));
+            return { ...part, text: newText || random(typeElems.prefixes) };
+          }
+        }
+        
+        if (part.type === 'type-suffix') {
+          // Use type-specific suffixes
+          const nameType = metadata.nameType || 'location';
+          const typeElems = nameTypeElements[nameType] || nameTypeElements.location;
+          if (typeElems.suffixes?.length > 0) {
+            const newText = random(typeElems.suffixes.filter(s => s !== part.text));
+            return { ...part, text: newText || random(typeElems.suffixes) };
+          }
+        }
+        
+        if (part.type === 'word') {
+          // For word parts (from spaced names), use type elements if available
+          const nameType = metadata.nameType || 'location';
+          const typeElems = nameTypeElements[nameType] || nameTypeElements.location;
+          const isFirst = allParts.indexOf(part) === 0 || (allParts[0]?.isTitle && allParts.indexOf(part) === 1);
+          
+          if (isFirst && typeElems.prefixes?.length > 0) {
+            const newText = random(typeElems.prefixes.filter(p => p.toLowerCase() !== part.text.toLowerCase()));
+            return { ...part, text: newText || random(typeElems.prefixes) };
+          } else if (typeElems.suffixes?.length > 0) {
+            const newText = random(typeElems.suffixes.filter(s => s.toLowerCase() !== part.text.toLowerCase()));
+            return { ...part, text: newText || random(typeElems.suffixes) };
+          }
+        }
+        
+        if (part.type === 'element') {
+          // Determine if it's a start or end element
+          const isStart = part.id.includes('start') || allParts.indexOf(part) === 0;
+          if (isStart && partLang.elements?.starts) {
+            const newText = random(partLang.elements.starts.filter(s => s !== part.text));
+            return { ...part, text: newText || random(partLang.elements.starts) };
+          } else if (partLang.elements?.ends) {
+            const newText = random(partLang.elements.ends.filter(e => e !== part.text));
+            return { ...part, text: newText || random(partLang.elements.ends) };
+          }
+        }
+        
+        // For syllables or fallback
+        const pattern = weightedRandom(partLang.patterns.map(p => p.type), partLang.patterns.map(p => p.weight));
+        const newSyllable = generateSyllable(partLang, pattern, tone);
+        return { ...part, text: newSyllable };
+      });
+      
+      // Build the new name
+      let newName;
+      const hasWordParts = newParts.some(p => p.type === 'word');
+      const hasTypeParts = newParts.some(p => p.type === 'type-prefix' || p.type === 'type-suffix');
+      
+      if (hasWordParts) {
+        // Join with spaces, preserve "The" at the start
+        newName = newParts.map((p, i) => {
+          if (p.isTitle) return p.text; // Keep "The" as-is
+          return capitalize(p.text.toLowerCase());
+        }).join(' ');
+      } else if (hasTypeParts) {
+        // Type-element names: check original name style
+        const originalName = nameObj.name;
+        const hadSpaces = originalName.includes(' ');
+        const hadThe = originalName.toLowerCase().startsWith('the ');
+        
+        if (hadThe) {
+          newName = 'The ' + capitalize(newParts[0].text) + ' ' + capitalize(newParts[1]?.text || '');
+        } else if (hadSpaces) {
+          newName = newParts.map(p => capitalize(p.text)).join(' ');
+        } else {
+          // Compound style - join directly
+          newName = capitalize(newParts[0].text) + newParts[1]?.text.toLowerCase();
+        }
+      } else {
+        newName = newParts.map(p => p.text).join('');
+        newName = cleanConsonantClusters(newName, primaryRegion);
+        newName = capitalize(newName.toLowerCase());
+      }
+      
+      // Build new metadata
+      const newMetadata = { ...metadata, modifications: [] };
+      if (metadata.method === 'syllable') {
+        newMetadata.syllables = newParts.map(p => ({ text: p.text, pattern: p.pattern, region: p.region }));
+      } else if (metadata.method === 'elements') {
+        newMetadata.elements = {
+          start: newParts[0]?.text,
+          startRegion: newParts[0]?.region,
+          end: newParts[1]?.text,
+          endRegion: newParts[1]?.region
+        };
+      } else if (metadata.method === 'mixed') {
+        newMetadata.parts = newParts.map(p => ({ text: p.text, type: p.type, region: p.region }));
+      } else if (metadata.method === 'type-elements') {
+        newMetadata.elements = {
+          start: newParts[0]?.text,
+          end: newParts[1]?.text
+        };
+      }
+      
+      const tweakedName = {
+        id: nameObj.id,
+        name: newName,
+        syllables: countSyllables(newName),
+        gender: classifyGender(newName),
+        metadata: newMetadata
+      };
+      
+      setGeneratedNames(prev => {
+        const newList = [...prev];
+        newList[nameIndex] = tweakedName;
+        return newList;
+      });
+      return;
+    }
+    
+    // Fallback: old behavior for full name tweak
+    const originalName = nameObj.name.toLowerCase().replace(/[^a-z]/g, '');
+    let newName = '';
+    let newMetadata = { ...metadata, modifications: [] };
+    let attempts = 0;
+    
+    while (attempts < 50) {
+      attempts++;
+      newName = '';
+      
+      const tweakType = Math.random();
+      
+      if (tweakType < 0.3 && metadata.syllables?.length > 0) {
+        // Replace random syllables
+        const syllables = metadata.syllables.map(s => {
+          if (Math.random() < 0.5) {
+            const regionForNew = s.region || primaryRegion;
+            const newLang = linguisticData[regionForNew] || lang;
+            const pattern = weightedRandom(newLang.patterns.map(p => p.type), newLang.patterns.map(p => p.weight));
+            return { ...s, text: generateSyllable(newLang, pattern, tone) };
+          }
+          return s;
+        });
+        newName = syllables.map(s => s.text).join('');
+        newMetadata.method = 'syllable';
+        newMetadata.syllables = syllables;
+        
+      } else if (tweakType < 0.5 && metadata.elements?.start) {
+        const keepStart = Math.random() < 0.5;
+        if (keepStart) {
+          const endLang = linguisticData[metadata.elements.endRegion] || lang;
+          const newEnd = random(endLang.elements?.ends || lang.endings);
+          newName = metadata.elements.start + newEnd;
+          newMetadata.elements = { ...metadata.elements, end: newEnd };
+        } else {
+          const startLang = linguisticData[metadata.elements.startRegion] || lang;
+          const newStart = random(startLang.elements?.starts || ['Ar', 'El', 'Or']);
+          newName = newStart + metadata.elements.end;
+          newMetadata.elements = { ...metadata.elements, start: newStart };
+        }
+        newMetadata.method = 'elements';
+        
+      } else {
+        // Change ending or vowels
+        const chars = originalName.split('');
+        const vowels = ['a', 'e', 'i', 'o', 'u'];
+        const vowelIndices = chars.map((c, i) => vowels.includes(c) ? i : -1).filter(i => i > 0 && i < chars.length - 1);
+        
+        if (vowelIndices.length > 0) {
+          const idx = vowelIndices[Math.floor(Math.random() * vowelIndices.length)];
+          const otherVowels = vowels.filter(v => v !== chars[idx]);
+          chars[idx] = otherVowels[Math.floor(Math.random() * otherVowels.length)];
+        }
+        
+        // Also maybe change ending
+        if (Math.random() < 0.5) {
+          const endings = lang.endings || ['a', 'an', 'en', 'or', 'ia'];
+          const newEnding = random(endings);
+          const chopAmount = Math.min(2, Math.floor(chars.length / 3));
+          newName = chars.slice(0, -chopAmount).join('') + newEnding;
+        } else {
+          newName = chars.join('');
+        }
+        newMetadata.method = metadata.method;
+      }
+      
+      newName = cleanConsonantClusters(newName, primaryRegion);
+      newName = capitalize(newName.toLowerCase());
+      
+      if (newName.length >= 3 && newName.length <= 15 && newName.toLowerCase() !== nameObj.name.toLowerCase()) {
+        break;
+      }
+    }
+    
+    if (newName.toLowerCase() === nameObj.name.toLowerCase() || newName.length < 3) {
+      const endings = lang.endings || ['a', 'an', 'en', 'or', 'ia'];
+      newName = capitalize(originalName.slice(0, -1) + random(endings));
+    }
+    
+    const tweakedName = {
+      id: nameObj.id,
+      name: newName,
+      syllables: countSyllables(newName),
+      gender: classifyGender(newName),
+      metadata: newMetadata
+    };
+    
+    setGeneratedNames(prev => {
+      const newList = [...prev];
+      newList[nameIndex] = tweakedName;
+      return newList;
+    });
+  }, []);
+
+  // SURPRISE ME - Random config and generate (respects locked settings)
+  const surpriseMe = () => {
+    const randomRegions = [...regions].sort(() => Math.random() - 0.5).slice(0, Math.floor(Math.random() * 2) + 1).map(r => r.value);
+    const randomTones = [...tones].sort(() => Math.random() - 0.5).slice(0, Math.floor(Math.random() * 2) + 1).map(t => t.value);
+    const randomGenre = genres[Math.floor(Math.random() * genres.length)].value;
+    const randomType = nameTypes[Math.floor(Math.random() * nameTypes.length)].value;
+    const randomTimePeriod = timePeriods[Math.floor(Math.random() * timePeriods.length)].value;
+    const randomGender = ['any', 'feminine', 'masculine', 'neutral'][Math.floor(Math.random() * 4)];
+    const randomStructure = [{ min: 1, max: 2 }, { min: 2, max: 3 }, { min: 3, max: 4 }][Math.floor(Math.random() * 3)];
+    
+    setConfig(prev => ({
+      ...prev,
+      genre: lockedSettings.genre ? prev.genre : randomGenre,
+      nameType: lockedSettings.nameType ? prev.nameType : randomType,
+      regions: lockedSettings.regions ? prev.regions : randomRegions,
+      tones: lockedSettings.tones ? prev.tones : randomTones,
+      timePeriod: lockedSettings.timePeriod ? prev.timePeriod : randomTimePeriod,
+      genderLean: lockedSettings.genderLean ? prev.genderLean : randomGender,
+      minSyllables: lockedSettings.structure ? prev.minSyllables : randomStructure.min,
+      maxSyllables: lockedSettings.structure ? prev.maxSyllables : randomStructure.max
+    }));
+    
+    // Generate after state updates
+    setTimeout(() => generate(), 100);
+  };
 
   // DONATE FUNCTION - Your Ko-fi link
   const openDonation = () => {
@@ -1835,6 +2488,10 @@ export default function AetherNames() {
                 <span className="text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
               </div>
             </GlowButton>
+            <GlowButton variant="secondary" onClick={surpriseMe} className="px-6" theme={config.genre}>
+              <Zap className="w-5 h-5" />
+              Surprise Me
+            </GlowButton>
             <GlowButton variant="donate" onClick={openDonation} className="px-8" theme={config.genre}>
               <Heart className="w-5 h-5" />
               Support the Creator
@@ -1879,6 +2536,9 @@ export default function AetherNames() {
                     <li>Use the "Refine" feature when you find names you almost like — it analyzes patterns and generates variations.</li>
                     <li>Combine multiple tones for unique blends (e.g., "Noble" + "Dark" for morally gray characters).</li>
                     <li>The copy format dropdown lets you export as plain text, bullets, numbered list, or comma-separated.</li>
+                    <li><span className="text-amber-400">Lock settings</span> (🔒 icon) to keep them fixed when using "Surprise Me".</li>
+                    <li>For locations/factions/items, use <span className="text-amber-400">Name Style</span> to control formatting (Ironhold vs Iron Hold vs The Iron Hold).</li>
+                    <li>Click the <RefreshCw className="w-3 h-3 inline text-purple-400" /> icon on any name to tweak specific syllables while keeping others.</li>
                   </ul>
                 </div>
               </div>
@@ -1896,7 +2556,7 @@ export default function AetherNames() {
 
               {/* Name Type */}
               <div className="mb-6">
-                <SectionHeader title="Name Type" helpText={helpTexts.nameType} icon={Sparkles} />
+                <SectionHeader title="Name Type" helpText={helpTexts.nameType} icon={Sparkles} isLocked={lockedSettings.nameType} onToggleLock={toggleLock} lockKey="nameType" />
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {nameTypes.map(t => (
                     <SelectionChip key={t.value} selected={config.nameType === t.value} onClick={() => updateConfig('nameType', t.value)}>
@@ -1906,9 +2566,36 @@ export default function AetherNames() {
                 </div>
               </div>
 
+              {/* Name Style - Only show for non-character types */}
+              {config.nameType !== 'character' && (
+                <div className="mb-6">
+                  <SectionHeader title="Name Style" helpText="How names are formatted. Default mixes styles, Compound joins words (Ironhold), Spaced separates them (Iron Hold), Title adds 'The' (The Iron Hold)." />
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: 'default', label: 'Default', example: 'Mixed styles' },
+                      { value: 'compound', label: 'Compound', example: 'Ironhold' },
+                      { value: 'spaced', label: 'Spaced', example: 'Iron Hold' },
+                      { value: 'title', label: 'Title', example: 'The Iron Hold' }
+                    ].map(style => (
+                      <SelectionChip 
+                        key={style.value} 
+                        selected={config.nameStyle === style.value} 
+                        onClick={() => updateConfig('nameStyle', style.value)}
+                        color="amber"
+                      >
+                        <div className="flex flex-col items-center">
+                          <span className="font-medium">{style.label}</span>
+                          <span className="text-[10px] opacity-60">{style.example}</span>
+                        </div>
+                      </SelectionChip>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Genre */}
               <div className="mb-6">
-                <SectionHeader title="Genre" helpText={helpTexts.genre} icon={Globe} />
+                <SectionHeader title="Genre" helpText={helpTexts.genre} icon={Globe} isLocked={lockedSettings.genre} onToggleLock={toggleLock} lockKey="genre" />
                 <div className="grid grid-cols-3 gap-2">
                   {genres.map(g => (
                     <SelectionChip key={g.value} selected={config.genre === g.value} onClick={() => updateConfig('genre', g.value)}>
@@ -1920,7 +2607,7 @@ export default function AetherNames() {
 
               {/* Time Period */}
               <div className="mb-6">
-                <SectionHeader title="Time Period" helpText={helpTexts.timePeriod} icon={Scroll} />
+                <SectionHeader title="Time Period" helpText={helpTexts.timePeriod} icon={Scroll} isLocked={lockedSettings.timePeriod} onToggleLock={toggleLock} lockKey="timePeriod" />
                 <div className="flex flex-wrap gap-2">
                   {timePeriods.map(t => (
                     <SelectionChip key={t.value} selected={config.timePeriod === t.value} onClick={() => updateConfig('timePeriod', t.value)} color="emerald">
@@ -1932,7 +2619,7 @@ export default function AetherNames() {
 
               {/* Gender Lean */}
               <div className="mb-6">
-                <SectionHeader title="Gender Lean" helpText="Filter names by masculine/feminine sound patterns based on endings and phonetics. Does not change generation, only filters results." />
+                <SectionHeader title="Gender Lean" helpText="Filter names by masculine/feminine sound patterns based on endings and phonetics. Does not change generation, only filters results." isLocked={lockedSettings.genderLean} onToggleLock={toggleLock} lockKey="genderLean" />
                 <div className="flex flex-wrap gap-2">
                   {[
                     { value: 'any', label: 'Any' },
@@ -1949,7 +2636,7 @@ export default function AetherNames() {
 
               {/* Tone */}
               <div className="mb-6">
-                <SectionHeader title="Tone" helpText={helpTexts.tone} icon={Music} />
+                <SectionHeader title="Tone" helpText={helpTexts.tone} icon={Music} isLocked={lockedSettings.tones} onToggleLock={toggleLock} lockKey="tones" />
                 <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                   {tones.map(t => {
                     const Icon = toneIcons[t.value];
@@ -1967,7 +2654,7 @@ export default function AetherNames() {
 
               {/* Region */}
               <div className="mb-6">
-                <SectionHeader title="Linguistic Influence (max 4)" helpText={helpTexts.region} icon={Globe} />
+                <SectionHeader title="Linguistic Influence (max 4)" helpText={helpTexts.region} icon={Globe} isLocked={lockedSettings.regions} onToggleLock={toggleLock} lockKey="regions" />
                 <p className="text-xs text-slate-500 mb-2 italic">Note: Regions approximate sound patterns for English-speaking writers, not culturally authentic names for native speakers.</p>
                 <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
                   {regions.map(r => (
@@ -1986,7 +2673,7 @@ export default function AetherNames() {
 
               {/* Structure */}
               <div className="mb-6">
-                <SectionHeader title="Structure" helpText={helpTexts.structure} />
+                <SectionHeader title="Structure" helpText={helpTexts.structure} isLocked={lockedSettings.structure} onToggleLock={toggleLock} lockKey="structure" />
                 <div className="flex flex-wrap gap-2">
                   {[
                     { label: 'Short', min: 1, max: 2 },
@@ -2087,6 +2774,29 @@ export default function AetherNames() {
                 </h2>
                 {generatedNames.length > 0 && (
                   <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Undo/Redo buttons */}
+                    <div className="flex items-center gap-1 border-r border-slate-700 pr-3">
+                      <button 
+                        onClick={undo} 
+                        disabled={!canUndo}
+                        className={`p-1.5 rounded transition-colors ${canUndo ? 'text-slate-400 hover:text-indigo-400 hover:bg-slate-800' : 'text-slate-700 cursor-not-allowed'}`}
+                        title="Undo (previous generation)"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={redo} 
+                        disabled={!canRedo}
+                        className={`p-1.5 rounded transition-colors ${canRedo ? 'text-slate-400 hover:text-indigo-400 hover:bg-slate-800' : 'text-slate-700 cursor-not-allowed'}`}
+                        title="Redo (next generation)"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                        </svg>
+                      </button>
+                    </div>
                     <select
                       value={copyFormat}
                       onChange={e => setCopyFormat(e.target.value)}
@@ -2134,7 +2844,7 @@ export default function AetherNames() {
                     <p className="text-slate-600 text-sm mt-2">Each name follows authentic linguistic rules</p>
                   </div>
                 ) : (
-                  generatedNames.map(n => (
+                  generatedNames.map((n, index) => (
                     <NameCard
                       key={n.id}
                       name={n.name}
@@ -2146,6 +2856,7 @@ export default function AetherNames() {
                       isSelectedForRefine={isSelectedForRefine(n.name)}
                       onRefineSelect={() => toggleRefineSelection(n)}
                       metadata={n.metadata}
+                      onRerollSiblings={(selectedPartIds, allParts) => tweakName(n, index, selectedPartIds, allParts)}
                     />
                   ))
                 )}
