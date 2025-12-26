@@ -1614,6 +1614,7 @@ export default function AetherNames() {
               {/* Region */}
               <div className="mb-6">
                 <SectionHeader title="Linguistic Influence (max 4)" helpText={helpTexts.region} icon={Globe} />
+                <p className="text-xs text-slate-500 mb-2 italic">Note: Regions approximate sound patterns for English-speaking writers, not culturally authentic names for native speakers.</p>
                 <div className="max-h-48 overflow-y-auto pr-2 space-y-2">
                   {regions.map(r => (
                     <SelectionChip key={r.value} selected={config.regions.includes(r.value)} onClick={() => toggleArray('regions', r.value)} color="teal">
