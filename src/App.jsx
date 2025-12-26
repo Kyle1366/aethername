@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses } from 'lucide-react';
 
 // ============================================================================
 // LINGUISTICALLY AUTHENTIC PHONOTACTIC DATA
@@ -365,8 +365,76 @@ const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
 const countSyllables = (str) => {
   const lower = str.toLowerCase().replace(/[^a-z]/g, '');
-  const matches = lower.match(/[aeiouy]+/g);
-  return matches ? matches.length : 1;
+  if (lower.length <= 3) return 1;
+  
+  // Count vowel groups
+  let count = 0;
+  let prevWasVowel = false;
+  
+  for (let i = 0; i < lower.length; i++) {
+    const isVowel = /[aeiouy]/.test(lower[i]);
+    if (isVowel && !prevWasVowel) {
+      count++;
+    }
+    prevWasVowel = isVowel;
+  }
+  
+  // Adjust for silent e at end
+  if (lower.endsWith('e') && count > 1 && !/[aeiouy]/.test(lower[lower.length - 2])) {
+    count--;
+  }
+  
+  // Adjust for common endings that don't add syllables
+  if (lower.endsWith('le') && lower.length > 2 && !/[aeiouy]/.test(lower[lower.length - 3])) {
+    count++;
+  }
+  
+  return Math.max(1, count);
+};
+
+const breakIntoSyllables = (str) => {
+  const lower = str.toLowerCase().replace(/[^a-z-]/g, '');
+  const syllables = [];
+  let current = '';
+  let prevWasVowel = false;
+  
+  for (let i = 0; i < lower.length; i++) {
+    const char = lower[i];
+    
+    // Handle hyphens as natural breaks
+    if (char === '-') {
+      if (current) syllables.push(current);
+      current = '';
+      prevWasVowel = false;
+      continue;
+    }
+    
+    const isVowel = /[aeiouy]/.test(char);
+    
+    // Start new syllable on vowel after consonant (if we have content)
+    if (isVowel && !prevWasVowel && current.length > 0 && syllables.length < 10) {
+      // Check if we should split before or after
+      const hasVowelInCurrent = /[aeiouy]/.test(current);
+      if (hasVowelInCurrent) {
+        // Split: move last consonant(s) to new syllable
+        const match = current.match(/([^aeiouy]*)$/);
+        if (match && match[1]) {
+          const consonants = match[1];
+          if (consonants.length > 0 && current.length > consonants.length) {
+            syllables.push(current.slice(0, -consonants.length));
+            current = consonants;
+          }
+        }
+      }
+    }
+    
+    current += char;
+    prevWasVowel = isVowel;
+  }
+  
+  if (current) syllables.push(current);
+  
+  return syllables.length > 0 ? syllables : [str];
 };
 
 const validateName = (name, region) => {
@@ -611,6 +679,11 @@ const generateRefinedName = (config, patterns) => {
   while (attempts < 50) {
     attempts++;
     name = '';
+    // Reset per-attempt metadata
+    metadata.syllables = [];
+    metadata.elements = { start: null, end: null };
+    metadata.method = '';
+    metadata.modifications = [];
     
     // Favor starting with analyzed start sounds (70% chance)
     if (patterns.startSounds.length > 0 && Math.random() < 0.7) {
@@ -689,13 +762,26 @@ const generateSyllable = (lang, patternType, tone = null) => {
 // NAME GENERATION
 // ============================================================================
 
-const generateName = (config) => {
+const generateName = (config, returnMetadata = false) => {
   const { nameType, regions, tones, timePeriod, minSyllables, maxSyllables, mustStartWith, mustContain, mustNotContain, seedWord, allowApostrophes, allowHyphens, allowAccents } = config;
 
   const regionList = regions.length > 0 ? regions.slice(0, 4) : ['neutral'];
   // Pick ONE region for this entire name based on equal probability
   const selectedRegion = regionList[Math.floor(Math.random() * regionList.length)];
   const primaryLang = linguisticData[selectedRegion] || linguisticData.neutral;
+  
+  // Track generation metadata
+  const metadata = {
+    selectedRegion: selectedRegion,
+    allRegions: regionList,
+    tones: tones.length > 0 ? tones : [],
+    timePeriod: timePeriod || 'any',
+    nameType: nameType,
+    method: '',
+    syllables: [],
+    elements: { start: null, end: null },
+    modifications: []
+  };
   const primaryTone = tones.length > 0 ? toneModifiers[tones[0]] : null;
   const periodMod = timePeriod && timePeriod !== 'any' ? timePeriodModifiers[timePeriod] : null;
   const typeElements = nameTypeElements[nameType] || nameTypeElements.character;
@@ -708,6 +794,11 @@ const generateName = (config) => {
   while (attempts < 50) {
     attempts++;
     name = '';
+    // Reset per-attempt metadata
+    metadata.syllables = [];
+    metadata.elements = { start: null, end: null };
+    metadata.method = '';
+    metadata.modifications = [];
 
     // For non-character types, use type-specific elements
     if (nameType !== 'character' && typeElements.prefixes.length > 0 && Math.random() < 0.7) {
@@ -754,12 +845,14 @@ const generateName = (config) => {
     // Use language elements
     else if (Math.random() < 0.35 && primaryLang.elements) {
       if (Math.random() < 0.5) {
+        metadata.method = 'elements';
         const prefix = primaryTone?.prefixes 
           ? random([...primaryLang.elements.starts, ...primaryTone.prefixes])
           : random(primaryLang.elements.starts);
         const suffix = primaryTone?.suffixes
           ? random([...primaryLang.elements.ends, ...primaryTone.suffixes])
           : random(primaryLang.elements.ends);
+        metadata.elements = { start: prefix, end: suffix };
         name = prefix + suffix;
       } else {
         name = random(primaryLang.elements.starts);
@@ -773,10 +866,13 @@ const generateName = (config) => {
     }
     // Pure syllable generation
     else {
+      metadata.method = 'syllable';
       for (let i = 0; i < targetSyllables; i++) {
         const lang = linguisticData[random(regionList)] || primaryLang;
         const pattern = weightedRandom(lang.patterns.map(p => p.type), lang.patterns.map(p => p.weight));
-        name += generateSyllable(lang, pattern, primaryTone);
+        const syllable = generateSyllable(lang, pattern, primaryTone);
+        metadata.syllables.push({ text: syllable, pattern: pattern });
+        name += syllable;
       }
 
       if (Math.random() < 0.25 && primaryLang.endings) {
@@ -829,7 +925,11 @@ const generateName = (config) => {
 
     // Clean up consonant clusters based on region rules
     const primaryRegion = regions.length > 0 ? regions[0] : 'neutral';
+    const beforeCleanup = name;
     name = cleanConsonantClusters(name, primaryRegion);
+    if (name !== beforeCleanup) {
+      metadata.modifications.push('cluster-cleanup');
+    }
 
     // Validate name for the linguistic region (skip for time period names)
     if (!(periodMod && nameType === 'character')) {
@@ -856,19 +956,64 @@ const generateName = (config) => {
       const match = vowelMatches[Math.floor(Math.random() * vowelMatches.length)];
       const pos = match.index + 2;
       name = name.slice(0, pos) + "'" + name.slice(pos);
+      metadata.modifications.push('apostrophe');
     }
   }
 
   if (allowHyphens && name.length > 5) {
-    const mid = Math.floor(name.length / 2);
-    let splitPos = mid;
-    for (let i = mid - 1; i <= mid + 1; i++) {
-      if (i > 1 && i < name.length - 2 && /[bcdfghjklmnpqrstvwxyz]/i.test(name[i])) {
-        splitPos = i;
-        break;
+    let splitPos = -1;
+    
+    // If we have element data, try to split at element boundary
+    if (metadata.elements?.start && metadata.elements?.end) {
+      const startLen = metadata.elements.start.length;
+      const nameLower = name.toLowerCase().replace(/[^a-z]/g, '');
+      const startLower = metadata.elements.start.toLowerCase();
+      if (nameLower.startsWith(startLower) && startLen >= 2 && startLen < name.length - 2) {
+        splitPos = startLen;
       }
     }
-    name = capitalize(name.slice(0, splitPos)) + '-' + capitalize(name.slice(splitPos));
+    
+    // Otherwise, find best natural break
+    if (splitPos === -1) {
+      const isVowel = (c) => /[aeiou]/i.test(c);
+      const mid = Math.floor(name.length / 2);
+      let bestScore = -999;
+      
+      for (let i = 2; i < name.length - 2; i++) {
+        const before = name[i - 1];
+        const after = name[i];
+        let score = 0;
+        
+        if (isVowel(before) && !isVowel(after)) score += 10;
+        else if (!isVowel(before) && isVowel(after)) score += 5;
+        else if (isVowel(before) && isVowel(after)) score -= 5;
+        else score -= 10;
+        
+        const distFromMid = Math.abs(i - mid);
+        score -= distFromMid;
+        
+        const afterPart = name.slice(i).toLowerCase();
+        if (/^[bcdfghjklmnpqrstvwxz]{2,}/.test(afterPart)) {
+          score -= 20;
+        }
+        
+        if (score > bestScore) {
+          bestScore = score;
+          splitPos = i;
+        }
+      }
+      
+      if (bestScore <= -5) {
+        splitPos = -1;
+      }
+    }
+    
+    if (splitPos > 0) {
+      const part1 = name.slice(0, splitPos);
+      const part2 = name.slice(splitPos);
+      name = capitalize(part1.toLowerCase()) + '-' + capitalize(part2.toLowerCase());
+      metadata.modifications.push('hyphen');
+    }
   }
 
   if (allowAccents) {
@@ -888,9 +1033,13 @@ const generateName = (config) => {
       const idx = vowelIndices[Math.floor(Math.random() * vowelIndices.length)];
       chars[idx] = random(accents[chars[idx].toLowerCase()]);
       name = chars.join('');
+      metadata.modifications.push('accent');
     }
   }
 
+  if (returnMetadata) {
+    return { name, metadata };
+  }
   return name;
 };
 
@@ -1094,7 +1243,30 @@ const SkeletonCard = () => (
   </div>
 );
 
-const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isSelectedForRefine, onRefineSelect }) => {
+const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isSelectedForRefine, onRefineSelect, metadata }) => {
+  const [showStats, setShowStats] = useState(false);
+  const [statsCopied, setStatsCopied] = useState(false);
+  
+  const copyStats = () => {
+    if (!metadata) return;
+    const stats = [
+      `Name: ${name}`,
+      `Breakdown: ${breakIntoSyllables(name).join(' · ')}`,
+      `Region Used: ${metadata.selectedRegion}`,
+      metadata.allRegions?.length > 1 ? `Region Pool: ${metadata.allRegions.join(', ')}` : null,
+      `Method: ${metadata.method || 'mixed'}`,
+      metadata.tones?.length > 0 ? `Tones: ${metadata.tones.join(', ')}` : null,
+      metadata.timePeriod !== 'any' ? `Era: ${metadata.timePeriod}` : null,
+      metadata.elements?.start ? `Elements: ${metadata.elements.start} + ${metadata.elements.end}` : null,
+      metadata.syllables?.length > 0 ? `Raw syllables: ${metadata.syllables.map(s => `${s.text}(${s.pattern})`).join(' -> ')}` : null,
+      metadata.modifications?.length > 0 ? `Modifications: ${metadata.modifications.join(', ')}` : null
+    ].filter(Boolean).join('\n');
+    navigator.clipboard.writeText(stats).then(() => {
+      setStatsCopied(true);
+      setTimeout(() => setStatsCopied(false), 1500);
+    });
+  };
+
   const speakName = () => {
     const utterance = new SpeechSynthesisUtterance(name);
     utterance.rate = 0.8;
@@ -1104,7 +1276,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
 
   return (
     <div className={`group relative p-3 md:p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border rounded-xl hover:shadow-lg transition-all duration-300 ${isSelectedForRefine ? 'border-teal-500/50 shadow-teal-500/10' : 'border-slate-700/50 hover:border-indigo-500/30 hover:shadow-indigo-500/5'}`}>
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -1117,6 +1289,9 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
             <button onClick={speakName} className="p-1 text-slate-600 hover:text-cyan-400 hover:scale-110 transition-all duration-200">
               <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
             </button>
+            <button onClick={() => setShowStats(!showStats)} className={`p-1 transition-all duration-200 ${showStats ? 'text-amber-400 scale-110' : 'text-slate-600 hover:text-amber-400 hover:scale-110'}`}>
+              <Glasses className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
           </div>
           <div className="min-w-0 flex-1">
             <span className="text-base md:text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent break-all">{name}</span>
@@ -1128,6 +1303,65 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
+      
+      {/* Stats for Nerds Panel */}
+      {showStats && metadata && (
+        <div className="mt-3 pt-3 border-t border-slate-700/50 text-xs text-slate-400 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded">Used: {metadata.selectedRegion}</span>
+            {metadata.allRegions?.length > 1 && (
+              <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded">Pool: {metadata.allRegions.join(', ')}</span>
+            )}
+            <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded">Method: {metadata.method || 'mixed'}</span>
+            {metadata.tones?.length > 0 && (
+              <span className="px-2 py-0.5 bg-pink-500/20 text-pink-300 rounded">Tones: {metadata.tones.join(', ')}</span>
+            )}
+            {metadata.timePeriod !== 'any' && (
+              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded">Era: {metadata.timePeriod}</span>
+            )}
+          </div>
+          {metadata.elements?.start && (
+            <div className="text-slate-500">
+              <span className="text-slate-400">Built from:</span> <span className="text-amber-400 font-mono">{metadata.elements.start}</span> + <span className="text-amber-400 font-mono">{metadata.elements.end}</span>
+            </div>
+          )}
+          {metadata.syllables?.length > 0 && (
+            <div className="text-slate-500">
+              <span className="text-slate-400">Raw syllables:</span> {metadata.syllables.map((s, i) => (
+                <span key={i} className="inline-flex items-center">
+                  <span className="text-cyan-400 font-mono">{s.text}</span>
+                  <span className="text-slate-600 text-[10px] ml-0.5">({s.pattern})</span>
+                  {i < metadata.syllables.length - 1 && <span className="mx-1 text-slate-600">→</span>}
+                </span>
+              ))}
+            </div>
+          )}
+          {metadata.modifications?.length > 0 && (
+            <div className="text-slate-500">
+              <span className="text-slate-400">Style applied:</span> {metadata.modifications.map((m, i) => (
+                <span key={i} className="px-1.5 py-0.5 bg-slate-700/50 text-orange-400 rounded text-[10px] ml-1">{m}</span>
+              ))}
+            </div>
+          )}
+          <div className="text-slate-500">
+            <span className="text-slate-400">Breakdown:</span>{' '}
+            <span className="text-green-400 font-mono">{breakIntoSyllables(name).join(' · ')}</span>
+          </div>
+          {metadata.modifications?.length > 0 && (
+            <div className="text-slate-600 text-[10px] italic">
+              Note: Final name modified by validation, cleanup, and/or styling.
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={copyStats}
+            className={`mt-2 flex items-center gap-1.5 px-2 py-1 rounded text-[10px] transition-colors ${statsCopied ? 'bg-green-500/20 text-green-400' : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-slate-300'}`}
+          >
+            {statsCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {statsCopied ? 'Copied!' : 'Copy Stats for Bug Report'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -1193,11 +1427,13 @@ export default function AetherNames() {
       let attempts = 0;
       while (names.length < config.nameCount && attempts < config.nameCount * 50) {
         attempts++;
-        const name = generateName(config);
+        const result = generateName(config, true);
+        const name = result.name;
+        const metadata = result.metadata;
         if (!names.some(n => n.name.toLowerCase() === name.toLowerCase()) && name.length >= 3 && name.length <= 20) {
           const gender = classifyGender(name);
           if (config.genderLean === 'any' || gender === config.genderLean || gender === 'neutral') {
-            names.push({ id: Date.now() + Math.random(), name, syllables: countSyllables(name), gender });
+            names.push({ id: Date.now() + Math.random(), name, syllables: countSyllables(name), gender, metadata });
           }
         }
       }
@@ -1517,6 +1753,7 @@ export default function AetherNames() {
                     <li><Star className="w-4 h-4 inline text-yellow-400" /> <span className="text-yellow-400">Star</span> — Add to favorites. Favorites are saved at the bottom and can be exported.</li>
                     <li><FlaskConical className="w-4 h-4 inline text-teal-400" /> <span className="text-teal-400">Flask</span> — Select for refinement. Pick 2-4 names you like, then generate similar ones.</li>
                     <li><Volume2 className="w-4 h-4 inline text-cyan-400" /> <span className="text-cyan-400">Speaker</span> — Hear an approximate pronunciation of the name.</li>
+                    <li><Glasses className="w-4 h-4 inline text-amber-400" /> <span className="text-amber-400">Glasses</span> — Stats for nerds! See how the name was generated.</li>
                   </ul>
                 </div>
                 <div>
@@ -1792,6 +2029,7 @@ export default function AetherNames() {
                       copied={copiedName === n.name}
                       isSelectedForRefine={isSelectedForRefine(n.name)}
                       onRefineSelect={() => toggleRefineSelection(n)}
+                      metadata={n.metadata}
                     />
                   ))
                 )}
