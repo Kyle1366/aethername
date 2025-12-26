@@ -676,7 +676,7 @@ const generateRefinedName = (config, patterns) => {
   let name = '';
   let attempts = 0;
   
-  while (attempts < 50) {
+  while (attempts < 100) {
     attempts++;
     name = '';
     // Reset per-attempt metadata
@@ -791,7 +791,7 @@ const generateName = (config, returnMetadata = false) => {
   let name = '';
   let attempts = 0;
 
-  while (attempts < 50) {
+  while (attempts < 100) {
     attempts++;
     name = '';
     // Reset per-attempt metadata
@@ -914,12 +914,31 @@ const generateName = (config, returnMetadata = false) => {
     if (syllables < minSyllables || syllables > maxSyllables) continue;
 
     // Apply filters
-    if (mustStartWith && !name.toLowerCase().startsWith(mustStartWith.toLowerCase())) {
-      name = mustStartWith + name.slice(mustStartWith.length);
-    }
-    if (mustContain && !name.toLowerCase().includes(mustContain.toLowerCase())) {
-      const pos = Math.floor(name.length / 2);
-      name = name.slice(0, pos) + mustContain + name.slice(pos);
+    if (mustStartWith) {
+      const prefix = mustStartWith.toLowerCase().slice(0, 3); // Limit to 3 chars max
+      if (!name.toLowerCase().startsWith(prefix)) {
+        // Replace the start of the name with the prefix, keeping natural flow
+        const prefixEndsVowel = /[aeiou]$/.test(prefix);
+        
+        // Find where to splice in the rest of the name
+        let splicePoint = 1;
+        for (let i = 1; i < name.length; i++) {
+          const isVowel = /[aeiou]/i.test(name[i]);
+          if (prefixEndsVowel && !isVowel) {
+            splicePoint = i;
+            break;
+          } else if (!prefixEndsVowel && isVowel) {
+            splicePoint = i;
+            break;
+          }
+          splicePoint = i + 1;
+        }
+        
+        name = prefix + name.slice(splicePoint);
+        
+        // If result is too short or too long, skip this attempt
+        if (name.length < 3 || name.length > 15) continue;
+      }
     }
     if (mustNotContain && name.toLowerCase().includes(mustNotContain.toLowerCase())) continue;
 
@@ -1128,7 +1147,7 @@ const GlowButton = ({ children, onClick, disabled, variant = 'primary', classNam
       className={`relative px-6 py-3 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
     >
       {(variant === 'primary' || variant === 'donate') && (
-        <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${currentTheme.buttonGradient} blur-xl opacity-50 group-hover:opacity-75 transition-opacity`} />
+        <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${currentTheme.buttonGradient} blur-lg opacity-30 transition-opacity pointer-events-none`} />
       )}
       <span className="relative flex items-center justify-center gap-2">{children}</span>
     </button>
@@ -1419,13 +1438,14 @@ export default function AetherNames() {
 
   const generate = useCallback(() => {
     setIsGenerating(true);
+    setGeneratedNames([]); // Clear old names immediately
     setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 150);
     setTimeout(() => {
       const names = [];
       let attempts = 0;
-      while (names.length < config.nameCount && attempts < config.nameCount * 50) {
+      while (names.length < config.nameCount && attempts < config.nameCount * 100) {
         attempts++;
         const result = generateName(config, true);
         const name = result.name;
@@ -1572,7 +1592,7 @@ export default function AetherNames() {
     timePeriod: "Historical era influences name style. Ancient uses archaic patterns, Futuristic uses tech-inspired sounds.",
     structure: "Target syllable count. Actual may vary ±1.",
     orthographic: "Visual styling. Apostrophes and accents add exotic flair.",
-    filters: "Constrain results. Seed words subtly influence without being obvious.",
+    filters: "'Starts with' (1-3 chars) sets the beginning. 'Excludes' removes names with unwanted sounds. 'Seed' subtly influences the generated sounds.",
     output: "Number of names to generate."
   };
 
@@ -1916,10 +1936,9 @@ export default function AetherNames() {
                 <SectionHeader title="Filters" helpText={helpTexts.filters} />
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { key: 'mustStartWith', placeholder: 'Starts with...' },
-                    { key: 'mustContain', placeholder: 'Contains...' },
+                    { key: 'mustStartWith', placeholder: 'Starts with (1-3 chars)' },
                     { key: 'mustNotContain', placeholder: 'Excludes...' },
-                    { key: 'seedWord', placeholder: 'Seed word...' }
+                    { key: 'seedWord', placeholder: 'Seed influence...' }
                   ].map(f => (
                     <input
                       key={f.key}
