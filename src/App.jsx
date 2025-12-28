@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword } from 'lucide-react';
 
 // ============================================================================
 // LINGUISTICALLY AUTHENTIC PHONOTACTIC DATA
@@ -18,6 +18,7 @@ const themeConfig = {
     accent: 'amber',
     glow: 'amber-500',
     font: "'Cinzel', serif",
+    fontWeight: 'font-medium',
     buttonGradient: 'from-amber-600 via-orange-600 to-red-600',
     buttonHover: 'from-amber-500 via-orange-500 to-red-500',
     buttonShadow: 'shadow-orange-500/25 hover:shadow-orange-500/40',
@@ -1527,10 +1528,10 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
       <button 
         ref={triggerRef}
         onClick={handleOpen} 
-        className={`p-1 transition-all duration-200 ${isOpen ? 'text-purple-400 scale-110' : 'text-slate-600 hover:text-purple-400 hover:scale-110'}`}
-        title="Tweak this name"
+        className={`p-1.5 rounded transition-all duration-200 ${isOpen ? 'text-purple-400 scale-110 bg-purple-400/10' : 'text-slate-600 hover:text-purple-400 hover:scale-110 hover:bg-purple-400/10'}`}
+        title="Tweak specific parts of this name"
       >
-        <RefreshCw className="w-4 h-4 md:w-5 md:h-5" />
+        <RefreshCw className="w-4 h-4" />
       </button>
       
       {isOpen && createPortal(
@@ -1610,7 +1611,7 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
   );
 };
 
-const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isSelectedForRefine, onRefineSelect, metadata, onRerollSiblings }) => {
+const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, metadata, onRerollSiblings, onSendToCharacter, onExplode }) => {
   const [showStats, setShowStats] = useState(false);
   const [statsCopied, setStatsCopied] = useState(false);
   const [tweakPopoverOpen, setTweakPopoverOpen] = useState(false);
@@ -1658,32 +1659,65 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
   };
 
   return (
-    <div className={`group relative p-3 md:p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border rounded-xl hover:shadow-lg transition-all duration-300 overflow-visible ${isSelectedForRefine ? 'border-teal-500/50 shadow-teal-500/10' : 'border-slate-700/50 hover:border-indigo-500/30 hover:shadow-indigo-500/5'}`}>
+    <div className="group relative p-3 md:p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl hover:shadow-lg hover:border-indigo-500/30 hover:shadow-indigo-500/5 transition-all duration-300 overflow-visible">
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={onFavorite} className={`p-1 transition-all duration-200 ${isFavorite ? 'text-yellow-400 scale-110' : 'text-slate-600 hover:text-yellow-400 hover:scale-110'}`}>
-              <Star className={`w-4 h-4 md:w-5 md:h-5 ${isFavorite ? 'fill-current' : ''}`} />
-            </button>
-            <button onClick={onRefineSelect} className={`p-1 transition-all duration-200 ${isSelectedForRefine ? 'text-teal-400 scale-110' : 'text-slate-600 hover:text-teal-400 hover:scale-110'}`}>
-              <FlaskConical className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-            <button onClick={speakName} className="p-1 text-slate-600 hover:text-cyan-400 hover:scale-110 transition-all duration-200">
-              <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-            <button onClick={() => setShowStats(!showStats)} className={`p-1 transition-all duration-200 ${showStats ? 'text-amber-400 scale-110' : 'text-slate-600 hover:text-amber-400 hover:scale-110'}`}>
-              <Glasses className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-            {onRerollSiblings && (
-              <TweakPopover 
-                name={name} 
-                metadata={metadata} 
-                onTweak={onRerollSiblings} 
-                isOpen={tweakPopoverOpen}
-                setIsOpen={setTweakPopoverOpen}
-              />
-            )}
+          <div className="flex-shrink-0">
+            <div className="grid grid-cols-3 gap-1">
+              {/* Row 1 */}
+              <button 
+                onClick={onFavorite} 
+                className={`p-1.5 rounded transition-all duration-200 ${isFavorite ? 'text-yellow-400 scale-110 bg-yellow-400/10' : 'text-slate-600 hover:text-yellow-400 hover:scale-110 hover:bg-yellow-400/10'}`}
+                title="Add to favorites"
+              >
+                <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+              </button>
+              <button 
+                onClick={onExplode} 
+                className="p-1.5 rounded text-slate-600 hover:text-teal-400 hover:scale-110 hover:bg-teal-400/10 transition-all duration-200"
+                title="Explode into variations - generate similar names based on this one"
+              >
+                <FlaskConical className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={speakName} 
+                className="p-1.5 rounded text-slate-600 hover:text-cyan-400 hover:scale-110 hover:bg-cyan-400/10 transition-all duration-200"
+                title="Hear pronunciation"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+              {/* Row 2 */}
+              <button 
+                onClick={() => setShowStats(!showStats)} 
+                className={`p-1.5 rounded transition-all duration-200 ${showStats ? 'text-amber-400 scale-110 bg-amber-400/10' : 'text-slate-600 hover:text-amber-400 hover:scale-110 hover:bg-amber-400/10'}`}
+                title="Stats for nerds - see how this name was built"
+              >
+                <Glasses className="w-4 h-4" />
+              </button>
+              {onRerollSiblings ? (
+                <TweakPopover 
+                  name={name} 
+                  metadata={metadata} 
+                  onTweak={onRerollSiblings} 
+                  isOpen={tweakPopoverOpen}
+                  setIsOpen={setTweakPopoverOpen}
+                />
+              ) : (
+                <div className="p-1.5" /> 
+              )}
+              {onSendToCharacter ? (
+                <button 
+                  onClick={onSendToCharacter} 
+                  className="p-1.5 rounded text-slate-600 hover:text-indigo-400 hover:scale-110 hover:bg-indigo-400/10 transition-all duration-200"
+                  title="Send to Character Creator"
+                >
+                  <User className="w-4 h-4" />
+                </button>
+              ) : (
+                <div className="p-1.5" />
+              )}
+            </div>
           </div>
           <div className="min-w-0 flex-1">
             <span className="text-base md:text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent break-all">{name}</span>
@@ -1827,7 +1861,4021 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, isS
 // MAIN COMPONENT
 // ============================================================================
 
+// ============================================================================
+// NAVIGATION COMPONENT
+// ============================================================================
+
+const Navigation = ({ currentPage, setCurrentPage, theme }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const currentTheme = themeConfig[theme] || themeConfig.mixed;
+  
+  const pages = [
+    { id: 'generator', label: 'Name Generator', icon: Sparkles, description: 'Create unique fantasy & sci-fi names' },
+    { id: 'character', label: 'Character Creator', icon: User, description: 'Build your D&D character sheet' }
+  ];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-indigo-500/50 transition-all"
+      >
+        <Menu className="w-5 h-5 text-indigo-400" />
+        <span className="text-slate-200 font-medium">
+          {pages.find(p => p.id === currentPage)?.label}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)} 
+          />
+          <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl z-50 overflow-hidden">
+            {pages.map((page) => {
+              const Icon = page.icon;
+              const isActive = currentPage === page.id;
+              return (
+                <button
+                  key={page.id}
+                  onClick={() => {
+                    setCurrentPage(page.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full flex items-start gap-3 p-4 text-left transition-all ${
+                    isActive 
+                      ? 'bg-indigo-500/20 border-l-2 border-indigo-500' 
+                      : 'hover:bg-slate-800/50 border-l-2 border-transparent'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 mt-0.5 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                  <div>
+                    <div className={`font-medium ${isActive ? 'text-indigo-300' : 'text-slate-200'}`}>
+                      {page.label}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {page.description}
+                    </div>
+                  </div>
+                  {isActive && (
+                    <Check className="w-4 h-4 text-indigo-400 ml-auto mt-0.5" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// ABILITY SCORE STEP COMPONENT
+// ============================================================================
+
+const ABILITY_NAMES = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+const ABILITY_LABELS = {
+  strength: { short: 'STR', name: 'Strength', desc: 'Physical power, melee attacks, carrying capacity' },
+  dexterity: { short: 'DEX', name: 'Dexterity', desc: 'Agility, reflexes, ranged attacks, AC' },
+  constitution: { short: 'CON', name: 'Constitution', desc: 'Health, stamina, hit points' },
+  intelligence: { short: 'INT', name: 'Intelligence', desc: 'Memory, reasoning, arcane magic' },
+  wisdom: { short: 'WIS', name: 'Wisdom', desc: 'Perception, insight, divine magic' },
+  charisma: { short: 'CHA', name: 'Charisma', desc: 'Force of personality, leadership, sorcery' }
+};
+
+const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+
+const POINT_BUY_COSTS = {
+  8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9
+};
+
+const getModifier = (score) => Math.floor((score - 10) / 2);
+const formatModifier = (mod) => mod >= 0 ? `+${mod}` : `${mod}`;
+
+// ============================================================================
+// RACE DATA + HELPERS (PHASE 3)
+// ============================================================================
+
+const RACE_ICONS = {
+  human: '🧑',
+  elf: '🧝',
+  dwarf: '⛏️',
+  halfling: '🍀',
+  gnome: '⚙️',
+  halfElf: '✨',
+  halfOrc: '🪓',
+  tiefling: '😈',
+  dragonborn: '🐉'
+};
+
+// Note: This is a “PHB-style” baseline dataset (kept lightweight for UI + bonuses + traits).
+// We’re not enforcing rules yet (that comes later in class/skills/proficiencies phases).
+const RACES = {
+  human: {
+    name: 'Human',
+    description: 'Versatile and ambitious, humans adapt quickly and thrive anywhere.',
+    abilityBonuses: { all: 1 },
+    speed: 30,
+    traits: ['Extra Language (choice)'],
+    languages: ['Common', 'One of your choice'],
+    subraces: null
+  },
+  elf: {
+    name: 'Elf',
+    description: 'Graceful and long-lived, elves are attuned to magic and the natural world.',
+    abilityBonuses: { dexterity: 2 },
+    speed: 30,
+    traits: ['Darkvision', 'Keen Senses', 'Fey Ancestry', 'Trance'],
+    languages: ['Common', 'Elvish'],
+    subraces: {
+      highElf: {
+        name: 'High Elf',
+        description: 'Scholarly and magical, high elves wield arcane cantrips and refined training.',
+        abilityBonuses: { intelligence: 1 },
+        traits: ['Elf Weapon Training', 'Cantrip', 'Extra Language (choice)']
+      },
+      woodElf: {
+        name: 'Wood Elf',
+        description: 'Swift and stealthy, wood elves move through forests like ghosts.',
+        abilityBonuses: { wisdom: 1 },
+        traits: ['Elf Weapon Training', 'Fleet of Foot', 'Mask of the Wild'],
+        speed: 35
+      },
+      darkElf: {
+        name: 'Dark Elf (Drow)',
+        description: 'Drow are shadowed and dangerous, gifted with magic but burdened by sunlight.',
+        abilityBonuses: { charisma: 1 },
+        traits: ['Superior Darkvision', 'Sunlight Sensitivity', 'Drow Magic', 'Drow Weapon Training']
+      }
+    }
+  },
+  dwarf: {
+    name: 'Dwarf',
+    description: 'Stout and stubborn, dwarves are hardy folk with deep traditions and endurance.',
+    abilityBonuses: { constitution: 2 },
+    speed: 25,
+    traits: ['Darkvision', 'Dwarven Resilience', 'Stonecunning'],
+    languages: ['Common', 'Dwarvish'],
+    subraces: {
+      hillDwarf: {
+        name: 'Hill Dwarf',
+        description: 'Wise and tough, hill dwarves are known for resilience and strong instincts.',
+        abilityBonuses: { wisdom: 1 },
+        traits: ['Dwarven Toughness']
+      },
+      mountainDwarf: {
+        name: 'Mountain Dwarf',
+        description: 'Strong and martial, mountain dwarves are bred for battle and heavy armor.',
+        abilityBonuses: { strength: 2 },
+        traits: ['Dwarven Armor Training']
+      }
+    }
+  },
+  halfling: {
+    name: 'Halfling',
+    description: 'Cheerful and brave, halflings survive through luck, grit, and quick thinking.',
+    abilityBonuses: { dexterity: 2 },
+    speed: 25,
+    traits: ['Lucky', 'Brave', 'Halfling Nimbleness'],
+    languages: ['Common', 'Halfling'],
+    subraces: {
+      lightfoot: {
+        name: 'Lightfoot Halfling',
+        description: 'Friendly and sneaky, lightfoots vanish behind larger companions with ease.',
+        abilityBonuses: { charisma: 1 },
+        traits: ['Naturally Stealthy']
+      },
+      stout: {
+        name: 'Stout Halfling',
+        description: 'Sturdy and hardy, stouts shrug off poison and keep going.',
+        abilityBonuses: { constitution: 1 },
+        traits: ['Stout Resilience']
+      }
+    }
+  },
+  gnome: {
+    name: 'Gnome',
+    description: 'Clever and curious, gnomes blend invention with illusion and charm.',
+    abilityBonuses: { intelligence: 2 },
+    speed: 25,
+    traits: ['Darkvision', 'Gnome Cunning'],
+    languages: ['Common', 'Gnomish'],
+    subraces: {
+      forest: {
+        name: 'Forest Gnome',
+        description: 'Mischievous and nature-loving, forest gnomes speak with small beasts.',
+        abilityBonuses: { dexterity: 1 },
+        traits: ['Natural Illusionist', 'Speak with Small Beasts']
+      },
+      rock: {
+        name: 'Rock Gnome',
+        description: 'Tinkerers at heart, rock gnomes build small gadgets and clever devices.',
+        abilityBonuses: { constitution: 1 },
+        traits: ['Artificer’s Lore', 'Tinker']
+      }
+    }
+  },
+  halfElf: {
+    name: 'Half-Elf',
+    description: 'Walking between worlds, half-elves blend human drive with elven grace.',
+    abilityBonuses: { charisma: 2, choice: { count: 2, value: 1 } }, // we’ll implement the “choice” UI later
+    speed: 30,
+    traits: ['Darkvision', 'Fey Ancestry', 'Skill Versatility'],
+    languages: ['Common', 'Elvish', 'One of your choice'],
+    subraces: null
+  },
+  halfOrc: {
+    name: 'Half-Orc',
+    description: 'Powerful and relentless, half-orcs are forged by hardship and strength.',
+    abilityBonuses: { strength: 2, constitution: 1 },
+    speed: 30,
+    traits: ['Darkvision', 'Menacing', 'Relentless Endurance', 'Savage Attacks'],
+    languages: ['Common', 'Orc'],
+    subraces: null
+  },
+  tiefling: {
+    name: 'Tiefling',
+    description: 'Marked by infernal heritage, tieflings command strange magic and strong will.',
+    abilityBonuses: { intelligence: 1, charisma: 2 },
+    speed: 30,
+    traits: ['Darkvision', 'Hellish Resistance', 'Infernal Legacy'],
+    languages: ['Common', 'Infernal'],
+    subraces: null
+  },
+  dragonborn: {
+    name: 'Dragonborn',
+    description: 'Proud and imposing, dragonborn channel draconic power through breath and presence.',
+    abilityBonuses: { strength: 2, charisma: 1 },
+    speed: 30,
+    traits: ['Draconic Ancestry', 'Breath Weapon', 'Damage Resistance'],
+    languages: ['Common', 'Draconic'],
+    subraces: {
+      black: { name: 'Black (Acid)', description: 'Acid breath and resistance.' },
+      blue: { name: 'Blue (Lightning)', description: 'Lightning breath and resistance.' },
+      brass: { name: 'Brass (Fire)', description: 'Fire breath and resistance.' },
+      bronze: { name: 'Bronze (Lightning)', description: 'Lightning breath and resistance.' },
+      copper: { name: 'Copper (Acid)', description: 'Acid breath and resistance.' },
+      gold: { name: 'Gold (Fire)', description: 'Fire breath and resistance.' },
+      green: { name: 'Green (Poison)', description: 'Poison breath and resistance.' },
+      red: { name: 'Red (Fire)', description: 'Fire breath and resistance.' },
+      silver: { name: 'Silver (Cold)', description: 'Cold breath and resistance.' },
+      white: { name: 'White (Cold)', description: 'Cold breath and resistance.' }
+    }
+  }
+};
+
+// ============================================================================
+// D&D 5E CLASSES
+// ============================================================================
+
+const CLASS_ICONS = {
+  barbarian: '🪓',
+  bard: '🎵',
+  cleric: '⛪',
+  druid: '🌿',
+  fighter: '⚔️',
+  monk: '👊',
+  paladin: '🛡️',
+  ranger: '🏹',
+  rogue: '🗡️',
+  sorcerer: '✨',
+  warlock: '👁️',
+  wizard: '📖'
+};
+
+const CLASSES = {
+  barbarian: {
+    name: 'Barbarian',
+    description: 'A fierce warrior who can enter a battle rage, dealing devastating damage while shrugging off blows.',
+    hitDie: 12,
+    primaryAbility: ['strength'],
+    savingThrows: ['strength', 'constitution'],
+    armorProficiencies: ['Light armor', 'Medium armor', 'Shields'],
+    weaponProficiencies: ['Simple weapons', 'Martial weapons'],
+    skillChoices: { count: 2, from: ['Animal Handling', 'Athletics', 'Intimidation', 'Nature', 'Perception', 'Survival'] },
+    features: ['Rage', 'Unarmored Defense'],
+    spellcasting: null,
+    subclassLevel: 3,
+    subclassName: 'Primal Path'
+  },
+  bard: {
+    name: 'Bard',
+    description: 'An inspiring magician whose music and words weave magic, bolstering allies and hindering foes.',
+    hitDie: 8,
+    primaryAbility: ['charisma'],
+    savingThrows: ['dexterity', 'charisma'],
+    armorProficiencies: ['Light armor'],
+    weaponProficiencies: ['Simple weapons', 'Hand crossbows', 'Longswords', 'Rapiers', 'Shortswords'],
+    skillChoices: { count: 3, from: 'any' },
+    features: ['Spellcasting', 'Bardic Inspiration'],
+    spellcasting: { ability: 'charisma', type: 'known', cantrips: 2, spellsKnown: 4 },
+    subclassLevel: 3,
+    subclassName: 'Bard College'
+  },
+  cleric: {
+    name: 'Cleric',
+    description: 'A priestly champion who wields divine magic in service of a higher power.',
+    hitDie: 8,
+    primaryAbility: ['wisdom'],
+    savingThrows: ['wisdom', 'charisma'],
+    armorProficiencies: ['Light armor', 'Medium armor', 'Shields'],
+    weaponProficiencies: ['Simple weapons'],
+    skillChoices: { count: 2, from: ['History', 'Insight', 'Medicine', 'Persuasion', 'Religion'] },
+    features: ['Spellcasting', 'Divine Domain'],
+    spellcasting: { ability: 'wisdom', type: 'prepared', cantrips: 3 },
+    subclassLevel: 1,
+    subclassName: 'Divine Domain'
+  },
+  druid: {
+    name: 'Druid',
+    description: 'A priest of the Old Faith, wielding nature\'s power and capable of transforming into beasts.',
+    hitDie: 8,
+    primaryAbility: ['wisdom'],
+    savingThrows: ['intelligence', 'wisdom'],
+    armorProficiencies: ['Light armor (nonmetal)', 'Medium armor (nonmetal)', 'Shields (nonmetal)'],
+    weaponProficiencies: ['Clubs', 'Daggers', 'Darts', 'Javelins', 'Maces', 'Quarterstaffs', 'Scimitars', 'Sickles', 'Slings', 'Spears'],
+    skillChoices: { count: 2, from: ['Arcana', 'Animal Handling', 'Insight', 'Medicine', 'Nature', 'Perception', 'Religion', 'Survival'] },
+    features: ['Druidic', 'Spellcasting'],
+    spellcasting: { ability: 'wisdom', type: 'prepared', cantrips: 2 },
+    subclassLevel: 2,
+    subclassName: 'Druid Circle'
+  },
+  fighter: {
+    name: 'Fighter',
+    description: 'A master of martial combat, skilled with a variety of weapons and armor.',
+    hitDie: 10,
+    primaryAbility: ['strength', 'dexterity'],
+    savingThrows: ['strength', 'constitution'],
+    armorProficiencies: ['All armor', 'Shields'],
+    weaponProficiencies: ['Simple weapons', 'Martial weapons'],
+    skillChoices: { count: 2, from: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'] },
+    features: ['Fighting Style', 'Second Wind'],
+    spellcasting: null,
+    subclassLevel: 3,
+    subclassName: 'Martial Archetype'
+  },
+  monk: {
+    name: 'Monk',
+    description: 'A martial artist pursuing physical and spiritual perfection, harnessing ki energy.',
+    hitDie: 8,
+    primaryAbility: ['dexterity', 'wisdom'],
+    savingThrows: ['strength', 'dexterity'],
+    armorProficiencies: [],
+    weaponProficiencies: ['Simple weapons', 'Shortswords'],
+    skillChoices: { count: 2, from: ['Acrobatics', 'Athletics', 'History', 'Insight', 'Religion', 'Stealth'] },
+    features: ['Unarmored Defense', 'Martial Arts'],
+    spellcasting: null,
+    subclassLevel: 3,
+    subclassName: 'Monastic Tradition'
+  },
+  paladin: {
+    name: 'Paladin',
+    description: 'A holy warrior bound to a sacred oath, smiting evil with divine power.',
+    hitDie: 10,
+    primaryAbility: ['strength', 'charisma'],
+    savingThrows: ['wisdom', 'charisma'],
+    armorProficiencies: ['All armor', 'Shields'],
+    weaponProficiencies: ['Simple weapons', 'Martial weapons'],
+    skillChoices: { count: 2, from: ['Athletics', 'Insight', 'Intimidation', 'Medicine', 'Persuasion', 'Religion'] },
+    features: ['Divine Sense', 'Lay on Hands'],
+    spellcasting: { ability: 'charisma', type: 'prepared', cantrips: 0, startsAtLevel: 2 },
+    subclassLevel: 3,
+    subclassName: 'Sacred Oath'
+  },
+  ranger: {
+    name: 'Ranger',
+    description: 'A warrior who combats threats on the edges of civilization with martial and nature magic.',
+    hitDie: 10,
+    primaryAbility: ['dexterity', 'wisdom'],
+    savingThrows: ['strength', 'dexterity'],
+    armorProficiencies: ['Light armor', 'Medium armor', 'Shields'],
+    weaponProficiencies: ['Simple weapons', 'Martial weapons'],
+    skillChoices: { count: 3, from: ['Animal Handling', 'Athletics', 'Insight', 'Investigation', 'Nature', 'Perception', 'Stealth', 'Survival'] },
+    features: ['Favored Enemy', 'Natural Explorer'],
+    spellcasting: { ability: 'wisdom', type: 'known', cantrips: 0, spellsKnown: 2, startsAtLevel: 2 },
+    subclassLevel: 3,
+    subclassName: 'Ranger Archetype'
+  },
+  rogue: {
+    name: 'Rogue',
+    description: 'A scoundrel who uses stealth and trickery to overcome obstacles and strike foes.',
+    hitDie: 8,
+    primaryAbility: ['dexterity'],
+    savingThrows: ['dexterity', 'intelligence'],
+    armorProficiencies: ['Light armor'],
+    weaponProficiencies: ['Simple weapons', 'Hand crossbows', 'Longswords', 'Rapiers', 'Shortswords'],
+    skillChoices: { count: 4, from: ['Acrobatics', 'Athletics', 'Deception', 'Insight', 'Intimidation', 'Investigation', 'Perception', 'Performance', 'Persuasion', 'Sleight of Hand', 'Stealth'] },
+    features: ['Expertise', 'Sneak Attack', 'Thieves\' Cant'],
+    spellcasting: null,
+    subclassLevel: 3,
+    subclassName: 'Roguish Archetype'
+  },
+  sorcerer: {
+    name: 'Sorcerer',
+    description: 'A spellcaster who draws on inherent magic from a bloodline or cosmic gift.',
+    hitDie: 6,
+    primaryAbility: ['charisma'],
+    savingThrows: ['constitution', 'charisma'],
+    armorProficiencies: [],
+    weaponProficiencies: ['Daggers', 'Darts', 'Slings', 'Quarterstaffs', 'Light crossbows'],
+    skillChoices: { count: 2, from: ['Arcana', 'Deception', 'Insight', 'Intimidation', 'Persuasion', 'Religion'] },
+    features: ['Spellcasting', 'Sorcerous Origin'],
+    spellcasting: { ability: 'charisma', type: 'known', cantrips: 4, spellsKnown: 2 },
+    subclassLevel: 1,
+    subclassName: 'Sorcerous Origin'
+  },
+  warlock: {
+    name: 'Warlock',
+    description: 'A wielder of magic derived from a bargain with an extraplanar entity.',
+    hitDie: 8,
+    primaryAbility: ['charisma'],
+    savingThrows: ['wisdom', 'charisma'],
+    armorProficiencies: ['Light armor'],
+    weaponProficiencies: ['Simple weapons'],
+    skillChoices: { count: 2, from: ['Arcana', 'Deception', 'History', 'Intimidation', 'Investigation', 'Nature', 'Religion'] },
+    features: ['Otherworldly Patron', 'Pact Magic'],
+    spellcasting: { ability: 'charisma', type: 'pact', cantrips: 2, spellsKnown: 2 },
+    subclassLevel: 1,
+    subclassName: 'Otherworldly Patron'
+  },
+  wizard: {
+    name: 'Wizard',
+    description: 'A scholarly magic-user who commands arcane spells through intense study.',
+    hitDie: 6,
+    primaryAbility: ['intelligence'],
+    savingThrows: ['intelligence', 'wisdom'],
+    armorProficiencies: [],
+    weaponProficiencies: ['Daggers', 'Darts', 'Slings', 'Quarterstaffs', 'Light crossbows'],
+    skillChoices: { count: 2, from: ['Arcana', 'History', 'Insight', 'Investigation', 'Medicine', 'Religion'] },
+    features: ['Spellcasting', 'Arcane Recovery'],
+    spellcasting: { ability: 'intelligence', type: 'prepared', cantrips: 3, spellbook: true },
+    subclassLevel: 2,
+    subclassName: 'Arcane Tradition'
+  }
+};
+
+// ============================================================================
+// D&D 5E BACKGROUNDS
+// ============================================================================
+
+const BACKGROUND_ICONS = {
+  acolyte: '🙏',
+  charlatan: '🎭',
+  criminal: '🗝️',
+  entertainer: '🎪',
+  folkHero: '🌾',
+  guildArtisan: '🔨',
+  hermit: '🏔️',
+  noble: '👑',
+  outlander: '🐺',
+  sage: '📚',
+  sailor: '⚓',
+  soldier: '🎖️',
+  urchin: '🐀'
+};
+
+const BACKGROUNDS = {
+  acolyte: {
+    name: 'Acolyte',
+    description: 'You spent your life in service to a temple, learning sacred rites and providing sacrifices.',
+    skillProficiencies: ['Insight', 'Religion'],
+    toolProficiencies: [],
+    languages: 2,
+    equipment: ['Holy symbol', 'Prayer book or wheel', '5 sticks of incense', 'Vestments', '15 gp'],
+    feature: 'Shelter of the Faithful',
+    featureDesc: 'You and your companions can receive free healing at temples of your faith, and supporters will provide modest lifestyle.'
+  },
+  charlatan: {
+    name: 'Charlatan',
+    description: 'You have always had a way with people. You know what makes them tick and can tease out their desires.',
+    skillProficiencies: ['Deception', 'Sleight of Hand'],
+    toolProficiencies: ['Disguise kit', 'Forgery kit'],
+    languages: 0,
+    equipment: ['Fine clothes', 'Disguise kit', 'Con tools (weighted dice, marked cards)', '15 gp'],
+    feature: 'False Identity',
+    featureDesc: 'You have a second identity with documentation, acquaintances, and disguises. You can forge documents.'
+  },
+  criminal: {
+    name: 'Criminal',
+    description: 'You are an experienced criminal with a history of breaking the law and surviving by your wits.',
+    skillProficiencies: ['Deception', 'Stealth'],
+    toolProficiencies: ['One gaming set', 'Thieves\' tools'],
+    languages: 0,
+    equipment: ['Crowbar', 'Dark common clothes with hood', '15 gp'],
+    feature: 'Criminal Contact',
+    featureDesc: 'You have a reliable contact who acts as your liaison to a network of criminals.'
+  },
+  entertainer: {
+    name: 'Entertainer',
+    description: 'You thrive in front of an audience, knowing how to entrance, entertain, and inspire.',
+    skillProficiencies: ['Acrobatics', 'Performance'],
+    toolProficiencies: ['Disguise kit', 'One musical instrument'],
+    languages: 0,
+    equipment: ['Musical instrument', 'Favor from an admirer', 'Costume', '15 gp'],
+    feature: 'By Popular Demand',
+    featureDesc: 'You can find a place to perform where you receive free lodging and food of modest standard.'
+  },
+  folkHero: {
+    name: 'Folk Hero',
+    description: 'You come from humble origins but are destined for much more. Your people see you as their champion.',
+    skillProficiencies: ['Animal Handling', 'Survival'],
+    toolProficiencies: ['One artisan\'s tools', 'Vehicles (land)'],
+    languages: 0,
+    equipment: ['Artisan\'s tools', 'Shovel', 'Iron pot', 'Common clothes', '10 gp'],
+    feature: 'Rustic Hospitality',
+    featureDesc: 'Common folk will shelter you from the law or others searching for you, risking their lives if needed.'
+  },
+  guildArtisan: {
+    name: 'Guild Artisan',
+    description: 'You are a member of an artisan guild, skilled in a particular craft and connected to merchants.',
+    skillProficiencies: ['Insight', 'Persuasion'],
+    toolProficiencies: ['One artisan\'s tools'],
+    languages: 1,
+    equipment: ['Artisan\'s tools', 'Letter of introduction from guild', 'Traveler\'s clothes', '15 gp'],
+    feature: 'Guild Membership',
+    featureDesc: 'Your guild provides lodging, food, legal defense, and access to powerful patrons.'
+  },
+  hermit: {
+    name: 'Hermit',
+    description: 'You lived in seclusion for an extended time, studying, praying, or communing with nature.',
+    skillProficiencies: ['Medicine', 'Religion'],
+    toolProficiencies: ['Herbalism kit'],
+    languages: 1,
+    equipment: ['Scroll case with notes', 'Winter blanket', 'Common clothes', 'Herbalism kit', '5 gp'],
+    feature: 'Discovery',
+    featureDesc: 'You have discovered a unique truth about the cosmos, deities, or powerful beings—work with DM on details.'
+  },
+  noble: {
+    name: 'Noble',
+    description: 'You understand wealth, power, and privilege. You carry a noble title and your family owns land.',
+    skillProficiencies: ['History', 'Persuasion'],
+    toolProficiencies: ['One gaming set'],
+    languages: 1,
+    equipment: ['Fine clothes', 'Signet ring', 'Scroll of pedigree', '25 gp'],
+    feature: 'Position of Privilege',
+    featureDesc: 'You are welcome in high society. Common folk try to accommodate you, and you can secure audiences with nobles.'
+  },
+  outlander: {
+    name: 'Outlander',
+    description: 'You grew up in the wilds, far from civilization and its comforts.',
+    skillProficiencies: ['Athletics', 'Survival'],
+    toolProficiencies: ['One musical instrument'],
+    languages: 1,
+    equipment: ['Staff', 'Hunting trap', 'Trophy from animal', 'Traveler\'s clothes', '10 gp'],
+    feature: 'Wanderer',
+    featureDesc: 'You have excellent memory for maps and geography. You can find food and water for yourself and five others daily.'
+  },
+  sage: {
+    name: 'Sage',
+    description: 'You spent years learning the lore of the multiverse, poring over manuscripts.',
+    skillProficiencies: ['Arcana', 'History'],
+    toolProficiencies: [],
+    languages: 2,
+    equipment: ['Bottle of black ink', 'Quill', 'Small knife', 'Letter with unanswered question', 'Common clothes', '10 gp'],
+    feature: 'Researcher',
+    featureDesc: 'When you don\'t know information, you often know where to find it—a library, sage, or other source.'
+  },
+  sailor: {
+    name: 'Sailor',
+    description: 'You sailed on a seagoing vessel for years, facing mighty storms, monsters, and the abyss.',
+    skillProficiencies: ['Athletics', 'Perception'],
+    toolProficiencies: ['Navigator\'s tools', 'Vehicles (water)'],
+    languages: 0,
+    equipment: ['Belaying pin (club)', '50 feet silk rope', 'Lucky charm', 'Common clothes', '10 gp'],
+    feature: 'Ship\'s Passage',
+    featureDesc: 'You can secure free passage on a sailing ship for yourself and companions in exchange for crew work.'
+  },
+  soldier: {
+    name: 'Soldier',
+    description: 'War has been your life. You trained as a youth, studied weapons, and served in a military.',
+    skillProficiencies: ['Athletics', 'Intimidation'],
+    toolProficiencies: ['One gaming set', 'Vehicles (land)'],
+    languages: 0,
+    equipment: ['Insignia of rank', 'Trophy from fallen enemy', 'Dice or cards', 'Common clothes', '10 gp'],
+    feature: 'Military Rank',
+    featureDesc: 'Soldiers loyal to your former organization recognize your rank. You can invoke authority to requisition supplies or gain access.'
+  },
+  urchin: {
+    name: 'Urchin',
+    description: 'You grew up on the streets alone, orphaned, and poor, learning to survive through quick wits.',
+    skillProficiencies: ['Sleight of Hand', 'Stealth'],
+    toolProficiencies: ['Disguise kit', 'Thieves\' tools'],
+    languages: 0,
+    equipment: ['Small knife', 'Map of your home city', 'Pet mouse', 'Token of your parents', 'Common clothes', '10 gp'],
+    feature: 'City Secrets',
+    featureDesc: 'You know secret passages through urban areas, allowing you to travel twice as fast when not in combat.'
+  }
+};
+
+// ============================================================================
+// D&D 5E EQUIPMENT
+// ============================================================================
+
+const STARTING_EQUIPMENT = {
+  barbarian: {
+    choices: [
+      { name: 'Primary Weapon', options: ['Greataxe', 'Any martial melee weapon'] },
+      { name: 'Secondary Weapon', options: ['Two handaxes', 'Any simple weapon'] }
+    ],
+    fixed: ['Explorer\'s pack', '4 javelins']
+  },
+  bard: {
+    choices: [
+      { name: 'Weapon', options: ['Rapier', 'Longsword', 'Any simple weapon'] },
+      { name: 'Pack', options: ['Diplomat\'s pack', 'Entertainer\'s pack'] },
+      { name: 'Instrument', options: ['Lute', 'Any musical instrument'] }
+    ],
+    fixed: ['Leather armor', 'Dagger']
+  },
+  cleric: {
+    choices: [
+      { name: 'Weapon', options: ['Mace', 'Warhammer (if proficient)'] },
+      { name: 'Armor', options: ['Scale mail', 'Leather armor', 'Chain mail (if proficient)'] },
+      { name: 'Secondary', options: ['Light crossbow + 20 bolts', 'Any simple weapon'] },
+      { name: 'Pack', options: ['Priest\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: ['Shield', 'Holy symbol']
+  },
+  druid: {
+    choices: [
+      { name: 'Shield', options: ['Wooden shield', 'Any simple weapon'] },
+      { name: 'Weapon', options: ['Scimitar', 'Any simple melee weapon'] },
+      { name: 'Pack', options: ['Explorer\'s pack', 'Dungeoneer\'s pack'] }
+    ],
+    fixed: ['Leather armor', 'Druidic focus']
+  },
+  fighter: {
+    choices: [
+      { name: 'Armor', options: ['Chain mail', 'Leather armor + longbow + 20 arrows'] },
+      { name: 'Weapons', options: ['Martial weapon + shield', 'Two martial weapons'] },
+      { name: 'Secondary', options: ['Light crossbow + 20 bolts', 'Two handaxes'] },
+      { name: 'Pack', options: ['Dungeoneer\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: []
+  },
+  monk: {
+    choices: [
+      { name: 'Weapon', options: ['Shortsword', 'Any simple weapon'] },
+      { name: 'Pack', options: ['Dungeoneer\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: ['10 darts']
+  },
+  paladin: {
+    choices: [
+      { name: 'Weapons', options: ['Martial weapon + shield', 'Two martial weapons'] },
+      { name: 'Secondary', options: ['5 javelins', 'Any simple melee weapon'] },
+      { name: 'Pack', options: ['Priest\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: ['Chain mail', 'Holy symbol']
+  },
+  ranger: {
+    choices: [
+      { name: 'Armor', options: ['Scale mail', 'Leather armor'] },
+      { name: 'Weapons', options: ['Two shortswords', 'Two simple melee weapons'] },
+      { name: 'Pack', options: ['Dungeoneer\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: ['Longbow', '20 arrows']
+  },
+  rogue: {
+    choices: [
+      { name: 'Weapon', options: ['Rapier', 'Shortsword'] },
+      { name: 'Secondary', options: ['Shortbow + 20 arrows', 'Shortsword'] },
+      { name: 'Pack', options: ['Burglar\'s pack', 'Dungeoneer\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: ['Leather armor', 'Two daggers', 'Thieves\' tools']
+  },
+  sorcerer: {
+    choices: [
+      { name: 'Weapon', options: ['Light crossbow + 20 bolts', 'Any simple weapon'] },
+      { name: 'Focus', options: ['Component pouch', 'Arcane focus'] },
+      { name: 'Pack', options: ['Dungeoneer\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: ['Two daggers']
+  },
+  warlock: {
+    choices: [
+      { name: 'Weapon', options: ['Light crossbow + 20 bolts', 'Any simple weapon'] },
+      { name: 'Focus', options: ['Component pouch', 'Arcane focus'] },
+      { name: 'Pack', options: ['Scholar\'s pack', 'Dungeoneer\'s pack'] }
+    ],
+    fixed: ['Leather armor', 'Any simple weapon', 'Two daggers']
+  },
+  wizard: {
+    choices: [
+      { name: 'Weapon', options: ['Quarterstaff', 'Dagger'] },
+      { name: 'Focus', options: ['Component pouch', 'Arcane focus'] },
+      { name: 'Pack', options: ['Scholar\'s pack', 'Explorer\'s pack'] }
+    ],
+    fixed: ['Spellbook']
+  }
+};
+
+const STARTING_GOLD = {
+  barbarian: { dice: 2, sides: 4, multiplier: 10 },
+  bard: { dice: 5, sides: 4, multiplier: 10 },
+  cleric: { dice: 5, sides: 4, multiplier: 10 },
+  druid: { dice: 2, sides: 4, multiplier: 10 },
+  fighter: { dice: 5, sides: 4, multiplier: 10 },
+  monk: { dice: 5, sides: 4, multiplier: 1 },
+  paladin: { dice: 5, sides: 4, multiplier: 10 },
+  ranger: { dice: 5, sides: 4, multiplier: 10 },
+  rogue: { dice: 4, sides: 4, multiplier: 10 },
+  sorcerer: { dice: 3, sides: 4, multiplier: 10 },
+  warlock: { dice: 4, sides: 4, multiplier: 10 },
+  wizard: { dice: 4, sides: 4, multiplier: 10 }
+};
+
+const EQUIPMENT_SHOP = {
+  weapons: [
+    { name: 'Club', cost: 0.1, damage: '1d4 bludgeoning', properties: 'Light' },
+    { name: 'Dagger', cost: 2, damage: '1d4 piercing', properties: 'Finesse, light, thrown (20/60)' },
+    { name: 'Handaxe', cost: 5, damage: '1d6 slashing', properties: 'Light, thrown (20/60)' },
+    { name: 'Javelin', cost: 0.5, damage: '1d6 piercing', properties: 'Thrown (30/120)' },
+    { name: 'Mace', cost: 5, damage: '1d6 bludgeoning', properties: '—' },
+    { name: 'Quarterstaff', cost: 0.2, damage: '1d6 bludgeoning', properties: 'Versatile (1d8)' },
+    { name: 'Shortbow', cost: 25, damage: '1d6 piercing', properties: 'Ammunition (80/320), two-handed' },
+    { name: 'Shortsword', cost: 10, damage: '1d6 piercing', properties: 'Finesse, light' },
+    { name: 'Longsword', cost: 15, damage: '1d8 slashing', properties: 'Versatile (1d10)' },
+    { name: 'Rapier', cost: 25, damage: '1d8 piercing', properties: 'Finesse' },
+    { name: 'Greataxe', cost: 30, damage: '1d12 slashing', properties: 'Heavy, two-handed' },
+    { name: 'Greatsword', cost: 50, damage: '2d6 slashing', properties: 'Heavy, two-handed' },
+    { name: 'Longbow', cost: 50, damage: '1d8 piercing', properties: 'Ammunition (150/600), heavy, two-handed' },
+    { name: 'Light Crossbow', cost: 25, damage: '1d8 piercing', properties: 'Ammunition (80/320), loading, two-handed' }
+  ],
+  armor: [
+    { name: 'Padded', cost: 5, ac: '11 + Dex', type: 'Light', stealth: 'Disadvantage' },
+    { name: 'Leather', cost: 10, ac: '11 + Dex', type: 'Light', stealth: '—' },
+    { name: 'Studded Leather', cost: 45, ac: '12 + Dex', type: 'Light', stealth: '—' },
+    { name: 'Hide', cost: 10, ac: '12 + Dex (max 2)', type: 'Medium', stealth: '—' },
+    { name: 'Chain Shirt', cost: 50, ac: '13 + Dex (max 2)', type: 'Medium', stealth: '—' },
+    { name: 'Scale Mail', cost: 50, ac: '14 + Dex (max 2)', type: 'Medium', stealth: 'Disadvantage' },
+    { name: 'Breastplate', cost: 400, ac: '14 + Dex (max 2)', type: 'Medium', stealth: '—' },
+    { name: 'Chain Mail', cost: 75, ac: '16', type: 'Heavy', stealth: 'Disadvantage', strReq: 13 },
+    { name: 'Plate', cost: 1500, ac: '18', type: 'Heavy', stealth: 'Disadvantage', strReq: 15 },
+    { name: 'Shield', cost: 10, ac: '+2', type: 'Shield', stealth: '—' }
+  ],
+  gear: [
+    { name: 'Backpack', cost: 2 },
+    { name: 'Bedroll', cost: 1 },
+    { name: 'Rope, 50 ft', cost: 1 },
+    { name: 'Torch (10)', cost: 0.1 },
+    { name: 'Rations (10 days)', cost: 5 },
+    { name: 'Waterskin', cost: 0.2 },
+    { name: 'Tinderbox', cost: 0.5 },
+    { name: 'Arrows (20)', cost: 1 },
+    { name: 'Bolts (20)', cost: 1 },
+    { name: 'Component Pouch', cost: 25 },
+    { name: 'Arcane Focus', cost: 10 },
+    { name: 'Holy Symbol', cost: 5 },
+    { name: 'Thieves\' Tools', cost: 25 },
+    { name: 'Healer\'s Kit', cost: 5 }
+  ],
+  packs: [
+    { name: 'Burglar\'s Pack', cost: 16, contents: 'Backpack, ball bearings, string, bell, 5 candles, crowbar, hammer, 10 pitons, lantern, 2 oil flasks, rations, tinderbox, waterskin, 50 ft rope' },
+    { name: 'Diplomat\'s Pack', cost: 39, contents: 'Chest, 2 cases for maps, fine clothes, ink, pen, lamp, 2 oil flasks, 5 paper sheets, vial of perfume, sealing wax, soap' },
+    { name: 'Dungeoneer\'s Pack', cost: 12, contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft rope' },
+    { name: 'Entertainer\'s Pack', cost: 40, contents: 'Backpack, bedroll, 2 costumes, 5 candles, rations, waterskin, disguise kit' },
+    { name: 'Explorer\'s Pack', cost: 10, contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft rope' },
+    { name: 'Priest\'s Pack', cost: 19, contents: 'Backpack, blanket, 10 candles, tinderbox, alms box, 2 incense blocks, censer, vestments, rations, waterskin' },
+    { name: 'Scholar\'s Pack', cost: 40, contents: 'Backpack, book of lore, ink, pen, 10 parchment sheets, little bag of sand, small knife' }
+  ]
+};
+
+// ============================================================================
+// D&D 5E SPELLS
+// ============================================================================
+
+const SPELL_SCHOOLS = {
+  abjuration: { name: 'Abjuration', color: 'blue', icon: '🛡️' },
+  conjuration: { name: 'Conjuration', color: 'yellow', icon: '✨' },
+  divination: { name: 'Divination', color: 'cyan', icon: '👁️' },
+  enchantment: { name: 'Enchantment', color: 'pink', icon: '💫' },
+  evocation: { name: 'Evocation', color: 'red', icon: '🔥' },
+  illusion: { name: 'Illusion', color: 'purple', icon: '🎭' },
+  necromancy: { name: 'Necromancy', color: 'green', icon: '💀' },
+  transmutation: { name: 'Transmutation', color: 'orange', icon: '🔄' }
+};
+
+const SPELLS = {
+  // CANTRIPS (Level 0)
+  acidSplash: { name: 'Acid Splash', level: 0, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Hurl a bubble of acid at one or two creatures within 5 ft of each other. Dex save or 1d6 acid damage.', classes: ['sorcerer', 'wizard'] },
+  bladeWard: { name: 'Blade Ward', level: 0, school: 'abjuration', castTime: '1 action', range: 'Self', duration: '1 round', description: 'Gain resistance to bludgeoning, piercing, and slashing damage from weapon attacks.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  chillTouch: { name: 'Chill Touch', level: 0, school: 'necromancy', castTime: '1 action', range: '120 ft', duration: '1 round', description: 'Ghostly skeletal hand deals 1d8 necrotic damage and prevents healing until your next turn.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  dancingLights: { name: 'Dancing Lights', level: 0, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Create up to four torch-sized lights that you can move and combine.', classes: ['bard', 'sorcerer', 'wizard'] },
+  druidcraft: { name: 'Druidcraft', level: 0, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: 'Instantaneous', description: 'Create minor nature effects: predict weather, bloom flower, sensory effect, or light/snuff flame.', classes: ['druid'] },
+  eldritchBlast: { name: 'Eldritch Blast', level: 0, school: 'evocation', castTime: '1 action', range: '120 ft', duration: 'Instantaneous', description: 'Beam of crackling energy deals 1d10 force damage. Additional beams at higher levels.', classes: ['warlock'] },
+  fireBolt: { name: 'Fire Bolt', level: 0, school: 'evocation', castTime: '1 action', range: '120 ft', duration: 'Instantaneous', description: 'Hurl a mote of fire. Ranged spell attack for 1d10 fire damage. Ignites flammable objects.', classes: ['sorcerer', 'wizard'] },
+  friends: { name: 'Friends', level: 0, school: 'enchantment', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Gain advantage on Charisma checks against one creature, but it becomes hostile after.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  guidance: { name: 'Guidance', level: 0, school: 'divination', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Target can add 1d4 to one ability check of its choice.', classes: ['cleric', 'druid'] },
+  light: { name: 'Light', level: 0, school: 'evocation', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Object sheds bright light in 20-ft radius and dim light for additional 20 ft.', classes: ['bard', 'cleric', 'sorcerer', 'wizard'] },
+  mageHand: { name: 'Mage Hand', level: 0, school: 'conjuration', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Spectral floating hand can manipulate objects, open doors, or retrieve items up to 10 lbs.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  mending: { name: 'Mending', level: 0, school: 'transmutation', castTime: '1 minute', range: 'Touch', duration: 'Instantaneous', description: 'Repair a single break or tear in an object (no larger than 1 ft).', classes: ['bard', 'cleric', 'druid', 'sorcerer', 'wizard'] },
+  message: { name: 'Message', level: 0, school: 'transmutation', castTime: '1 action', range: '120 ft', duration: '1 round', description: 'Whisper a message to a creature within range. It can reply in a whisper.', classes: ['bard', 'sorcerer', 'wizard'] },
+  minorIllusion: { name: 'Minor Illusion', level: 0, school: 'illusion', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Create a sound or image of an object. Investigation check to determine illusion.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  poisonSpray: { name: 'Poison Spray', level: 0, school: 'conjuration', castTime: '1 action', range: '10 ft', duration: 'Instantaneous', description: 'Puff of noxious gas. Con save or 1d12 poison damage.', classes: ['druid', 'sorcerer', 'warlock', 'wizard'] },
+  prestidigitation: { name: 'Prestidigitation', level: 0, school: 'transmutation', castTime: '1 action', range: '10 ft', duration: '1 hour', description: 'Minor magical trick: sensory effect, light/snuff, clean/soil, warm/chill, flavor, symbol.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  produceFlame: { name: 'Produce Flame', level: 0, school: 'conjuration', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Flickering flame provides light or can be hurled for 1d8 fire damage.', classes: ['druid'] },
+  rayOfFrost: { name: 'Ray of Frost', level: 0, school: 'evocation', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Frigid beam deals 1d8 cold damage and reduces speed by 10 ft until your next turn.', classes: ['sorcerer', 'wizard'] },
+  resistance: { name: 'Resistance', level: 0, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Target can add 1d4 to one saving throw of its choice.', classes: ['cleric', 'druid'] },
+  sacredFlame: { name: 'Sacred Flame', level: 0, school: 'evocation', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Flame-like radiance. Dex save or 1d8 radiant damage. No benefit from cover.', classes: ['cleric'] },
+  shillelagh: { name: 'Shillelagh', level: 0, school: 'transmutation', castTime: '1 bonus action', range: 'Touch', duration: '1 minute', description: 'Club or quarterstaff becomes magical, uses spellcasting ability, and deals 1d8 damage.', classes: ['druid'] },
+  shockingGrasp: { name: 'Shocking Grasp', level: 0, school: 'evocation', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Lightning springs from your hand. 1d8 lightning damage, target can\'t take reactions.', classes: ['sorcerer', 'wizard'] },
+  spareTheDying: { name: 'Spare the Dying', level: 0, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Stabilize a creature at 0 HP.', classes: ['cleric'] },
+  thaumaturgy: { name: 'Thaumaturgy', level: 0, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Minor divine wonder: booming voice, flames flicker, tremors, sounds, doors open/close.', classes: ['cleric'] },
+  thornWhip: { name: 'Thorn Whip', level: 0, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: 'Instantaneous', description: 'Vine-like whip deals 1d6 piercing and pulls Large or smaller creature 10 ft closer.', classes: ['druid'] },
+  trueStrike: { name: 'True Strike', level: 0, school: 'divination', castTime: '1 action', range: '30 ft', duration: '1 round', description: 'Gain advantage on your first attack roll against the target on your next turn.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  viciousMockery: { name: 'Vicious Mockery', level: 0, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Psychic insults deal 1d4 psychic damage and impose disadvantage on next attack.', classes: ['bard'] },
+
+  // 1ST LEVEL SPELLS
+  alarm: { name: 'Alarm', level: 1, school: 'abjuration', castTime: '1 minute', range: '30 ft', duration: '8 hours', description: 'Set a ward that alerts you when a creature enters a 20-ft cube area.', classes: ['ranger', 'wizard'], ritual: true },
+  armorOfAgathys: { name: 'Armor of Agathys', level: 1, school: 'abjuration', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Gain 5 temp HP. While active, creatures hitting you in melee take 5 cold damage.', classes: ['warlock'] },
+  bane: { name: 'Bane', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Up to 3 creatures subtract 1d4 from attack rolls and saving throws.', classes: ['bard', 'cleric'] },
+  bless: { name: 'Bless', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Up to 3 creatures add 1d4 to attack rolls and saving throws.', classes: ['cleric', 'paladin'] },
+  burningHands: { name: 'Burning Hands', level: 1, school: 'evocation', castTime: '1 action', range: 'Self (15-ft cone)', duration: 'Instantaneous', description: 'Each creature in 15-ft cone takes 3d6 fire damage (Dex half).', classes: ['sorcerer', 'wizard'] },
+  charmPerson: { name: 'Charm Person', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 hour', description: 'Humanoid regards you as friendly. Wis save. Advantage if you\'re fighting it.', classes: ['bard', 'druid', 'sorcerer', 'warlock', 'wizard'] },
+  chromaticOrb: { name: 'Chromatic Orb', level: 1, school: 'evocation', castTime: '1 action', range: '90 ft', duration: 'Instantaneous', description: 'Hurl orb of acid, cold, fire, lightning, poison, or thunder for 3d8 damage.', classes: ['sorcerer', 'wizard'] },
+  colorSpray: { name: 'Color Spray', level: 1, school: 'illusion', castTime: '1 action', range: 'Self (15-ft cone)', duration: '1 round', description: 'Blind creatures in cone with total HP up to 6d10 (starting from lowest HP).', classes: ['sorcerer', 'wizard'] },
+  command: { name: 'Command', level: 1, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 round', description: 'Speak one-word command. Wis save or target follows command on its turn.', classes: ['cleric', 'paladin'] },
+  compelledDuel: { name: 'Compelled Duel', level: 1, school: 'enchantment', castTime: '1 bonus action', range: '30 ft', duration: '1 minute', description: 'Force creature to fight you. Wis save or disadvantage on attacks against others.', classes: ['paladin'] },
+  cureWounds: { name: 'Cure Wounds', level: 1, school: 'evocation', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Heal 1d8 + spellcasting modifier HP.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger'] },
+  detectMagic: { name: 'Detect Magic', level: 1, school: 'divination', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Sense magic within 30 ft and see its aura. See through most barriers.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger', 'sorcerer', 'wizard'], ritual: true },
+  disguiseSelf: { name: 'Disguise Self', level: 1, school: 'illusion', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Change your appearance including clothing, armor, weapons, and other belongings.', classes: ['bard', 'sorcerer', 'wizard'] },
+  dissonantWhispers: { name: 'Dissonant Whispers', level: 1, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Whisper discordant melody. 3d6 psychic damage, Wis save or flee.', classes: ['bard'] },
+  divineFavor: { name: 'Divine Favor', level: 1, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Your weapon attacks deal extra 1d4 radiant damage.', classes: ['paladin'] },
+  entangle: { name: 'Entangle', level: 1, school: 'conjuration', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Grasping weeds in 20-ft square. Str save or restrained. Difficult terrain.', classes: ['druid'] },
+  expeditiousRetreat: { name: 'Expeditious Retreat', level: 1, school: 'transmutation', castTime: '1 bonus action', range: 'Self', duration: '10 minutes', description: 'Dash as bonus action for duration.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  faerieFire: { name: 'Faerie Fire', level: 1, school: 'evocation', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Objects and creatures in 20-ft cube outlined in light. Attacks have advantage.', classes: ['bard', 'druid'] },
+  falseLife: { name: 'False Life', level: 1, school: 'necromancy', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Gain 1d4 + 4 temporary HP.', classes: ['sorcerer', 'wizard'] },
+  featherFall: { name: 'Feather Fall', level: 1, school: 'transmutation', castTime: '1 reaction', range: '60 ft', duration: '1 minute', description: 'Up to 5 falling creatures slow to 60 ft/round and take no falling damage.', classes: ['bard', 'sorcerer', 'wizard'] },
+  findFamiliar: { name: 'Find Familiar', level: 1, school: 'conjuration', castTime: '1 hour', range: '10 ft', duration: 'Instantaneous', description: 'Summon a spirit as bat, cat, owl, etc. Telepathic link, can see through its senses.', classes: ['wizard'], ritual: true },
+  fogCloud: { name: 'Fog Cloud', level: 1, school: 'conjuration', castTime: '1 action', range: '120 ft', duration: '1 hour', description: 'Create 20-ft radius sphere of fog. Area is heavily obscured.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'] },
+  goodberry: { name: 'Goodberry', level: 1, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Create 10 berries. Each heals 1 HP and provides nourishment for a day.', classes: ['druid', 'ranger'] },
+  grease: { name: 'Grease', level: 1, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 minute', description: '10-ft square becomes difficult terrain. Dex save or fall prone.', classes: ['wizard'] },
+  guidingBolt: { name: 'Guiding Bolt', level: 1, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 round', description: '4d6 radiant damage. Next attack against target has advantage.', classes: ['cleric'] },
+  healingWord: { name: 'Healing Word', level: 1, school: 'evocation', castTime: '1 bonus action', range: '60 ft', duration: 'Instantaneous', description: 'Heal 1d4 + spellcasting modifier HP at range.', classes: ['bard', 'cleric', 'druid'] },
+  hellishRebuke: { name: 'Hellish Rebuke', level: 1, school: 'evocation', castTime: '1 reaction', range: '60 ft', duration: 'Instantaneous', description: 'When damaged, creature takes 2d10 fire damage (Dex half).', classes: ['warlock'] },
+  heroism: { name: 'Heroism', level: 1, school: 'enchantment', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Target immune to frightened, gains temp HP equal to spellcasting mod each turn.', classes: ['bard', 'paladin'] },
+  hex: { name: 'Hex', level: 1, school: 'enchantment', castTime: '1 bonus action', range: '90 ft', duration: '1 hour', description: 'Curse target. Deal extra 1d6 necrotic on hits. Disadvantage on one ability checks.', classes: ['warlock'] },
+  huntersMark: { name: 'Hunter\'s Mark', level: 1, school: 'divination', castTime: '1 bonus action', range: '90 ft', duration: '1 hour', description: 'Mark prey. Deal extra 1d6 damage on hits. Advantage on tracking.', classes: ['ranger'] },
+  identify: { name: 'Identify', level: 1, school: 'divination', castTime: '1 minute', range: 'Touch', duration: 'Instantaneous', description: 'Learn properties of magic item or if creature is affected by spell.', classes: ['bard', 'wizard'], ritual: true },
+  inflictWounds: { name: 'Inflict Wounds', level: 1, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Melee spell attack deals 3d10 necrotic damage.', classes: ['cleric'] },
+  jump: { name: 'Jump', level: 1, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Triple target\'s jump distance.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'] },
+  longstrider: { name: 'Longstrider', level: 1, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target\'s speed increases by 10 ft.', classes: ['bard', 'druid', 'ranger', 'wizard'] },
+  mageArmor: { name: 'Mage Armor', level: 1, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '8 hours', description: 'Target\'s base AC becomes 13 + Dex modifier (no armor).', classes: ['sorcerer', 'wizard'] },
+  magicMissile: { name: 'Magic Missile', level: 1, school: 'evocation', castTime: '1 action', range: '120 ft', duration: 'Instantaneous', description: 'Three darts automatically hit for 1d4+1 force damage each.', classes: ['sorcerer', 'wizard'] },
+  protectionFromEvilAndGood: { name: 'Protection from Evil and Good', level: 1, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '10 minutes', description: 'Protect against aberrations, celestials, elementals, fey, fiends, undead.', classes: ['cleric', 'paladin', 'warlock', 'wizard'] },
+  sanctuary: { name: 'Sanctuary', level: 1, school: 'abjuration', castTime: '1 bonus action', range: '30 ft', duration: '1 minute', description: 'Creatures must make Wis save to attack warded target.', classes: ['cleric'] },
+  shield: { name: 'Shield', level: 1, school: 'abjuration', castTime: '1 reaction', range: 'Self', duration: '1 round', description: '+5 AC until your next turn, including against triggering attack.', classes: ['sorcerer', 'wizard'] },
+  shieldOfFaith: { name: 'Shield of Faith', level: 1, school: 'abjuration', castTime: '1 bonus action', range: '60 ft', duration: '10 minutes', description: 'Target gains +2 AC.', classes: ['cleric', 'paladin'] },
+  sleep: { name: 'Sleep', level: 1, school: 'enchantment', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Creatures with HP totaling up to 5d8 fall unconscious (lowest HP first).', classes: ['bard', 'sorcerer', 'wizard'] },
+  speakWithAnimals: { name: 'Speak with Animals', level: 1, school: 'divination', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Communicate with beasts. Intelligence limits information.', classes: ['bard', 'druid', 'ranger'], ritual: true },
+  tashasHideousLaughter: { name: 'Tasha\'s Hideous Laughter', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Creature falls prone laughing. Incapacitated, can\'t stand. Wis save each turn.', classes: ['bard', 'wizard'] },
+  thunderwave: { name: 'Thunderwave', level: 1, school: 'evocation', castTime: '1 action', range: 'Self (15-ft cube)', duration: 'Instantaneous', description: '2d8 thunder damage in 15-ft cube. Con save or pushed 10 ft.', classes: ['bard', 'druid', 'sorcerer', 'wizard'] },
+  witchBolt: { name: 'Witch Bolt', level: 1, school: 'evocation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: '1d12 lightning damage. Use action each turn to auto-deal 1d12 more.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  wrathfulSmite: { name: 'Wrathful Smite', level: 1, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +1d6 psychic. Wis save or frightened.', classes: ['paladin'] }
+};
+
+// Get spells available to a class at a given level
+const getSpellsForClass = (classId, spellLevel) => {
+  return Object.entries(SPELLS)
+    .filter(([_, spell]) => spell.level === spellLevel && spell.classes.includes(classId))
+    .map(([id, spell]) => ({ id, ...spell }));
+};
+
+// Get spellcasting info for a class
+const getSpellcastingInfo = (classId, characterLevel = 1) => {
+  const classData = CLASSES[classId];
+  if (!classData?.spellcasting) return null;
+  
+  const sc = classData.spellcasting;
+  
+  // Check if spellcasting starts at higher level
+  if (sc.startsAtLevel && characterLevel < sc.startsAtLevel) {
+    return { ...sc, available: false, startsAt: sc.startsAtLevel };
+  }
+  
+  return { ...sc, available: true };
+};
+
+// ============================================================================
+// D&D 5E LANGUAGES
+// ============================================================================
+
+const LANGUAGES = {
+  common: { name: 'Common', type: 'standard', speakers: 'Humans, most civilized races' },
+  dwarvish: { name: 'Dwarvish', type: 'standard', speakers: 'Dwarves' },
+  elvish: { name: 'Elvish', type: 'standard', speakers: 'Elves' },
+  giant: { name: 'Giant', type: 'standard', speakers: 'Ogres, Giants' },
+  gnomish: { name: 'Gnomish', type: 'standard', speakers: 'Gnomes' },
+  goblin: { name: 'Goblin', type: 'standard', speakers: 'Goblinoids' },
+  halfling: { name: 'Halfling', type: 'standard', speakers: 'Halflings' },
+  orc: { name: 'Orc', type: 'standard', speakers: 'Orcs' },
+  abyssal: { name: 'Abyssal', type: 'exotic', speakers: 'Demons' },
+  celestial: { name: 'Celestial', type: 'exotic', speakers: 'Celestials' },
+  draconic: { name: 'Draconic', type: 'exotic', speakers: 'Dragons, Dragonborn' },
+  deepSpeech: { name: 'Deep Speech', type: 'exotic', speakers: 'Aboleths, Cloakers' },
+  infernal: { name: 'Infernal', type: 'exotic', speakers: 'Devils' },
+  primordial: { name: 'Primordial', type: 'exotic', speakers: 'Elementals' },
+  sylvan: { name: 'Sylvan', type: 'exotic', speakers: 'Fey creatures' },
+  undercommon: { name: 'Undercommon', type: 'exotic', speakers: 'Underdark traders' }
+};
+
+// Get languages a character already knows from race
+const getFixedLanguages = (raceId, subraceId) => {
+  if (!raceId || !RACES[raceId]) return ['Common'];
+  const race = RACES[raceId];
+  // Filter out "One of your choice" type entries
+  return (race.languages || []).filter(lang => 
+    !lang.toLowerCase().includes('choice') && 
+    !lang.toLowerCase().includes('your choice')
+  );
+};
+
+// Get number of bonus language choices from race
+const getRaceLanguageChoices = (raceId, subraceId) => {
+  if (!raceId || !RACES[raceId]) return 0;
+  const race = RACES[raceId];
+  const subrace = subraceId && race.subraces ? race.subraces[subraceId] : null;
+  
+  let choices = 0;
+  
+  // Check race languages for "choice" entries
+  (race.languages || []).forEach(lang => {
+    if (lang.toLowerCase().includes('one of your choice')) choices += 1;
+  });
+  
+  // Human gets +1, High Elf gets +1
+  if (raceId === 'human') choices = 1;
+  if (subraceId === 'highElf') choices = 1;
+  
+  return choices;
+};
+
+// Get number of bonus language choices from background
+const getBackgroundLanguageChoices = (backgroundId) => {
+  if (!backgroundId || !BACKGROUNDS[backgroundId]) return 0;
+  return BACKGROUNDS[backgroundId].languages || 0;
+};
+
+// ============================================================================
+// D&D 5E SKILLS
+// ============================================================================
+
+const SKILLS = {
+  acrobatics: { name: 'Acrobatics', ability: 'dexterity' },
+  animalHandling: { name: 'Animal Handling', ability: 'wisdom' },
+  arcana: { name: 'Arcana', ability: 'intelligence' },
+  athletics: { name: 'Athletics', ability: 'strength' },
+  deception: { name: 'Deception', ability: 'charisma' },
+  history: { name: 'History', ability: 'intelligence' },
+  insight: { name: 'Insight', ability: 'wisdom' },
+  intimidation: { name: 'Intimidation', ability: 'charisma' },
+  investigation: { name: 'Investigation', ability: 'intelligence' },
+  medicine: { name: 'Medicine', ability: 'wisdom' },
+  nature: { name: 'Nature', ability: 'intelligence' },
+  perception: { name: 'Perception', ability: 'wisdom' },
+  performance: { name: 'Performance', ability: 'charisma' },
+  persuasion: { name: 'Persuasion', ability: 'charisma' },
+  religion: { name: 'Religion', ability: 'intelligence' },
+  sleightOfHand: { name: 'Sleight of Hand', ability: 'dexterity' },
+  stealth: { name: 'Stealth', ability: 'dexterity' },
+  survival: { name: 'Survival', ability: 'wisdom' }
+};
+
+// Get skill ID from skill name
+const getSkillId = (skillName) => {
+  const entry = Object.entries(SKILLS).find(([_, s]) => 
+    s.name.toLowerCase() === skillName.toLowerCase()
+  );
+  return entry ? entry[0] : null;
+};
+
+// Get overlapping skills between background and class
+const getSkillOverlap = (classId, backgroundId) => {
+  if (!classId || !backgroundId) return [];
+  
+  const classData = CLASSES[classId];
+  const bgData = BACKGROUNDS[backgroundId];
+  
+  if (!classData || !bgData) return [];
+  
+  const bgSkills = bgData.skillProficiencies || [];
+  const classSkillOptions = classData.skillChoices?.from;
+  
+  // If class can choose from any skill, no overlap issues
+  if (classSkillOptions === 'any') return [];
+  
+  // Find skills that appear in both background AND class options
+  const overlap = bgSkills.filter(skill => 
+    classSkillOptions?.includes(skill)
+  );
+  
+  return overlap;
+};
+
+// Get all available skills for replacement (skills not already gained)
+const getAvailableReplacementSkills = (classId, backgroundId, alreadyChosen = []) => {
+  const bgSkills = BACKGROUNDS[backgroundId]?.skillProficiencies || [];
+  const classSkillOptions = CLASSES[classId]?.skillChoices?.from;
+  
+  // All skills except background skills and already chosen replacements
+  const excluded = [...bgSkills, ...alreadyChosen.map(id => SKILLS[id]?.name)].map(s => s?.toLowerCase());
+  
+  return Object.entries(SKILLS).filter(([id, skill]) => 
+    !excluded.includes(skill.name.toLowerCase())
+  );
+};
+
+const getRacialBonuses = (raceId, subraceId) => {
+  if (!raceId || !RACES[raceId]) return {};
+  const race = RACES[raceId];
+
+  // Start with race bonuses
+  let bonuses = { ...(race.abilityBonuses || {}) };
+
+  // Human: { all: 1 }
+  if (bonuses.all) {
+    const v = bonuses.all;
+    delete bonuses.all;
+    bonuses = {
+      strength: v, dexterity: v, constitution: v,
+      intelligence: v, wisdom: v, charisma: v
+    };
+  }
+
+  // Half-elf “choice” bonus is deferred to a later phase UI
+  if (bonuses.choice) {
+    delete bonuses.choice;
+  }
+
+  // Subrace bonuses overlay
+  if (subraceId && race.subraces && race.subraces[subraceId]?.abilityBonuses) {
+    bonuses = { ...bonuses, ...race.subraces[subraceId].abilityBonuses };
+  }
+
+  return bonuses;
+};
+
+const applyBonusesToAbilities = (baseAbilities, bonuses) => {
+  const out = { ...baseAbilities };
+  ABILITY_NAMES.forEach((a) => {
+    out[a] = (out[a] || 0) + (bonuses[a] || 0);
+  });
+  return out;
+};
+
+const formatBonusLine = (bonuses) => {
+  const parts = [];
+  ABILITY_NAMES.forEach((a) => {
+    const v = bonuses[a];
+    if (v) parts.push(`${ABILITY_LABELS[a].short} +${v}`);
+  });
+  return parts.length ? parts.join(', ') : 'No ability score bonuses';
+};
+
+// Animated D6 Die Component
+const AnimatedDie = ({ value, isRolling, isDropped = false }) => {
+  const [displayValue, setDisplayValue] = useState(value || 1);
+  
+  useEffect(() => {
+    if (isRolling) {
+      const interval = setInterval(() => {
+        setDisplayValue(Math.floor(Math.random() * 6) + 1);
+      }, 80);
+      return () => clearInterval(interval);
+    } else {
+      setDisplayValue(value);
+    }
+  }, [isRolling, value]);
+
+  const dotPositions = {
+    1: [[50, 50]],
+    2: [[25, 25], [75, 75]],
+    3: [[25, 25], [50, 50], [75, 75]],
+    4: [[25, 25], [75, 25], [25, 75], [75, 75]],
+    5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
+    6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]]
+  };
+
+  return (
+    <div 
+      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 ${
+        isDropped 
+          ? 'bg-slate-700/50 border-2 border-red-500/30 opacity-50 scale-90' 
+          : 'bg-gradient-to-br from-white to-slate-200 shadow-lg'
+      } ${isRolling ? 'animate-bounce' : ''}`}
+    >
+      {dotPositions[displayValue]?.map(([x, y], i) => (
+        <div
+          key={i}
+          className={`absolute w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${isDropped ? 'bg-red-400/50' : 'bg-slate-800'}`}
+          style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
+        />
+      ))}
+      {isDropped && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-full h-0.5 bg-red-500/60 rotate-45 absolute" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Single Ability Score Roll Display
+const AbilityRollResult = ({ roll, index, onAssign, assignedTo }) => {
+  const total = roll.kept.reduce((a, b) => a + b, 0);
+  const modifier = getModifier(total);
+  
+  return (
+    <div className={`p-4 rounded-xl border transition-all ${
+      assignedTo 
+        ? 'bg-green-500/10 border-green-500/30' 
+        : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+    }`}>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="flex gap-1">
+          {roll.all.map((val, i) => (
+            <AnimatedDie 
+              key={i} 
+              value={val} 
+              isRolling={false}
+              isDropped={val === roll.dropped}
+            />
+          ))}
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-white">{total}</div>
+          <div className={`text-sm font-medium ${modifier >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatModifier(modifier)}
+          </div>
+        </div>
+      </div>
+      {assignedTo ? (
+        <div className="text-xs text-green-400 flex items-center gap-1">
+          <Check className="w-3 h-3" />
+          Assigned to {ABILITY_LABELS[assignedTo].short}
+        </div>
+      ) : (
+        <div className="text-xs text-slate-500">Click an ability below to assign</div>
+      )}
+    </div>
+  );
+};
+
+// Main Ability Score Step
+const AbilityScoreStep = ({ character, updateCharacter }) => {
+  const [method, setMethod] = useState(character.abilityMethod || null);
+  const [rolls, setRolls] = useState([]);
+  const [isRolling, setIsRolling] = useState(false);
+  const [assignments, setAssignments] = useState({}); // Maps ability -> scoreIndex (not value!)
+  const [unassignedIndices, setUnassignedIndices] = useState([]); // Array of indices into rolls/standardArray
+  const [selectedIndex, setSelectedIndex] = useState(null); // Index of selected score, not value
+  const [pointBuyScores, setPointBuyScores] = useState({
+    strength: 8, dexterity: 8, constitution: 8,
+    intelligence: 8, wisdom: 8, charisma: 8
+  });
+  
+  // Get the actual scores array based on method
+  const getScoresArray = () => {
+    if (method === 'standard') return STANDARD_ARRAY;
+    if (method === 'roll') return rolls.map(r => r.kept.reduce((a, b) => a + b, 0));
+    return [];
+  };
+  const scoresArray = getScoresArray();
+
+  // Calculate point buy remaining
+  const pointBuySpent = Object.values(pointBuyScores).reduce((sum, score) => sum + POINT_BUY_COSTS[score], 0);
+  const pointBuyRemaining = 27 - pointBuySpent;
+
+  // Roll 4d6 drop lowest
+  const rollAbilityScore = () => {
+    const dice = [
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1
+    ];
+    const sorted = [...dice].sort((a, b) => a - b);
+    const dropped = sorted[0];
+    const kept = sorted.slice(1);
+    return { all: dice, kept, dropped };
+  };
+
+  const rollAllScores = () => {
+    setIsRolling(true);
+    setAssignments({});
+    setSelectedIndex(null);
+    setUnassignedIndices([]);
+    
+    // Generate rolls immediately
+    const newRolls = Array(6).fill(null).map(() => rollAbilityScore());
+    
+    // Show results after animation
+    setTimeout(() => {
+      setRolls(newRolls);
+      setUnassignedIndices([0, 1, 2, 3, 4, 5]);
+      setIsRolling(false);
+      updateCharacter('abilities', {
+        strength: 10, dexterity: 10, constitution: 10,
+        intelligence: 10, wisdom: 10, charisma: 10
+      });
+    }, 1500);
+  };
+
+  const resetAbilities = () => {
+    const defaultAbilities = {
+      strength: 10, dexterity: 10, constitution: 10,
+      intelligence: 10, wisdom: 10, charisma: 10
+    };
+    updateCharacter('abilities', defaultAbilities);
+    setAssignments({});
+    setSelectedIndex(null);
+    setUnassignedIndices([]);
+    setRolls([]);
+    setPointBuyScores({
+      strength: 8, dexterity: 8, constitution: 8,
+      intelligence: 8, wisdom: 8, charisma: 8
+    });
+  };
+
+  const selectMethod = (newMethod) => {
+    setMethod(newMethod);
+    updateCharacter('abilityMethod', newMethod);
+    setAssignments({});
+    setSelectedIndex(null);
+    
+    if (newMethod === 'standard') {
+      setUnassignedIndices([0, 1, 2, 3, 4, 5]); // All 6 indices available
+      // Reset abilities to 10 until assigned
+      updateCharacter('abilities', {
+        strength: 10, dexterity: 10, constitution: 10,
+        intelligence: 10, wisdom: 10, charisma: 10
+      });
+    } else if (newMethod === 'roll') {
+      setRolls([]);
+      setUnassignedIndices([]);
+      updateCharacter('abilities', {
+        strength: 10, dexterity: 10, constitution: 10,
+        intelligence: 10, wisdom: 10, charisma: 10
+      });
+    } else if (newMethod === 'pointbuy') {
+      const startScores = {
+        strength: 8, dexterity: 8, constitution: 8,
+        intelligence: 8, wisdom: 8, charisma: 8
+      };
+      setPointBuyScores(startScores);
+      updateCharacter('abilities', startScores);
+    } else if (newMethod === 'manual') {
+      // Keep current abilities or reset to 10
+      updateCharacter('abilities', {
+        strength: 10, dexterity: 10, constitution: 10,
+        intelligence: 10, wisdom: 10, charisma: 10
+      });
+    }
+  };
+
+  const assignScore = (ability) => {
+    if (method === 'pointbuy' || method === 'manual') return;
+    
+    if (selectedIndex !== null) {
+      const scoreValue = scoresArray[selectedIndex];
+      
+      // If this ability already has a score assigned, put its index back
+      const oldIndex = assignments[ability];
+      
+      const newAssignments = { ...assignments };
+      newAssignments[ability] = selectedIndex;
+      setAssignments(newAssignments);
+      
+      // Update character abilities
+      const newAbilities = { ...character.abilities };
+      newAbilities[ability] = scoreValue;
+      updateCharacter('abilities', newAbilities);
+      
+      // Update unassigned indices
+      let newUnassigned = unassignedIndices.filter(i => i !== selectedIndex);
+      if (oldIndex !== undefined) {
+        newUnassigned.push(oldIndex);
+        newUnassigned.sort((a, b) => a - b);
+      }
+      setUnassignedIndices(newUnassigned);
+      setSelectedIndex(null);
+    }
+  };
+
+  const adjustPointBuy = (ability, delta) => {
+    const current = pointBuyScores[ability];
+    const newValue = current + delta;
+    
+    if (newValue < 8 || newValue > 15) return;
+    
+    const newCost = POINT_BUY_COSTS[newValue];
+    const oldCost = POINT_BUY_COSTS[current];
+    const costDelta = newCost - oldCost;
+    
+    if (pointBuyRemaining - costDelta < 0) return;
+    
+    const newScores = { ...pointBuyScores, [ability]: newValue };
+    setPointBuyScores(newScores);
+    updateCharacter('abilities', newScores);
+  };
+
+  const setManualScore = (ability, value) => {
+    const numValue = parseInt(value) || 8;
+    const clamped = Math.max(3, Math.min(18, numValue));
+    const newAbilities = { ...character.abilities, [ability]: clamped };
+    updateCharacter('abilities', newAbilities);
+  };
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-xl font-bold text-white mb-4">Ability Scores</h3>
+      
+      {/* Method Selection */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { id: 'standard', label: 'Standard Array', desc: '15, 14, 13, 12, 10, 8', icon: '📊' },
+          { id: 'pointbuy', label: 'Point Buy', desc: '27 points to spend', icon: '🛒' },
+          { id: 'roll', label: 'Roll 4d6', desc: 'Drop lowest die', icon: '🎲' },
+          { id: 'manual', label: 'Manual Entry', desc: 'Type your own', icon: '✏️' }
+        ].map(m => (
+          <button
+            key={m.id}
+            onClick={() => selectMethod(m.id)}
+            className={`p-4 rounded-xl border text-left transition-all ${
+              method === m.id
+                ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
+                : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
+            }`}
+          >
+            <div className="text-2xl mb-1">{m.icon}</div>
+            <div className={`font-semibold ${method === m.id ? 'text-indigo-300' : 'text-slate-200'}`}>
+              {m.label}
+            </div>
+            <div className="text-xs text-slate-500">{m.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Rolling UI */}
+      {method === 'roll' && (
+        <div className="space-y-4">
+          <button
+            onClick={rollAllScores}
+            disabled={isRolling}
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-bold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all disabled:opacity-50"
+          >
+            {isRolling ? (
+              <span className="flex items-center justify-center gap-2">
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                Rolling...
+              </span>
+            ) : rolls.length > 0 ? (
+              '🎲 Reroll All Scores'
+            ) : (
+              '🎲 Roll Ability Scores'
+            )}
+          </button>
+          
+          {isRolling && (
+            <div className="flex justify-center gap-3 py-8">
+              {[0, 1, 2, 3].map(i => (
+                <AnimatedDie key={i} value={1} isRolling={true} delay={i * 100} />
+              ))}
+            </div>
+          )}
+          
+          {rolls.length > 0 && !isRolling && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {rolls.map((roll, i) => {
+                const total = roll.kept.reduce((a, b) => a + b, 0);
+                const assignedAbility = Object.entries(assignments).find(([_, idx]) => idx === i)?.[0];
+                const modifier = getModifier(total);
+                
+                // Find the INDEX of the dropped die (first occurrence of the lowest value)
+                const lowestValue = Math.min(...roll.all);
+                const droppedIndex = roll.all.indexOf(lowestValue);
+                
+                return (
+                  <div 
+                    key={i}
+                    className={`p-3 rounded-xl border transition-all ${
+                      assignedAbility 
+                        ? 'bg-green-500/10 border-green-500/30' 
+                        : 'bg-slate-800/50 border-slate-700/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      {roll.all.map((val, dieIndex) => (
+                        <AnimatedDie 
+                          key={dieIndex} 
+                          value={val} 
+                          isRolling={false}
+                          isDropped={dieIndex === droppedIndex}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xl font-bold text-white">{total}</span>
+                        <span className={`ml-2 text-sm font-medium ${modifier >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          ({formatModifier(modifier)})
+                        </span>
+                      </div>
+                      {assignedAbility ? (
+                        <span className="text-xs text-green-400 flex items-center gap-1">
+                          <Check className="w-3 h-3" />
+                          {ABILITY_LABELS[assignedAbility].short}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-500">Click an ability below to assign</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Standard Array / Roll Assignment */}
+      {(method === 'standard' || (method === 'roll' && rolls.length > 0 && !isRolling)) && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2 justify-center items-center p-4 bg-slate-800/30 rounded-xl">
+            <span className="text-slate-400 text-sm mr-2">
+              {unassignedIndices.filter(i => !Object.values(assignments).includes(i)).length > 0 
+                ? 'Click a score, then click an ability:' 
+                : 'All scores assigned!'}
+            </span>
+            {unassignedIndices.filter(i => !Object.values(assignments).includes(i)).map((scoreIndex) => (
+              <button
+                key={scoreIndex}
+                onClick={() => setSelectedIndex(selectedIndex === scoreIndex ? null : scoreIndex)}
+                className={`px-4 py-2 rounded-lg font-bold transition-all ${
+                  selectedIndex === scoreIndex
+                    ? 'bg-indigo-500 text-white scale-110'
+                    : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                }`}
+              >
+                {scoresArray[scoreIndex]}
+              </button>
+            ))}
+            {Object.keys(assignments).length > 0 && (
+              <button
+                onClick={resetAbilities}
+                className="ml-4 px-3 py-1.5 text-sm rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-all"
+              >
+                Reset All
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Ability Score Grid */}
+      {method && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {ABILITY_NAMES.map(ability => {
+            const info = ABILITY_LABELS[ability];
+            const score = method === 'pointbuy' ? pointBuyScores[ability] : character.abilities[ability];
+            const modifier = getModifier(score);
+            const isAssigned = (method === 'standard' || method === 'roll') ? assignments[ability] !== undefined : true;
+            const assignedScore = isAssigned && assignments[ability] !== undefined ? scoresArray[assignments[ability]] : null;
+            
+            return (
+              <div
+                key={ability}
+                onClick={() => (method === 'standard' || method === 'roll') && selectedIndex !== null && assignScore(ability)}
+                className={`p-4 rounded-xl border transition-all ${
+                  selectedIndex !== null && (method === 'standard' || method === 'roll')
+                    ? 'cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/10'
+                    : ''
+                } ${
+                  isAssigned && (method === 'standard' || method === 'roll')
+                    ? 'bg-green-500/10 border-green-500/30'
+                    : 'bg-slate-800/50 border-slate-700/50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <div className="text-lg font-bold text-white">{info.short}</div>
+                    <div className="text-xs text-slate-500">{info.name}</div>
+                  </div>
+                  <div className="text-right">
+                    {method === 'manual' ? (
+                      <input
+                        type="number"
+                        min="3"
+                        max="18"
+                        value={score}
+                        onChange={(e) => setManualScore(ability, e.target.value)}
+                        className="w-16 text-2xl font-bold text-center bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                      />
+                    ) : method === 'pointbuy' ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => adjustPointBuy(ability, -1)}
+                          disabled={score <= 8}
+                          className="w-8 h-8 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          -
+                        </button>
+                        <span className="text-2xl font-bold text-white w-8 text-center">{score}</span>
+                        <button
+                          onClick={() => adjustPointBuy(ability, 1)}
+                          disabled={score >= 15 || pointBuyRemaining < (POINT_BUY_COSTS[score + 1] - POINT_BUY_COSTS[score])}
+                          className="w-8 h-8 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-2xl font-bold text-white">{score}</div>
+                    )}
+                    <div className={`text-sm font-semibold ${modifier >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {formatModifier(modifier)}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500">{info.desc}</div>
+                {method === 'pointbuy' && (
+                  <div className="text-xs text-indigo-400 mt-1">
+                    Cost: {POINT_BUY_COSTS[score]} points
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Point Buy Summary */}
+      {method === 'pointbuy' && (
+        <div className={`p-4 rounded-xl border ${
+          pointBuyRemaining === 0 
+            ? 'bg-green-500/10 border-green-500/30' 
+            : pointBuyRemaining < 0
+              ? 'bg-red-500/10 border-red-500/30'
+              : 'bg-slate-800/50 border-slate-700/50'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-300">Points Remaining:</span>
+            <span className={`text-2xl font-bold ${
+              pointBuyRemaining === 0 ? 'text-green-400' : pointBuyRemaining < 0 ? 'text-red-400' : 'text-white'
+            }`}>
+              {pointBuyRemaining} / 27
+            </span>
+          </div>
+          {pointBuyRemaining === 0 && (
+            <div className="text-xs text-green-400 mt-1 flex items-center gap-1">
+              <Check className="w-3 h-3" /> All points allocated!
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* D&D Modifier Reference */}
+      {method && (
+        <div className="text-xs text-slate-600 text-center">
+          D&D Modifier: (Score - 10) ÷ 2, rounded down. 8 = -1, 10 = +0, 12 = +1, 14 = +2, 16 = +3, 18 = +4
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// RACE SELECTION STEP (PHASE 3)
+// ============================================================================
+
+const RaceSelectionStep = ({ character, updateCharacter }) => {
+  const selectedRaceId = character.race;
+  const selectedSubraceId = character.subrace;
+
+  const selectedRace = selectedRaceId ? RACES[selectedRaceId] : null;
+
+  const racialBonuses = getRacialBonuses(selectedRaceId, selectedSubraceId);
+  const previewAbilities = applyBonusesToAbilities(character.abilities, racialBonuses);
+
+  const pickRace = (raceId) => {
+    updateCharacter('race', raceId);
+    updateCharacter('subrace', null);
+  };
+
+  const pickSubrace = (subId) => {
+    updateCharacter('subrace', subId);
+  };
+
+  const getFullTraits = () => {
+    if (!selectedRace) return [];
+    const base = selectedRace.traits || [];
+    const sub = selectedRace.subraces && selectedSubraceId
+      ? (selectedRace.subraces[selectedSubraceId]?.traits || [])
+      : [];
+    // de-dupe while preserving order
+    const seen = new Set();
+    return [...base, ...sub].filter(t => {
+      if (seen.has(t)) return false;
+      seen.add(t);
+      return true;
+    });
+  };
+
+  const fullTraits = getFullTraits();
+
+  const speed = (() => {
+    if (!selectedRace) return null;
+    let s = selectedRace.speed;
+    if (selectedRace.subraces && selectedSubraceId && selectedRace.subraces[selectedSubraceId]?.speed) {
+      s = selectedRace.subraces[selectedSubraceId].speed;
+    }
+    return s;
+  })();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Choose Your Race</h3>
+        <p className="text-sm text-slate-500">
+          Racial bonuses are shown as a preview here. Your base ability scores stay unchanged.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Race Grid */}
+        <div className="lg:col-span-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.entries(RACES).map(([id, race]) => {
+              const isSelected = selectedRaceId === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => pickRace(id)}
+                  className={`p-4 rounded-xl border text-left transition-all ${
+                    isSelected
+                      ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
+                      : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">{RACE_ICONS[id] || '🧙'}</div>
+                    <div className="min-w-0">
+                      <div className={`font-semibold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
+                        {race.name}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                        {race.description}
+                      </div>
+                      <div className="text-xs mt-2">
+                        <span className="text-slate-500">Bonuses: </span>
+                        <span className={isSelected ? 'text-indigo-200' : 'text-slate-300'}>
+                          {formatBonusLine(getRacialBonuses(id, null))}
+                        </span>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <Check className="w-4 h-4 text-indigo-400 ml-auto mt-0.5 shrink-0" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Subrace Selector */}
+          {selectedRace && selectedRace.subraces && (
+            <div className="mt-5 p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="font-semibold text-slate-200">
+                    {selectedRaceId === 'dragonborn' ? 'Choose Draconic Ancestry' : 'Choose Subrace'}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {selectedRaceId === 'dragonborn'
+                      ? 'This determines your breath weapon and resistance flavor.'
+                      : 'Adds additional traits and sometimes extra bonuses.'}
+                  </div>
+                </div>
+                {selectedSubraceId && (
+                  <button
+                    onClick={() => updateCharacter('subrace', null)}
+                    className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(selectedRace.subraces).map(([sid, sub]) => {
+                  const isSelected = selectedSubraceId === sid;
+                  const subBonus = sub.abilityBonuses ? formatBonusLine(sub.abilityBonuses) : null;
+
+                  return (
+                    <button
+                      key={sid}
+                      onClick={() => pickSubrace(sid)}
+                      className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                        isSelected
+                          ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200'
+                          : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-indigo-500/30'
+                      }`}
+                      title={sub.description || ''}
+                    >
+                      <div className="font-medium">{sub.name}</div>
+                      {(sub.description || subBonus) && (
+                        <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
+                          {sub.description || subBonus}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Details Panel */}
+        <div className="lg:col-span-2">
+          <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-4">
+            {!selectedRace ? (
+              <div className="text-center py-10 text-slate-500">
+                <User className="w-14 h-14 mx-auto mb-3 opacity-40" />
+                <div className="font-semibold text-slate-300">Select a race to see details</div>
+                <div className="text-xs mt-1">Traits, speed, languages, and ability preview.</div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">{RACE_ICONS[selectedRaceId] || '🧙'}</div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-bold text-white">
+                      {selectedRace.name}
+                      {selectedRace.subraces && selectedSubraceId
+                        ? `: ${selectedRace.subraces[selectedSubraceId]?.name || ''}`
+                        : ''}
+                    </div>
+                    <div className="text-sm text-slate-400 mt-1">
+                      {selectedRace.subraces && selectedSubraceId && selectedRace.subraces[selectedSubraceId]?.description
+                        ? selectedRace.subraces[selectedSubraceId].description
+                        : selectedRace.description}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                    <div className="text-xs text-slate-500">Speed</div>
+                    <div className="text-sm font-semibold text-slate-200">{speed} ft</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                    <div className="text-xs text-slate-500">Bonuses</div>
+                    <div className="text-sm font-semibold text-slate-200">{formatBonusLine(racialBonuses)}</div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                  <div className="text-xs text-slate-500 mb-2">Ability Preview</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {ABILITY_NAMES.map((a) => {
+                      const base = character.abilities[a];
+                      const bonus = racialBonuses[a] || 0;
+                      const total = previewAbilities[a];
+                      const mod = getModifier(total);
+
+                      return (
+                        <div key={a} className="p-2 rounded-lg bg-slate-800/40 border border-slate-700/40">
+                          <div className="text-[11px] text-slate-500">{ABILITY_LABELS[a].short}</div>
+                          <div className="flex items-baseline justify-between">
+                            <div className="text-sm font-bold text-slate-200">
+                              {total}
+                              {bonus ? <span className="text-[11px] text-green-400 ml-1">(+{bonus})</span> : null}
+                            </div>
+                            <div className={`text-xs font-semibold ${mod >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {formatModifier(mod)}
+                            </div>
+                          </div>
+                          <div className="text-[10px] text-slate-600 mt-0.5">
+                            Base {base}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-slate-900/30 border border-slate-700/40 space-y-2">
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Languages</div>
+                    <div className="text-sm text-slate-200">
+                      {(selectedRace.languages || []).join(', ')}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">Traits</div>
+                    {fullTraits.length ? (
+                      <ul className="text-sm text-slate-200 space-y-1 list-disc list-inside">
+                        {fullTraits.map((t) => (
+                          <li key={t}>{t}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-sm text-slate-400">No traits listed.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tiny note so nobody yells about Half-Elf choice bonuses yet */}
+                {selectedRaceId === 'halfElf' && (
+                  <div className="text-xs text-amber-400/90">
+                    Half-Elf “choose two +1s” will be selectable in a later phase. For now it’s preview-only.
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// REVIEW & EXPORT STEP (PHASE 8)
+// ============================================================================
+
+const ReviewStep = ({ character, updateCharacter }) => {
+  const [exportFormat, setExportFormat] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const race = character.race ? RACES[character.race] : null;
+  const subrace = character.subrace && race?.subraces ? race.subraces[character.subrace] : null;
+  const classData = character.class ? CLASSES[character.class] : null;
+  const background = character.background ? BACKGROUNDS[character.background] : null;
+  const racialBonuses = getRacialBonuses(character.race, character.subrace);
+  const finalAbilities = applyBonusesToAbilities(character.abilities, racialBonuses);
+
+  const spellcastingInfo = character.class ? getSpellcastingInfo(character.class, character.level) : null;
+
+  // Calculate derived stats
+  const proficiencyBonus = Math.ceil(1 + character.level / 4) + 1; // +2 at level 1
+  const initiative = getModifier(finalAbilities.dexterity);
+  const speed = subrace?.speed || race?.speed || 30;
+  
+  // AC calculation (base 10 + dex, or with armor)
+  const baseAC = 10 + getModifier(finalAbilities.dexterity);
+  
+  // HP calculation
+  const hitDie = classData?.hitDie || 8;
+  const conMod = getModifier(finalAbilities.constitution);
+  const maxHP = hitDie + conMod;
+
+  // Passive Perception
+  const passivePerception = 10 + getModifier(finalAbilities.wisdom);
+
+  // Get all proficiencies
+  const getAllProficiencies = () => {
+    // Combine fixed languages with chosen languages
+    const fixedLangs = getFixedLanguages(character.race, character.subrace);
+    const chosenLangs = (character.chosenLanguages || []).map(id => LANGUAGES[id]?.name).filter(Boolean);
+    const allLanguages = [...fixedLangs, ...chosenLangs];
+    
+    // Combine background skills with replacement skills
+    const bgSkills = background?.skillProficiencies || [];
+    const replacementSkills = (character.replacementSkills || []).map(id => SKILLS[id]?.name).filter(Boolean);
+    const allSkills = [...bgSkills, ...replacementSkills];
+    
+    const profs = {
+      armor: classData?.armorProficiencies || [],
+      weapons: classData?.weaponProficiencies || [],
+      tools: background?.toolProficiencies || [],
+      skills: allSkills,
+      savingThrows: classData?.savingThrows?.map(s => ABILITY_LABELS[s]?.name) || [],
+      languages: allLanguages.length > 0 ? allLanguages : ['Common']
+    };
+    return profs;
+  };
+
+  const proficiencies = getAllProficiencies();
+
+  // Get selected equipment
+  const getEquipmentList = () => {
+    if (character.equipmentMethod === 'starting' && character.class) {
+      const classEquip = STARTING_EQUIPMENT[character.class];
+      const items = [...(classEquip?.fixed || [])];
+      
+      // Add chosen options
+      if (character.equipmentChoices && classEquip?.choices) {
+        classEquip.choices.forEach((choice, idx) => {
+          const chosenIdx = character.equipmentChoices[idx];
+          if (chosenIdx !== undefined && choice.options[chosenIdx]) {
+            items.push(choice.options[chosenIdx]);
+          }
+        });
+      }
+      
+      // Add background equipment
+      if (background?.equipment) {
+        items.push(...background.equipment);
+      }
+      
+      return items;
+    } else if (character.equipmentMethod === 'gold') {
+      return character.purchasedItems || [];
+    }
+    return [];
+  };
+
+  const equipment = getEquipmentList();
+
+  // Get selected spells
+  const getSpellList = () => {
+    const cantrips = (character.cantrips || []).map(id => SPELLS[id]?.name).filter(Boolean);
+    const spells = (character.spells || []).map(id => SPELLS[id]?.name).filter(Boolean);
+    return { cantrips, spells };
+  };
+
+  const spellList = getSpellList();
+
+  // Generate text export
+  const generateTextExport = () => {
+    const lines = [
+      '═══════════════════════════════════════════════════════════',
+      `  ${character.name || 'Unnamed Character'}`,
+      '═══════════════════════════════════════════════════════════',
+      '',
+      `Race: ${race?.name || 'None'}${subrace ? ` (${subrace.name})` : ''}`,
+      `Class: ${classData?.name || 'None'} ${character.level}`,
+      `Background: ${background?.name || 'None'}`,
+      '',
+      '─── ABILITY SCORES ───────────────────────────────────────',
+      '',
+      ...ABILITY_NAMES.map(a => {
+        const base = character.abilities[a];
+        const bonus = racialBonuses[a] || 0;
+        const final = finalAbilities[a];
+        const mod = getModifier(final);
+        const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+        const bonusStr = bonus > 0 ? ` (+${bonus} racial)` : '';
+        return `${ABILITY_LABELS[a].short}: ${final} (${modStr})${bonusStr}`;
+      }),
+      '',
+      '─── COMBAT STATS ─────────────────────────────────────────',
+      '',
+      `AC: ${baseAC}`,
+      `HP: ${maxHP} (d${hitDie} + ${conMod})`,
+      `Initiative: ${initiative >= 0 ? '+' : ''}${initiative}`,
+      `Speed: ${speed} ft`,
+      `Proficiency Bonus: +${proficiencyBonus}`,
+      `Passive Perception: ${passivePerception}`,
+      '',
+      '─── PROFICIENCIES ────────────────────────────────────────',
+      '',
+      `Saving Throws: ${proficiencies.savingThrows.join(', ') || 'None'}`,
+      `Skills: ${proficiencies.skills.join(', ') || 'None'}`,
+      `Armor: ${proficiencies.armor.join(', ') || 'None'}`,
+      `Weapons: ${proficiencies.weapons.join(', ') || 'None'}`,
+      `Tools: ${proficiencies.tools.join(', ') || 'None'}`,
+      `Languages: ${proficiencies.languages.join(', ') || 'Common'}`,
+      '',
+      '─── FEATURES & TRAITS ────────────────────────────────────',
+      '',
+      `Racial Traits: ${race?.traits?.join(', ') || 'None'}`,
+      `Class Features: ${classData?.features?.join(', ') || 'None'}`,
+      `Background Feature: ${background?.feature || 'None'}`,
+      '',
+    ];
+
+    if (equipment.length > 0) {
+      lines.push('─── EQUIPMENT ────────────────────────────────────────────');
+      lines.push('');
+      equipment.forEach(item => lines.push(`• ${item}`));
+      if (character.equipmentMethod === 'gold' && character.gold > 0) {
+        lines.push(`• ${character.gold} gp remaining`);
+      }
+      lines.push('');
+    }
+
+    if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
+      lines.push('─── SPELLCASTING ─────────────────────────────────────────');
+      lines.push('');
+      lines.push(`Spellcasting Ability: ${ABILITY_LABELS[spellcastingInfo.ability]?.name}`);
+      lines.push(`Spell Save DC: ${8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability])}`);
+      lines.push(`Spell Attack: +${proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability])}`);
+      lines.push('');
+      if (spellList.cantrips.length > 0) {
+        lines.push(`Cantrips: ${spellList.cantrips.join(', ')}`);
+      }
+      if (spellList.spells.length > 0) {
+        lines.push(`1st Level Spells: ${spellList.spells.join(', ')}`);
+      }
+      lines.push('');
+    }
+
+    lines.push('═══════════════════════════════════════════════════════════');
+    lines.push('  Generated by AetherNames Character Creator');
+    lines.push('═══════════════════════════════════════════════════════════');
+
+    return lines.join('\n');
+  };
+
+  // Generate JSON export
+  const generateJSONExport = () => {
+    return JSON.stringify({
+      name: character.name,
+      playerName: character.playerName,
+      race: race?.name,
+      subrace: subrace?.name || null,
+      class: classData?.name,
+      level: character.level,
+      background: background?.name,
+      abilities: {
+        base: character.abilities,
+        racial: racialBonuses,
+        final: finalAbilities
+      },
+      combat: {
+        ac: baseAC,
+        hp: maxHP,
+        hitDie: `d${hitDie}`,
+        initiative: initiative,
+        speed: speed,
+        proficiencyBonus: proficiencyBonus,
+        passivePerception: passivePerception
+      },
+      proficiencies: proficiencies,
+      features: {
+        racial: race?.traits || [],
+        class: classData?.features || [],
+        background: background?.feature || null
+      },
+      equipment: equipment,
+      gold: character.gold || 0,
+      spellcasting: spellcastingInfo?.available ? {
+        ability: spellcastingInfo.ability,
+        saveDC: 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]),
+        attackBonus: proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]),
+        cantrips: spellList.cantrips,
+        spells: spellList.spells
+      } : null
+    }, null, 2);
+  };
+
+  const handleExport = (format) => {
+    setExportFormat(format);
+    
+    let content, filename, type;
+    
+    if (format === 'json') {
+      content = generateJSONExport();
+      filename = `${character.name || 'character'}.json`;
+      type = 'application/json';
+    } else {
+      content = generateTextExport();
+      filename = `${character.name || 'character'}.txt`;
+      type = 'text/plain';
+    }
+
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generateTextExport());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Check completion status
+  const raceLanguageChoices = getRaceLanguageChoices(character.race, character.subrace);
+  const bgLanguageChoices = getBackgroundLanguageChoices(character.background);
+  const totalLanguageChoices = raceLanguageChoices + bgLanguageChoices;
+  const languagesComplete = totalLanguageChoices === 0 || (character.chosenLanguages || []).length >= totalLanguageChoices;
+
+  const skillOverlap = getSkillOverlap(character.class, character.background);
+  const skillsComplete = skillOverlap.length === 0 || (character.replacementSkills || []).length >= skillOverlap.length;
+
+  const isComplete = {
+    name: !!character.name,
+    race: !!character.race,
+    class: !!character.class,
+    abilities: Object.values(character.abilities).some(v => v !== 10),
+    background: !!character.background,
+    languages: languagesComplete,
+    skills: skillsComplete
+  };
+
+  const completionCount = Object.values(isComplete).filter(Boolean).length;
+  const totalRequired = 7;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Character Review</h3>
+          <p className="text-sm text-slate-500">
+            Review your character and export when ready.
+          </p>
+        </div>
+        <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+          completionCount === totalRequired 
+            ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+        }`}>
+          {completionCount}/{totalRequired} Complete
+        </div>
+      </div>
+
+      {/* Character Header */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-indigo-500/30">
+        <div className="flex items-start gap-4">
+          <div className="text-5xl">
+            {RACE_ICONS[character.race] || '🧙'}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-white">
+              {character.name || 'Unnamed Character'}
+            </h2>
+            <p className="text-slate-300">
+              {race?.name || 'Unknown Race'}
+              {subrace ? ` (${subrace.name})` : ''} {classData?.name || 'Unknown Class'} {character.level}
+            </p>
+            {background && (
+              <p className="text-slate-400 text-sm mt-1">{background.name} Background</p>
+            )}
+            {character.playerName && (
+              <p className="text-slate-500 text-xs mt-2">Player: {character.playerName}</p>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-red-400">{maxHP}</div>
+            <div className="text-xs text-slate-500">Hit Points</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-4">
+          {/* Combat Stats */}
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <h4 className="text-sm font-semibold text-slate-300 mb-3">Combat Stats</h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3 rounded-lg bg-slate-900/50">
+                <div className="text-2xl font-bold text-blue-400">{baseAC}</div>
+                <div className="text-xs text-slate-500">AC</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-slate-900/50">
+                <div className="text-2xl font-bold text-slate-200">
+                  {initiative >= 0 ? '+' : ''}{initiative}
+                </div>
+                <div className="text-xs text-slate-500">Initiative</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-slate-900/50">
+                <div className="text-2xl font-bold text-green-400">{speed}</div>
+                <div className="text-xs text-slate-500">Speed</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="text-center p-2 rounded-lg bg-slate-900/50">
+                <div className="text-lg font-bold text-amber-400">+{proficiencyBonus}</div>
+                <div className="text-xs text-slate-500">Proficiency</div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-slate-900/50">
+                <div className="text-lg font-bold text-cyan-400">{passivePerception}</div>
+                <div className="text-xs text-slate-500">Passive Perception</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Ability Scores */}
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <h4 className="text-sm font-semibold text-slate-300 mb-3">Ability Scores</h4>
+            <div className="grid grid-cols-3 gap-2">
+              {ABILITY_NAMES.map(a => {
+                const final = finalAbilities[a];
+                const mod = getModifier(final);
+                const bonus = racialBonuses[a] || 0;
+                
+                return (
+                  <div key={a} className="text-center p-2 rounded-lg bg-slate-900/50">
+                    <div className="text-xs text-slate-500 mb-1">{ABILITY_LABELS[a].short}</div>
+                    <div className="text-xl font-bold text-white">{final}</div>
+                    <div className={`text-sm font-medium ${mod >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {mod >= 0 ? '+' : ''}{mod}
+                    </div>
+                    {bonus > 0 && (
+                      <div className="text-[10px] text-indigo-400">+{bonus} racial</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Proficiencies */}
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <h4 className="text-sm font-semibold text-slate-300 mb-3">Proficiencies</h4>
+            <div className="space-y-2 text-sm">
+              <div>
+                <span className="text-slate-500">Saving Throws: </span>
+                <span className="text-slate-200">{proficiencies.savingThrows.join(', ') || 'None'}</span>
+              </div>
+              <div>
+                <span className="text-slate-500">Skills: </span>
+                <span className="text-slate-200">{proficiencies.skills.join(', ') || 'None'}</span>
+              </div>
+              <div>
+                <span className="text-slate-500">Languages: </span>
+                <span className="text-slate-200">{proficiencies.languages.join(', ') || 'Common'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-4">
+          {/* Features */}
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <h4 className="text-sm font-semibold text-slate-300 mb-3">Features & Traits</h4>
+            <div className="space-y-3">
+              {race?.traits && race.traits.length > 0 && (
+                <div>
+                  <div className="text-xs text-indigo-400 mb-1">Racial Traits</div>
+                  <div className="flex flex-wrap gap-1">
+                    {race.traits.map((t, i) => (
+                      <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {classData?.features && classData.features.length > 0 && (
+                <div>
+                  <div className="text-xs text-purple-400 mb-1">Class Features</div>
+                  <div className="flex flex-wrap gap-1">
+                    {classData.features.map((f, i) => (
+                      <span key={i} className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {background?.feature && (
+                <div>
+                  <div className="text-xs text-amber-400 mb-1">Background Feature</div>
+                  <span className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs">
+                    {background.feature}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Equipment */}
+          {equipment.length > 0 && (
+            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <h4 className="text-sm font-semibold text-slate-300 mb-3">Equipment</h4>
+              <div className="flex flex-wrap gap-1">
+                {equipment.map((item, i) => (
+                  <span key={i} className="px-2 py-1 rounded-md bg-slate-700/50 text-slate-300 text-xs">
+                    {item}
+                  </span>
+                ))}
+              </div>
+              {character.equipmentMethod === 'gold' && character.gold > 0 && (
+                <div className="mt-2 text-sm text-amber-400">
+                  💰 {character.gold} gp remaining
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Spells */}
+          {spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0) && (
+            <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+              <h4 className="text-sm font-semibold text-purple-300 mb-3">Spellcasting</h4>
+              <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                <div>
+                  <span className="text-slate-500">Save DC: </span>
+                  <span className="text-white font-medium">
+                    {8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability])}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Attack: </span>
+                  <span className="text-white font-medium">
+                    +{proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability])}
+                  </span>
+                </div>
+              </div>
+              {spellList.cantrips.length > 0 && (
+                <div className="mb-2">
+                  <div className="text-xs text-purple-400 mb-1">Cantrips</div>
+                  <div className="flex flex-wrap gap-1">
+                    {spellList.cantrips.map((s, i) => (
+                      <span key={i} className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {spellList.spells.length > 0 && (
+                <div>
+                  <div className="text-xs text-indigo-400 mb-1">1st Level</div>
+                  <div className="flex flex-wrap gap-1">
+                    {spellList.spells.map((s, i) => (
+                      <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Pending Choices - Languages */}
+      {(() => {
+        const raceChoices = getRaceLanguageChoices(character.race, character.subrace);
+        const bgChoices = getBackgroundLanguageChoices(character.background);
+        const totalChoices = raceChoices + bgChoices;
+        const fixedLangs = getFixedLanguages(character.race, character.subrace);
+        const chosenLangs = character.chosenLanguages || [];
+        
+        if (totalChoices === 0) return null;
+        
+        const knownLanguageNames = [...fixedLangs, ...chosenLangs.map(id => LANGUAGES[id]?.name)].map(n => n?.toLowerCase());
+        const availableLanguages = Object.entries(LANGUAGES).filter(([id, lang]) => 
+          !knownLanguageNames.includes(lang.name.toLowerCase())
+        );
+        
+        const toggleLanguage = (langId) => {
+          const current = character.chosenLanguages || [];
+          if (current.includes(langId)) {
+            updateCharacter('chosenLanguages', current.filter(l => l !== langId));
+          } else if (current.length < totalChoices) {
+            updateCharacter('chosenLanguages', [...current, langId]);
+          }
+        };
+        
+        const isComplete = chosenLangs.length >= totalChoices;
+        
+        return (
+          <div className={`p-4 rounded-xl border ${
+            isComplete 
+              ? 'bg-green-500/10 border-green-500/30' 
+              : 'bg-amber-500/10 border-amber-500/30'
+          }`}>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
+                {isComplete ? '✓ ' : '⚠ '}Language Selection
+              </h4>
+              <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
+                {chosenLangs.length}/{totalChoices} chosen
+              </span>
+            </div>
+            
+            <div className="text-xs text-slate-400 mb-3">
+              {raceChoices > 0 && <span>{raceChoices} from {RACES[character.race]?.name || 'race'}</span>}
+              {raceChoices > 0 && bgChoices > 0 && <span> • </span>}
+              {bgChoices > 0 && <span>{bgChoices} from {BACKGROUNDS[character.background]?.name || 'background'}</span>}
+            </div>
+            
+            {/* Already known */}
+            {fixedLangs.length > 0 && (
+              <div className="mb-3">
+                <div className="text-xs text-slate-500 mb-1">Already Known</div>
+                <div className="flex flex-wrap gap-1">
+                  {fixedLangs.map((lang, i) => (
+                    <span key={i} className="px-2 py-1 rounded-md bg-slate-700/50 text-slate-400 text-xs">
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Selected */}
+            {chosenLangs.length > 0 && (
+              <div className="mb-3">
+                <div className="text-xs text-slate-500 mb-1">Selected</div>
+                <div className="flex flex-wrap gap-1">
+                  {chosenLangs.map(id => (
+                    <button
+                      key={id}
+                      onClick={() => toggleLanguage(id)}
+                      className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs flex items-center gap-1 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                    >
+                      {LANGUAGES[id]?.name}
+                      <X className="w-3 h-3" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Available choices */}
+            {!isComplete && (
+              <div>
+                <div className="text-xs text-slate-500 mb-2">Choose {totalChoices - chosenLangs.length} more</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 max-h-32 overflow-y-auto">
+                  {availableLanguages.map(([id, lang]) => (
+                    <button
+                      key={id}
+                      onClick={() => toggleLanguage(id)}
+                      className="px-2 py-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-indigo-500/30 transition-all text-left"
+                    >
+                      <div>{lang.name}</div>
+                      <div className="text-[10px] text-slate-500">{lang.type}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Pending Choices - Skill Replacements */}
+      {(() => {
+        const overlap = getSkillOverlap(character.class, character.background);
+        
+        if (overlap.length === 0) return null;
+        
+        const chosenReplacements = character.replacementSkills || [];
+        const availableSkills = getAvailableReplacementSkills(
+          character.class, 
+          character.background, 
+          chosenReplacements
+        );
+        
+        const toggleSkill = (skillId) => {
+          const current = character.replacementSkills || [];
+          if (current.includes(skillId)) {
+            updateCharacter('replacementSkills', current.filter(s => s !== skillId));
+          } else if (current.length < overlap.length) {
+            updateCharacter('replacementSkills', [...current, skillId]);
+          }
+        };
+        
+        const isComplete = chosenReplacements.length >= overlap.length;
+        
+        return (
+          <div className={`p-4 rounded-xl border ${
+            isComplete 
+              ? 'bg-green-500/10 border-green-500/30' 
+              : 'bg-amber-500/10 border-amber-500/30'
+          }`}>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
+                {isComplete ? '✓ ' : '⚠ '}Skill Replacement
+              </h4>
+              <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
+                {chosenReplacements.length}/{overlap.length} chosen
+              </span>
+            </div>
+            
+            <div className="text-xs text-slate-400 mb-3">
+              Your <span className="text-purple-300">{BACKGROUNDS[character.background]?.name}</span> background 
+              grants skills that overlap with <span className="text-indigo-300">{CLASSES[character.class]?.name}</span> options.
+              Choose {overlap.length} replacement skill{overlap.length > 1 ? 's' : ''}.
+            </div>
+            
+            {/* Overlapping skills */}
+            <div className="mb-3">
+              <div className="text-xs text-slate-500 mb-1">Overlapping Skills (from background)</div>
+              <div className="flex flex-wrap gap-1">
+                {overlap.map((skill, i) => (
+                  <span key={i} className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            {/* Selected replacements */}
+            {chosenReplacements.length > 0 && (
+              <div className="mb-3">
+                <div className="text-xs text-slate-500 mb-1">Replacement Skills</div>
+                <div className="flex flex-wrap gap-1">
+                  {chosenReplacements.map(id => (
+                    <button
+                      key={id}
+                      onClick={() => toggleSkill(id)}
+                      className="px-2 py-1 rounded-md bg-green-500/20 text-green-300 text-xs flex items-center gap-1 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                    >
+                      {SKILLS[id]?.name}
+                      <X className="w-3 h-3" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Available choices */}
+            {!isComplete && (
+              <div>
+                <div className="text-xs text-slate-500 mb-2">Choose {overlap.length - chosenReplacements.length} more</div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
+                  {availableSkills.map(([id, skill]) => (
+                    <button
+                      key={id}
+                      onClick={() => toggleSkill(id)}
+                      className="px-2 py-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-green-500/30 transition-all text-left"
+                    >
+                      <div>{skill.name}</div>
+                      <div className="text-[10px] text-slate-500">{ABILITY_LABELS[skill.ability]?.short}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Export Options */}
+      <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+        <h4 className="text-sm font-semibold text-slate-300 mb-3">Export Character</h4>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => handleExport('txt')}
+            className="px-4 py-2 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50 transition-colors flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download .txt
+          </button>
+          <button
+            onClick={() => handleExport('json')}
+            className="px-4 py-2 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50 transition-colors flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download .json
+          </button>
+          <button
+            onClick={handleCopy}
+            className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 ${
+              copied 
+                ? 'bg-green-500/20 border-green-500/50 text-green-300'
+                : 'bg-slate-700/50 border-slate-600/50 text-slate-200 hover:bg-slate-600/50'
+            }`}
+          >
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copied!' : 'Copy to Clipboard'}
+          </button>
+        </div>
+      </div>
+
+      {/* Completion Checklist */}
+      {completionCount < totalRequired && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <h4 className="text-sm font-semibold text-amber-300 mb-2">Incomplete Steps</h4>
+          <div className="space-y-1 text-sm">
+            {!isComplete.name && (
+              <div className="text-amber-200/70">• Character name is missing</div>
+            )}
+            {!isComplete.race && (
+              <div className="text-amber-200/70">• Race not selected</div>
+            )}
+            {!isComplete.class && (
+              <div className="text-amber-200/70">• Class not selected</div>
+            )}
+            {!isComplete.abilities && (
+              <div className="text-amber-200/70">• Ability scores not set</div>
+            )}
+            {!isComplete.background && (
+              <div className="text-amber-200/70">• Background not selected</div>
+            )}
+            {!isComplete.languages && (
+              <div className="text-amber-200/70">• Language choices not complete</div>
+            )}
+            {!isComplete.skills && (
+              <div className="text-amber-200/70">• Skill replacements not complete</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// SPELL SELECTION STEP (PHASE 7)
+// ============================================================================
+
+const SpellSelectionStep = ({ character, updateCharacter }) => {
+  const classId = character.class;
+  const classData = classId ? CLASSES[classId] : null;
+  const spellcastingInfo = classId ? getSpellcastingInfo(classId, character.level) : null;
+  
+  const [selectedCantrips, setSelectedCantrips] = useState(character.cantrips || []);
+  const [selectedSpells, setSelectedSpells] = useState(character.spells || []);
+  const [viewingSpell, setViewingSpell] = useState(null);
+  const [activeTab, setActiveTab] = useState('cantrips');
+
+  const availableCantrips = classId ? getSpellsForClass(classId, 0) : [];
+  const availableLevel1Spells = classId ? getSpellsForClass(classId, 1) : [];
+
+  const maxCantrips = spellcastingInfo?.cantrips || 0;
+  const maxSpellsKnown = spellcastingInfo?.spellsKnown || 0;
+  const spellcastingType = spellcastingInfo?.type; // 'known', 'prepared', 'pact'
+  
+  // Calculate max prepared spells for prepared casters (Wizard, Cleric, Druid, Paladin)
+  const getMaxPreparedSpells = () => {
+    if (spellcastingType !== 'prepared') return null;
+    const abilityMod = getModifier(character.abilities[spellcastingInfo?.ability] || 10);
+    const level = character.level || 1;
+    // Prepared = ability mod + class level (minimum 1)
+    return Math.max(1, abilityMod + level);
+  };
+  const maxPreparedSpells = getMaxPreparedSpells();
+
+  // Update character when selections change
+  useEffect(() => {
+    updateCharacter('cantrips', selectedCantrips);
+    updateCharacter('spells', selectedSpells);
+  }, [selectedCantrips, selectedSpells]);
+
+  const toggleCantrip = (spellId) => {
+    setSelectedCantrips(prev => {
+      if (prev.includes(spellId)) {
+        return prev.filter(id => id !== spellId);
+      }
+      if (prev.length >= maxCantrips) return prev;
+      return [...prev, spellId];
+    });
+  };
+
+  const toggleSpell = (spellId) => {
+    setSelectedSpells(prev => {
+      if (prev.includes(spellId)) {
+        return prev.filter(id => id !== spellId);
+      }
+      // For 'known' casters, limit spells
+      if (spellcastingType === 'known' || spellcastingType === 'pact') {
+        if (prev.length >= maxSpellsKnown) return prev;
+      }
+      // For 'prepared' casters, limit to max prepared
+      if (spellcastingType === 'prepared' && maxPreparedSpells !== null) {
+        if (prev.length >= maxPreparedSpells) return prev;
+      }
+      return [...prev, spellId];
+    });
+  };
+
+  const getSchoolColor = (school) => {
+    const colors = {
+      abjuration: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
+      conjuration: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
+      divination: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30',
+      enchantment: 'text-pink-400 bg-pink-500/20 border-pink-500/30',
+      evocation: 'text-red-400 bg-red-500/20 border-red-500/30',
+      illusion: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
+      necromancy: 'text-green-400 bg-green-500/20 border-green-500/30',
+      transmutation: 'text-orange-400 bg-orange-500/20 border-orange-500/30'
+    };
+    return colors[school] || 'text-slate-400 bg-slate-500/20 border-slate-500/30';
+  };
+
+  // No class selected
+  if (!classId) {
+    return (
+      <div className="text-center py-20 text-slate-500">
+        <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-50" />
+        <p className="text-lg">Please select a class first</p>
+        <p className="text-sm mt-2">Your class determines your available spells.</p>
+      </div>
+    );
+  }
+
+  // Non-spellcaster
+  if (!spellcastingInfo) {
+    return (
+      <div className="text-center py-20 text-slate-500">
+        <Sword className="w-16 h-16 mx-auto mb-4 opacity-50" />
+        <p className="text-lg">{classData?.name}s don't cast spells</p>
+        <p className="text-sm mt-2">Your power comes from martial prowess, not magic.</p>
+        <div className="mt-6 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 inline-block">
+          <p className="text-slate-400 text-sm">You can skip this step and proceed to Review.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Spellcasting not available yet (e.g., Paladin/Ranger at level 1)
+  if (!spellcastingInfo.available) {
+    return (
+      <div className="text-center py-20 text-slate-500">
+        <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-50" />
+        <p className="text-lg">{classData?.name} spellcasting begins at level {spellcastingInfo.startsAt}</p>
+        <p className="text-sm mt-2">You'll gain access to spells when you reach that level.</p>
+        <div className="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 inline-block">
+          <p className="text-amber-300 text-sm">You can skip this step for now.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Choose Your Spells</h3>
+        <p className="text-sm text-slate-500">
+          {classData?.name} — Spellcasting Ability: {ABILITY_LABELS[spellcastingInfo.ability]?.name}
+        </p>
+      </div>
+
+      {/* Spellcasting Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
+          <div className="text-xs text-purple-300">Cantrips</div>
+          <div className="text-xl font-bold text-purple-400">
+            {selectedCantrips.length} / {maxCantrips}
+          </div>
+        </div>
+        {(spellcastingType === 'known' || spellcastingType === 'pact') && (
+          <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+            <div className="text-xs text-indigo-300">Spells Known</div>
+            <div className="text-xl font-bold text-indigo-400">
+              {selectedSpells.length} / {maxSpellsKnown}
+            </div>
+          </div>
+        )}
+        {spellcastingType === 'prepared' && maxPreparedSpells !== null && (
+          <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+            <div className="text-xs text-indigo-300">Prepared Spells</div>
+            <div className="text-xl font-bold text-indigo-400">
+              {selectedSpells.length} / {maxPreparedSpells}
+            </div>
+            <div className="text-xs text-slate-500">
+              {ABILITY_LABELS[spellcastingInfo?.ability]?.short} mod ({getModifier(character.abilities[spellcastingInfo?.ability])}) + Level ({character.level})
+            </div>
+          </div>
+        )}
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <div className="text-xs text-amber-300">Spell Save DC</div>
+          <div className="text-xl font-bold text-amber-400">
+            {8 + 2 + getModifier(character.abilities[spellcastingInfo.ability])}
+          </div>
+        </div>
+        <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
+          <div className="text-xs text-green-300">Spell Attack</div>
+          <div className="text-xl font-bold text-green-400">
+            +{2 + getModifier(character.abilities[spellcastingInfo.ability])}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-slate-700/50">
+        <button
+          onClick={() => setActiveTab('cantrips')}
+          className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+            activeTab === 'cantrips'
+              ? 'text-purple-400 border-purple-400'
+              : 'text-slate-400 border-transparent hover:text-slate-200'
+          }`}
+        >
+          Cantrips ({availableCantrips.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('level1')}
+          className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+            activeTab === 'level1'
+              ? 'text-indigo-400 border-indigo-400'
+              : 'text-slate-400 border-transparent hover:text-slate-200'
+          }`}
+        >
+          1st Level ({availableLevel1Spells.length})
+        </button>
+        {selectedCantrips.length + selectedSpells.length > 0 && (
+          <button
+            onClick={() => setActiveTab('selected')}
+            className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+              activeTab === 'selected'
+                ? 'text-green-400 border-green-400'
+                : 'text-slate-400 border-transparent hover:text-slate-200'
+            }`}
+          >
+            Selected ({selectedCantrips.length + selectedSpells.length})
+          </button>
+        )}
+      </div>
+
+      {/* Spell Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-2 max-h-[400px] overflow-y-auto pr-2">
+          {activeTab === 'cantrips' && availableCantrips.map(spell => {
+            const isSelected = selectedCantrips.includes(spell.id);
+            const isDisabled = !isSelected && selectedCantrips.length >= maxCantrips;
+            
+            return (
+              <div
+                key={spell.id}
+                className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-purple-500/20 border-purple-500/50'
+                    : isDisabled
+                      ? 'bg-slate-900/30 border-slate-800/50 opacity-50 cursor-not-allowed'
+                      : 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/30'
+                }`}
+                onClick={() => !isDisabled && toggleCantrip(spell.id)}
+                onMouseEnter={() => setViewingSpell(spell)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{SPELL_SCHOOLS[spell.school]?.icon}</span>
+                    <div>
+                      <div className={`font-medium ${isSelected ? 'text-purple-300' : 'text-slate-200'}`}>
+                        {spell.name}
+                      </div>
+                      <div className="text-xs text-slate-500">{spell.castTime} • {spell.range}</div>
+                    </div>
+                  </div>
+                  {isSelected && <Check className="w-5 h-5 text-purple-400" />}
+                </div>
+              </div>
+            );
+          })}
+
+          {activeTab === 'level1' && availableLevel1Spells.map(spell => {
+            const isSelected = selectedSpells.includes(spell.id);
+            const isDisabledKnown = (spellcastingType === 'known' || spellcastingType === 'pact') && selectedSpells.length >= maxSpellsKnown;
+            const isDisabledPrepared = spellcastingType === 'prepared' && maxPreparedSpells !== null && selectedSpells.length >= maxPreparedSpells;
+            const isDisabled = !isSelected && (isDisabledKnown || isDisabledPrepared);
+            
+            return (
+              <div
+                key={spell.id}
+                className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-indigo-500/20 border-indigo-500/50'
+                    : isDisabled
+                      ? 'bg-slate-900/30 border-slate-800/50 opacity-50 cursor-not-allowed'
+                      : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                }`}
+                onClick={() => !isDisabled && toggleSpell(spell.id)}
+                onMouseEnter={() => setViewingSpell(spell)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{SPELL_SCHOOLS[spell.school]?.icon}</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
+                          {spell.name}
+                        </span>
+                        {spell.ritual && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                            Ritual
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500">{spell.castTime} • {spell.range}</div>
+                    </div>
+                  </div>
+                  {isSelected && <Check className="w-5 h-5 text-indigo-400" />}
+                </div>
+              </div>
+            );
+          })}
+
+          {activeTab === 'selected' && (
+            <>
+              {selectedCantrips.length > 0 && (
+                <div className="mb-4">
+                  <div className="text-xs text-purple-400 font-medium mb-2">Cantrips</div>
+                  {selectedCantrips.map(spellId => {
+                    const spell = SPELLS[spellId];
+                    return (
+                      <div
+                        key={spellId}
+                        className="p-3 rounded-xl bg-purple-500/20 border border-purple-500/50 mb-2 cursor-pointer"
+                        onClick={() => toggleCantrip(spellId)}
+                        onMouseEnter={() => setViewingSpell({ id: spellId, ...spell })}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">{SPELL_SCHOOLS[spell.school]?.icon}</span>
+                            <span className="font-medium text-purple-300">{spell.name}</span>
+                          </div>
+                          <X className="w-4 h-4 text-purple-400" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {selectedSpells.length > 0 && (
+                <div>
+                  <div className="text-xs text-indigo-400 font-medium mb-2">1st Level Spells</div>
+                  {selectedSpells.map(spellId => {
+                    const spell = SPELLS[spellId];
+                    return (
+                      <div
+                        key={spellId}
+                        className="p-3 rounded-xl bg-indigo-500/20 border border-indigo-500/50 mb-2 cursor-pointer"
+                        onClick={() => toggleSpell(spellId)}
+                        onMouseEnter={() => setViewingSpell({ id: spellId, ...spell })}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">{SPELL_SCHOOLS[spell.school]?.icon}</span>
+                            <span className="font-medium text-indigo-300">{spell.name}</span>
+                          </div>
+                          <X className="w-4 h-4 text-indigo-400" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Spell Detail Panel */}
+        <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 sticky top-4 h-fit">
+          {viewingSpell ? (
+            <>
+              <div className="flex items-start gap-3 mb-4">
+                <span className="text-2xl">{SPELL_SCHOOLS[viewingSpell.school]?.icon}</span>
+                <div>
+                  <div className="font-bold text-white">{viewingSpell.name}</div>
+                  <div className={`text-xs px-2 py-0.5 rounded-full inline-block ${getSchoolColor(viewingSpell.school)}`}>
+                    {SPELL_SCHOOLS[viewingSpell.school]?.name}
+                    {viewingSpell.level === 0 ? ' cantrip' : ` (Level ${viewingSpell.level})`}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="text-slate-500">Casting Time: </span>
+                  <span className="text-slate-200">{viewingSpell.castTime}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Range: </span>
+                  <span className="text-slate-200">{viewingSpell.range}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Duration: </span>
+                  <span className="text-slate-200">{viewingSpell.duration}</span>
+                </div>
+                {viewingSpell.ritual && (
+                  <div className="text-cyan-400 text-xs">✦ Can be cast as a ritual</div>
+                )}
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-sm text-slate-300 leading-relaxed">{viewingSpell.description}</p>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-8 text-slate-500">
+              <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">Hover over a spell to see details</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// EQUIPMENT SELECTION STEP (PHASE 6)
+// ============================================================================
+
+const EquipmentSelectionStep = ({ character, updateCharacter }) => {
+  const [method, setMethod] = useState(character.equipmentMethod || null);
+  const [equipmentChoices, setEquipmentChoices] = useState(character.equipmentChoices || {});
+  const [gold, setGold] = useState(character.gold || 0);
+  const [goldRolled, setGoldRolled] = useState(false);
+  const [purchasedItems, setPurchasedItems] = useState(character.purchasedItems || []);
+  const [shopCategory, setShopCategory] = useState('weapons');
+
+  const classId = character.class;
+  const classEquipment = classId ? STARTING_EQUIPMENT[classId] : null;
+  const classGold = classId ? STARTING_GOLD[classId] : null;
+  const backgroundEquipment = character.background ? BACKGROUNDS[character.background]?.equipment : null;
+
+  // Update character when equipment changes
+  useEffect(() => {
+    updateCharacter('equipmentMethod', method);
+    updateCharacter('equipmentChoices', equipmentChoices);
+    updateCharacter('gold', gold);
+    updateCharacter('purchasedItems', purchasedItems);
+  }, [method, equipmentChoices, gold, purchasedItems]);
+
+  const rollStartingGold = () => {
+    if (!classGold) return;
+    let total = 0;
+    for (let i = 0; i < classGold.dice; i++) {
+      total += Math.floor(Math.random() * classGold.sides) + 1;
+    }
+    total *= classGold.multiplier;
+    setGold(total);
+    setGoldRolled(true);
+    setPurchasedItems([]);
+  };
+
+  const selectChoice = (choiceIndex, optionIndex) => {
+    setEquipmentChoices(prev => ({
+      ...prev,
+      [choiceIndex]: optionIndex
+    }));
+  };
+
+  const buyItem = (item) => {
+    if (gold >= item.cost) {
+      setGold(prev => Math.round((prev - item.cost) * 100) / 100);
+      setPurchasedItems(prev => [...prev, item.name]);
+    }
+  };
+
+  const removeItem = (index) => {
+    const item = purchasedItems[index];
+    const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs]
+      .find(i => i.name === item);
+    if (shopItem) {
+      setGold(prev => Math.round((prev + shopItem.cost) * 100) / 100);
+    }
+    setPurchasedItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  if (!classId) {
+    return (
+      <div className="text-center py-20 text-slate-500">
+        <Sword className="w-16 h-16 mx-auto mb-4 opacity-50" />
+        <p className="text-lg">Please select a class first</p>
+        <p className="text-sm mt-2">Your class determines your starting equipment options.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Choose Your Equipment</h3>
+        <p className="text-sm text-slate-500">
+          Take your class starting equipment or roll for gold to buy your own.
+        </p>
+      </div>
+
+      {/* Method Selection */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button
+          onClick={() => { setMethod('starting'); setGoldRolled(false); }}
+          className={`p-4 rounded-xl border text-left transition-all ${
+            method === 'starting'
+              ? 'bg-indigo-500/20 border-indigo-500/50'
+              : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">📦</div>
+            <div>
+              <div className={`font-semibold ${method === 'starting' ? 'text-indigo-300' : 'text-slate-200'}`}>
+                Starting Equipment
+              </div>
+              <div className="text-xs text-slate-500">
+                Take your {CLASSES[classId]?.name}'s default gear with choices
+              </div>
+            </div>
+            {method === 'starting' && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
+          </div>
+        </button>
+
+        <button
+          onClick={() => setMethod('gold')}
+          className={`p-4 rounded-xl border text-left transition-all ${
+            method === 'gold'
+              ? 'bg-indigo-500/20 border-indigo-500/50'
+              : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">💰</div>
+            <div>
+              <div className={`font-semibold ${method === 'gold' ? 'text-indigo-300' : 'text-slate-200'}`}>
+                Roll for Gold
+              </div>
+              <div className="text-xs text-slate-500">
+                {classGold ? `${classGold.dice}d${classGold.sides} × ${classGold.multiplier} gp` : '—'} to buy equipment
+              </div>
+            </div>
+            {method === 'gold' && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
+          </div>
+        </button>
+      </div>
+
+      {/* Starting Equipment */}
+      {method === 'starting' && classEquipment && (
+        <div className="space-y-4">
+          {/* Equipment Choices */}
+          {classEquipment.choices.map((choice, choiceIndex) => (
+            <div key={choiceIndex} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <div className="text-sm font-medium text-slate-300 mb-3">{choice.name}</div>
+              <div className="flex flex-wrap gap-2">
+                {choice.options.map((option, optionIndex) => (
+                  <button
+                    key={optionIndex}
+                    onClick={() => selectChoice(choiceIndex, optionIndex)}
+                    className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                      equipmentChoices[choiceIndex] === optionIndex
+                        ? 'bg-green-500/20 border-green-500/50 text-green-300'
+                        : 'bg-slate-700/50 border-slate-600/50 text-slate-300 hover:border-green-500/30'
+                    }`}
+                  >
+                    {option}
+                    {equipmentChoices[choiceIndex] === optionIndex && (
+                      <Check className="w-3 h-3 inline ml-2" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Fixed Equipment */}
+          {classEquipment.fixed.length > 0 && (
+            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <div className="text-sm font-medium text-slate-300 mb-3">Also Included</div>
+              <div className="flex flex-wrap gap-2">
+                {classEquipment.fixed.map((item, i) => (
+                  <span key={i} className="px-3 py-1.5 rounded-lg bg-slate-700/50 text-slate-300 text-sm">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Background Equipment */}
+          {backgroundEquipment && (
+            <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+              <div className="text-sm font-medium text-purple-300 mb-3">
+                From Background ({BACKGROUNDS[character.background]?.name})
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {backgroundEquipment.map((item, i) => (
+                  <span key={i} className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-200 text-sm">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Gold Method */}
+      {method === 'gold' && (
+        <div className="space-y-4">
+          {/* Roll / Gold Display */}
+          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-amber-300 font-medium">Starting Gold</div>
+                <div className="text-3xl font-bold text-amber-400">{gold} gp</div>
+              </div>
+              <button
+                onClick={rollStartingGold}
+                className="px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 transition-colors"
+              >
+                {goldRolled ? 'Reroll' : 'Roll'} ({classGold?.dice}d{classGold?.sides} × {classGold?.multiplier})
+              </button>
+            </div>
+          </div>
+
+          {goldRolled && (
+            <>
+              {/* Shop Categories */}
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {['weapons', 'armor', 'gear', 'packs'].map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setShopCategory(cat)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                      shopCategory === cat
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 border'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:text-slate-200'
+                    }`}
+                  >
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Shop Items */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                {EQUIPMENT_SHOP[shopCategory]?.map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => buyItem(item)}
+                    disabled={gold < item.cost}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      gold >= item.cost
+                        ? 'bg-slate-800/50 border-slate-700/50 hover:border-green-500/30'
+                        : 'bg-slate-900/30 border-slate-800/50 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="font-medium text-slate-200 text-sm">{item.name}</div>
+                      <div className="text-amber-400 text-sm font-medium">{item.cost} gp</div>
+                    </div>
+                    {item.damage && (
+                      <div className="text-xs text-red-400 mt-1">{item.damage}</div>
+                    )}
+                    {item.ac && (
+                      <div className="text-xs text-blue-400 mt-1">AC: {item.ac}</div>
+                    )}
+                    {item.properties && (
+                      <div className="text-xs text-slate-500 mt-1">{item.properties}</div>
+                    )}
+                    {item.contents && (
+                      <div className="text-xs text-slate-500 mt-1 line-clamp-2">{item.contents}</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Purchased Items */}
+              {purchasedItems.length > 0 && (
+                <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <div className="text-sm font-medium text-green-300 mb-3">
+                    Purchased ({purchasedItems.length} items)
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {purchasedItems.map((item, i) => (
+                      <span 
+                        key={i} 
+                        className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
+                        onClick={() => removeItem(i)}
+                        title="Click to refund"
+                      >
+                        {item}
+                        <X className="w-3 h-3" />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// BACKGROUND SELECTION STEP (PHASE 5)
+// ============================================================================
+
+const BackgroundSelectionStep = ({ character, updateCharacter }) => {
+  const selectedBackgroundId = character.background;
+  const selectedBackground = selectedBackgroundId ? BACKGROUNDS[selectedBackgroundId] : null;
+
+  const pickBackground = (bgId) => {
+    updateCharacter('background', bgId);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Choose Your Background</h3>
+        <p className="text-sm text-slate-500">
+          Your background reveals where you came from and your place in the world.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Background Grid */}
+        <div className="lg:col-span-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.entries(BACKGROUNDS).map(([id, bg]) => {
+              const isSelected = selectedBackgroundId === id;
+              
+              return (
+                <button
+                  key={id}
+                  onClick={() => pickBackground(id)}
+                  className={`p-4 rounded-xl border text-left transition-all ${
+                    isSelected
+                      ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
+                      : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">{BACKGROUND_ICONS[id] || '📜'}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className={`font-semibold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
+                        {bg.name}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                        {bg.description}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-2">
+                        {bg.skillProficiencies.join(', ')}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <Check className="w-4 h-4 text-indigo-400 shrink-0" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Details Panel */}
+        <div className="lg:col-span-2">
+          <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-4 sticky top-4">
+            {!selectedBackground ? (
+              <div className="text-center py-10 text-slate-500">
+                <Scroll className="w-14 h-14 mx-auto mb-3 opacity-40" />
+                <div className="font-semibold text-slate-300">Select a background to see details</div>
+                <div className="text-xs mt-1">Skills, tools, languages, and features.</div>
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">{BACKGROUND_ICONS[selectedBackgroundId] || '📜'}</div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-bold text-white">{selectedBackground.name}</div>
+                    <div className="text-sm text-slate-400 mt-1">{selectedBackground.description}</div>
+                  </div>
+                </div>
+
+                {/* Proficiencies */}
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                    <div className="text-xs text-slate-500 mb-2">Skill Proficiencies</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedBackground.skillProficiencies.map((skill, i) => (
+                        <span key={i} className="px-2 py-1 rounded-md bg-green-500/20 text-green-300 text-xs font-medium">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedBackground.toolProficiencies.length > 0 && (
+                    <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                      <div className="text-xs text-slate-500 mb-2">Tool Proficiencies</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedBackground.toolProficiencies.map((tool, i) => (
+                          <span key={i} className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs font-medium">
+                            {tool}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedBackground.languages > 0 && (
+                    <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                      <div className="text-xs text-slate-500">Languages</div>
+                      <div className="text-sm text-slate-200 mt-1">
+                        {selectedBackground.languages} of your choice
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Feature */}
+                <div className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <div className="text-sm text-indigo-300 font-semibold">{selectedBackground.feature}</div>
+                  </div>
+                  <div className="text-xs text-slate-300 leading-relaxed">
+                    {selectedBackground.featureDesc}
+                  </div>
+                </div>
+
+                {/* Equipment */}
+                <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                  <div className="text-xs text-slate-500 mb-2">Starting Equipment</div>
+                  <ul className="text-xs text-slate-300 space-y-1">
+                    {selectedBackground.equipment.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-slate-600">•</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Synergy hint */}
+                {character.class && (() => {
+                  const classSkills = CLASSES[character.class]?.skillChoices.from;
+                  if (classSkills === 'any') return null;
+                  
+                  const overlap = selectedBackground.skillProficiencies.filter(
+                    skill => classSkills?.includes(skill)
+                  );
+                  
+                  if (overlap.length > 0) {
+                    return (
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
+                        ⚠️ Overlap with {CLASSES[character.class].name} skills: {overlap.join(', ')}. 
+                        You'll choose replacements in the Review step.
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// CLASS SELECTION STEP (PHASE 4)
+// ============================================================================
+
+const ClassSelectionStep = ({ character, updateCharacter }) => {
+  const selectedClassId = character.class;
+  const selectedClass = selectedClassId ? CLASSES[selectedClassId] : null;
+
+  const pickClass = (classId) => {
+    updateCharacter('class', classId);
+  };
+
+  const getHitPointsAtLevel1 = () => {
+    if (!selectedClass) return null;
+    const conMod = getModifier(character.abilities.constitution);
+    return selectedClass.hitDie + conMod;
+  };
+
+  const getPrimaryAbilityDisplay = () => {
+    if (!selectedClass) return '';
+    return selectedClass.primaryAbility
+      .map(a => ABILITY_LABELS[a]?.short || a)
+      .join(' or ');
+  };
+
+  const getSavingThrowDisplay = () => {
+    if (!selectedClass) return '';
+    return selectedClass.savingThrows
+      .map(a => ABILITY_LABELS[a]?.short || a)
+      .join(', ');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Choose Your Class</h3>
+        <p className="text-sm text-slate-500">
+          Your class determines your abilities, features, and role in the party.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Class Grid */}
+        <div className="lg:col-span-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.entries(CLASSES).map(([id, cls]) => {
+              const isSelected = selectedClassId === id;
+              const primaryAbs = cls.primaryAbility.map(a => ABILITY_LABELS[a]?.short).join('/');
+              
+              return (
+                <button
+                  key={id}
+                  onClick={() => pickClass(id)}
+                  className={`p-4 rounded-xl border text-left transition-all ${
+                    isSelected
+                      ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
+                      : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">{CLASS_ICONS[id] || '⚔️'}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className={`font-semibold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
+                        {cls.name}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                        {cls.description}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2 text-xs">
+                        <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300">
+                          d{cls.hitDie}
+                        </span>
+                        <span className="text-slate-500">
+                          {primaryAbs}
+                        </span>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <Check className="w-4 h-4 text-indigo-400 shrink-0" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Details Panel */}
+        <div className="lg:col-span-2">
+          <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-4 sticky top-4">
+            {!selectedClass ? (
+              <div className="text-center py-10 text-slate-500">
+                <Sword className="w-14 h-14 mx-auto mb-3 opacity-40" />
+                <div className="font-semibold text-slate-300">Select a class to see details</div>
+                <div className="text-xs mt-1">Hit die, features, proficiencies, and more.</div>
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">{CLASS_ICONS[selectedClassId] || '⚔️'}</div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-bold text-white">{selectedClass.name}</div>
+                    <div className="text-sm text-slate-400 mt-1">{selectedClass.description}</div>
+                  </div>
+                </div>
+
+                {/* Core Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                    <div className="text-xs text-slate-500">Hit Die</div>
+                    <div className="text-lg font-bold text-red-400">d{selectedClass.hitDie}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      HP at Lvl 1: <span className="text-white font-medium">{getHitPointsAtLevel1()}</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                    <div className="text-xs text-slate-500">Primary Ability</div>
+                    <div className="text-lg font-bold text-amber-400">{getPrimaryAbilityDisplay()}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      Saves: <span className="text-white font-medium">{getSavingThrowDisplay()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                  <div className="text-xs text-slate-500 mb-2">Level 1 Features</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedClass.features.map((f, i) => (
+                      <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs font-medium">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                  {selectedClass.subclassLevel === 1 && (
+                    <div className="text-xs text-amber-400 mt-2">
+                      ⚡ {selectedClass.subclassName} chosen at level 1
+                    </div>
+                  )}
+                  {selectedClass.subclassLevel > 1 && (
+                    <div className="text-xs text-slate-500 mt-2">
+                      {selectedClass.subclassName} at level {selectedClass.subclassLevel}
+                    </div>
+                  )}
+                </div>
+
+                {/* Proficiencies */}
+                <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40 space-y-2">
+                  <div className="text-xs text-slate-500">Proficiencies</div>
+                  
+                  {selectedClass.armorProficiencies.length > 0 && (
+                    <div>
+                      <span className="text-xs text-slate-500">Armor: </span>
+                      <span className="text-xs text-slate-300">{selectedClass.armorProficiencies.join(', ')}</span>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <span className="text-xs text-slate-500">Weapons: </span>
+                    <span className="text-xs text-slate-300">{selectedClass.weaponProficiencies.join(', ')}</span>
+                  </div>
+                  
+                  <div>
+                    <span className="text-xs text-slate-500">Skills: </span>
+                    <span className="text-xs text-slate-300">
+                      Choose {selectedClass.skillChoices.count} from {
+                        selectedClass.skillChoices.from === 'any' 
+                          ? 'any skill' 
+                          : selectedClass.skillChoices.from.join(', ')
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                {/* Spellcasting */}
+                {selectedClass.spellcasting && (
+                  <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <div className="text-xs text-purple-300 font-semibold">Spellcaster</div>
+                    </div>
+                    <div className="text-xs text-slate-300 space-y-1">
+                      <div>
+                        <span className="text-slate-500">Ability: </span>
+                        {ABILITY_LABELS[selectedClass.spellcasting.ability]?.name}
+                      </div>
+                      {selectedClass.spellcasting.cantrips > 0 && (
+                        <div>
+                          <span className="text-slate-500">Cantrips: </span>
+                          {selectedClass.spellcasting.cantrips} known
+                        </div>
+                      )}
+                      {selectedClass.spellcasting.startsAtLevel && selectedClass.spellcasting.startsAtLevel > 1 && (
+                        <div className="text-amber-400">
+                          Spellcasting begins at level {selectedClass.spellcasting.startsAtLevel}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendation based on abilities */}
+                {(() => {
+                  const abilities = character.abilities;
+                  const primaryScores = selectedClass.primaryAbility.map(a => abilities[a]);
+                  const maxPrimary = Math.max(...primaryScores);
+                  const isGoodFit = maxPrimary >= 14;
+                  const isGreatFit = maxPrimary >= 16;
+                  
+                  if (isGreatFit) {
+                    return (
+                      <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-xs text-green-300">
+                        ✨ Excellent fit! Your {getPrimaryAbilityDisplay()} score is great for this class.
+                      </div>
+                    );
+                  } else if (isGoodFit) {
+                    return (
+                      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-xs text-blue-300">
+                        👍 Good fit! Your {getPrimaryAbilityDisplay()} score works well for this class.
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
+                        ⚠️ Consider boosting your {getPrimaryAbilityDisplay()} for this class (currently {maxPrimary}).
+                      </div>
+                    );
+                  }
+                })()}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// CHARACTER CREATOR COMPONENT (SKELETON)
+// ============================================================================
+
+const CharacterCreator = ({ 
+  theme, 
+  importedName, 
+  setImportedName,
+  onGoToGenerator 
+}) => {
+  const currentTheme = themeConfig[theme] || themeConfig.mixed;
+  const [currentStep, setCurrentStep] = useState(0);
+  const stepContentRef = useRef(null);
+
+  // Auto-scroll to top when step changes
+  useEffect(() => {
+    // Small delay to ensure content has rendered
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (stepContentRef.current) {
+        stepContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentStep]);
+  const [character, setCharacter] = useState({
+    name: importedName || '',
+    playerName: '',
+    race: null,
+    subrace: null,
+    class: null,
+    subclass: null,
+    background: null,
+    level: 1,
+    abilities: {
+      strength: 10,
+      dexterity: 10,
+      constitution: 10,
+      intelligence: 10,
+      wisdom: 10,
+      charisma: 10
+    },
+    abilityMethod: null, // 'standard', 'pointbuy', 'roll', 'manual'
+    chosenLanguages: [], // Languages chosen by player (not automatic ones)
+    replacementSkills: [], // Skills chosen to replace overlapping background/class skills
+    skills: [],
+    equipment: [],
+    spells: [],
+    traits: [],
+    proficiencies: {
+      armor: [],
+      weapons: [],
+      tools: [],
+      languages: [],
+      savingThrows: [],
+      skills: []
+    }
+  });
+
+  // Update character name when importedName changes
+  useEffect(() => {
+    if (importedName) {
+      setCharacter(prev => ({ ...prev, name: importedName }));
+    }
+  }, [importedName]);
+
+  const steps = [
+    { id: 'basics', label: 'Basics', icon: User },
+    { id: 'race', label: 'Race', icon: User },
+    { id: 'class', label: 'Class', icon: Sword },
+    { id: 'abilities', label: 'Abilities', icon: Zap },
+    { id: 'background', label: 'Background', icon: Scroll },
+    { id: 'equipment', label: 'Equipment', icon: Sword },
+    { id: 'spells', label: 'Spells', icon: Sparkles },
+    { id: 'review', label: 'Review', icon: Check }
+  ];
+
+  const updateCharacter = (key, value) => {
+    setCharacter(prev => {
+      const updated = { ...prev, [key]: value };
+      
+      // Reset dependent choices when race changes
+      if (key === 'race') {
+        updated.subrace = null;
+        updated.chosenLanguages = [];
+      }
+      
+      // Reset subrace languages too
+      if (key === 'subrace') {
+        updated.chosenLanguages = [];
+      }
+      
+      // Reset skill replacements when class changes
+      if (key === 'class') {
+        updated.replacementSkills = [];
+      }
+      
+      // Reset both languages and skill replacements when background changes
+      if (key === 'background') {
+        updated.chosenLanguages = [];
+        updated.replacementSkills = [];
+      }
+      
+      return updated;
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Step Progress Bar */}
+      <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-slate-800/50">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <User className="w-5 h-5 text-indigo-400" />
+            Character Creator
+          </h2>
+          <span className="text-sm text-slate-400">
+            Step {currentStep + 1} of {steps.length}
+          </span>
+        </div>
+        
+        {/* Progress Steps */}
+        <div className="flex items-center gap-1">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isActive = index === currentStep;
+            const isComplete = index < currentStep;
+            
+            return (
+              <React.Fragment key={step.id}>
+                <button
+                  onClick={() => setCurrentStep(index)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50'
+                      : isComplete
+                        ? 'bg-green-500/20 text-green-300 border border-green-500/50'
+                        : 'bg-slate-800/50 text-slate-500 border border-slate-700/50 hover:border-slate-600'
+                  }`}
+                >
+                  {isComplete ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Icon className="w-3 h-3" />
+                  )}
+                  <span className="hidden sm:inline">{step.label}</span>
+                </button>
+                {index < steps.length - 1 && (
+                  <div className={`w-4 h-0.5 ${isComplete ? 'bg-green-500/50' : 'bg-slate-700'}`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Step Content */}
+      <div ref={stepContentRef} className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 min-h-[500px]">
+        {currentStep === 0 && (
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-white mb-4">Basic Information</h3>
+            
+            {/* Character Name */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Character Name
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={character.name}
+                  onChange={(e) => updateCharacter('name', e.target.value)}
+                  placeholder="Enter character name..."
+                  className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+                />
+                <button
+                  onClick={onGoToGenerator}
+                  className="px-4 py-3 bg-indigo-500/20 border border-indigo-500/50 rounded-lg text-indigo-300 hover:bg-indigo-500/30 transition-colors flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Generate
+                </button>
+              </div>
+              {importedName && (
+                <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Imported from Name Generator
+                </p>
+              )}
+            </div>
+
+            {/* Player Name */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Player Name
+              </label>
+              <input
+                type="text"
+                value={character.playerName}
+                onChange={(e) => updateCharacter('playerName', e.target.value)}
+                placeholder="Your name..."
+                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+              />
+            </div>
+
+            {/* Level */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Starting Level
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(level => (
+                  <button
+                    key={level}
+                    onClick={() => updateCharacter('level', level)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      character.level === level
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 border'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:border-slate-600'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Most campaigns start at level 1. Higher levels unlock more features and spells.
+              </p>
+            </div>
+
+            
+          </div>
+        )}
+
+        {currentStep === 1 && (
+          <RaceSelectionStep 
+            character={character}
+            updateCharacter={updateCharacter}
+          />
+        )}
+
+        {currentStep === 2 && (
+          <ClassSelectionStep 
+            character={character}
+            updateCharacter={updateCharacter}
+          />
+        )}
+
+        {currentStep === 3 && (
+          <AbilityScoreStep 
+            character={character}
+            updateCharacter={updateCharacter}
+          />
+        )}
+
+        {currentStep === 4 && (
+          <BackgroundSelectionStep 
+            character={character}
+            updateCharacter={updateCharacter}
+          />
+        )}
+
+        {currentStep === 5 && (
+          <EquipmentSelectionStep 
+            character={character}
+            updateCharacter={updateCharacter}
+          />
+        )}
+
+        {currentStep === 6 && (
+          <SpellSelectionStep 
+            character={character}
+            updateCharacter={updateCharacter}
+          />
+        )}
+
+        {currentStep === 7 && (
+          <ReviewStep character={character} updateCharacter={updateCharacter} />
+        )}
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between">
+        <button
+          onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
+          disabled={currentStep === 0}
+          className={`px-6 py-3 rounded-xl font-medium transition-all ${
+            currentStep === 0
+              ? 'bg-slate-800/30 text-slate-600 cursor-not-allowed'
+              : 'bg-slate-800/80 text-slate-200 hover:bg-slate-700/80 border border-slate-600/50'
+          }`}
+        >
+          ← Previous
+        </button>
+        
+        <button
+          onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
+          disabled={currentStep === steps.length - 1}
+          className={`px-6 py-3 rounded-xl font-medium transition-all ${
+            currentStep === steps.length - 1
+              ? 'bg-slate-800/30 text-slate-600 cursor-not-allowed'
+              : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
+          }`}
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export default function AetherNames() {
+  // Page navigation state
+  const [currentPage, setCurrentPage] = useState('generator');
+  const [characterImportName, setCharacterImportName] = useState('');
+
   const [config, setConfig] = useState({
     nameType: 'character',
     genre: 'fantasy',
@@ -1865,7 +5913,7 @@ export default function AetherNames() {
   });
   const [favorites, setFavorites] = useState([]);
   const [copiedName, setCopiedName] = useState(null);
-  const [refineSelections, setRefineSelections] = useState([]);
+  // Removed old refine selections - flask now instantly generates variations
   const [showInstructions, setShowInstructions] = useState(false);
   const resultsRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1989,58 +6037,197 @@ export default function AetherNames() {
     a.click();
   };
 
-  const toggleRefineSelection = (nameObj) => {
-    setRefineSelections(prev => {
-      if (prev.some(n => n.name === nameObj.name)) {
-        return prev.filter(n => n.name !== nameObj.name);
-      } else if (prev.length < 4) {
-        return [...prev, nameObj];
-      }
-      return prev;
-    });
-  };
-
-  const isSelectedForRefine = (name) => refineSelections.some(n => n.name === name);
-
-  const generateRefined = useCallback(() => {
-    if (refineSelections.length === 0) return;
+  // Explode a name into variations (flask button)
+  const explodeNameVariations = useCallback((nameObj) => {
+    if (!nameObj.metadata) return;
     
-    // Add refine selections to favorites before generating
-    setFavorites(prev => {
-      const newFavs = [...prev];
-      refineSelections.forEach(sel => {
-        if (!newFavs.some(f => f.name === sel.name)) {
-          newFavs.push({ ...sel, id: Date.now() + Math.random() });
-        }
-      });
-      return newFavs;
-    });
+    const metadata = nameObj.metadata;
+    const regions = metadata.allRegions || [metadata.selectedRegion];
+    const primaryRegion = regions[0];
+    const lang = linguisticData[primaryRegion] || linguisticData.neutral;
+    const tone = metadata.tones?.[0] ? toneModifiers[metadata.tones[0]] : null;
     
-    setIsGenerating(true);
-    setTimeout(() => {
-      const patterns = analyzePatterns(refineSelections);
-      const names = [];
-      let attempts = 0;
+    // Get the parts of this name
+    const getParts = () => {
+      const name = nameObj.name;
+      const hasSpaces = name.includes(' ');
       
-      while (names.length < config.nameCount && attempts < config.nameCount * 50) {
-        attempts++;
-        const name = generateRefinedName(config, patterns);
-        if (!names.some(n => n.name.toLowerCase() === name.toLowerCase()) && 
-            !refineSelections.some(n => n.name.toLowerCase() === name.toLowerCase()) &&
-            name.length >= 3 && name.length <= 20) {
-          const gender = classifyGender(name);
-          if (config.genderLean === 'any' || gender === config.genderLean || gender === 'neutral') {
-            names.push({ id: Date.now() + Math.random(), name, syllables: countSyllables(name), gender });
+      if (hasSpaces) {
+        const words = name.split(' ').filter(w => w.length > 0);
+        return words.map((word, i) => ({
+          id: `word-${i}`,
+          text: word,
+          type: 'word',
+          region: metadata?.selectedRegion || 'neutral',
+          isTitle: word.toLowerCase() === 'the'
+        }));
+      } else if (metadata?.method === 'syllable' && metadata.syllables?.length > 0) {
+        return metadata.syllables.map((s, i) => ({
+          id: `syl-${i}`,
+          text: s.text,
+          type: 'syllable',
+          region: s.region
+        }));
+      } else if (metadata?.method === 'elements' && metadata.elements?.start) {
+        return [
+          { id: 'el-start', text: metadata.elements.start, type: 'element', region: metadata.elements.startRegion },
+          { id: 'el-end', text: metadata.elements.end, type: 'element', region: metadata.elements.endRegion }
+        ];
+      } else if (metadata?.method === 'type-elements' && metadata.elements?.start) {
+        return [
+          { id: 'type-start', text: metadata.elements.start, type: 'type-prefix', region: metadata?.selectedRegion },
+          { id: 'type-end', text: metadata.elements.end, type: 'type-suffix', region: metadata?.selectedRegion }
+        ];
+      } else {
+        const syllables = breakIntoSyllables(name);
+        return syllables.map((s, i) => ({
+          id: `auto-${i}`,
+          text: s,
+          type: 'syllable',
+          region: metadata?.selectedRegion || 'neutral'
+        }));
+      }
+    };
+    
+    const originalParts = getParts();
+    const variations = [];
+    
+    // Add original at the top
+    variations.push({ ...nameObj, id: Date.now() + Math.random() });
+    
+    // Generate variations by changing each part
+    originalParts.forEach((part, partIndex) => {
+      if (part.isTitle) return; // Don't vary "The"
+      
+      // Generate 2-3 variations for each part
+      const numVariations = Math.min(3, Math.max(2, Math.floor(8 / originalParts.length)));
+      
+      for (let v = 0; v < numVariations; v++) {
+        const newParts = originalParts.map((p, i) => {
+          if (i !== partIndex) return p;
+          
+          // Generate new text for this part
+          const partRegion = p.region || primaryRegion;
+          const partLang = linguisticData[partRegion] || lang;
+          
+          if (p.type === 'type-prefix') {
+            const nameType = metadata.nameType || 'location';
+            const typeElems = nameTypeElements[nameType] || nameTypeElements.location;
+            if (typeElems.prefixes?.length > 0) {
+              const available = typeElems.prefixes.filter(x => x !== p.text);
+              const newText = available[Math.floor(Math.random() * available.length)] || p.text;
+              return { ...p, text: newText };
+            }
           }
+          
+          if (p.type === 'type-suffix') {
+            const nameType = metadata.nameType || 'location';
+            const typeElems = nameTypeElements[nameType] || nameTypeElements.location;
+            if (typeElems.suffixes?.length > 0) {
+              const available = typeElems.suffixes.filter(x => x !== p.text);
+              const newText = available[Math.floor(Math.random() * available.length)] || p.text;
+              return { ...p, text: newText };
+            }
+          }
+          
+          if (p.type === 'word') {
+            const nameType = metadata.nameType || 'location';
+            const typeElems = nameTypeElements[nameType] || nameTypeElements.location;
+            const isFirst = partIndex === 0 || (originalParts[0]?.isTitle && partIndex === 1);
+            
+            if (isFirst && typeElems.prefixes?.length > 0) {
+              const available = typeElems.prefixes.filter(x => x.toLowerCase() !== p.text.toLowerCase());
+              const newText = available[Math.floor(Math.random() * available.length)] || p.text;
+              return { ...p, text: newText };
+            } else if (typeElems.suffixes?.length > 0) {
+              const available = typeElems.suffixes.filter(x => x.toLowerCase() !== p.text.toLowerCase());
+              const newText = available[Math.floor(Math.random() * available.length)] || p.text;
+              return { ...p, text: newText };
+            }
+          }
+          
+          if (p.type === 'element') {
+            const isStart = p.id.includes('start') || partIndex === 0;
+            if (isStart && partLang.elements?.starts) {
+              const available = partLang.elements.starts.filter(x => x !== p.text);
+              const newText = available[Math.floor(Math.random() * available.length)] || p.text;
+              return { ...p, text: newText };
+            } else if (partLang.elements?.ends) {
+              const available = partLang.elements.ends.filter(x => x !== p.text);
+              const newText = available[Math.floor(Math.random() * available.length)] || p.text;
+              return { ...p, text: newText };
+            }
+          }
+          
+          // Syllable - generate new one
+          const pattern = weightedRandom(partLang.patterns.map(x => x.type), partLang.patterns.map(x => x.weight));
+          const newSyllable = generateSyllable(partLang, pattern, tone);
+          return { ...p, text: newSyllable };
+        });
+        
+        // Build the new name
+        let newName;
+        const hasWordParts = newParts.some(p => p.type === 'word');
+        const hasTypeParts = newParts.some(p => p.type === 'type-prefix' || p.type === 'type-suffix');
+        
+        if (hasWordParts) {
+          newName = newParts.map(p => p.isTitle ? p.text : capitalize(p.text.toLowerCase())).join(' ');
+        } else if (hasTypeParts) {
+          const hadSpaces = nameObj.name.includes(' ');
+          const hadThe = nameObj.name.toLowerCase().startsWith('the ');
+          
+          if (hadThe) {
+            newName = 'The ' + capitalize(newParts[0].text) + ' ' + capitalize(newParts[1]?.text || '');
+          } else if (hadSpaces) {
+            newName = newParts.map(p => capitalize(p.text)).join(' ');
+          } else {
+            newName = capitalize(newParts[0].text) + (newParts[1]?.text.toLowerCase() || '');
+          }
+        } else {
+          newName = newParts.map(p => p.text).join('');
+          newName = cleanConsonantClusters(newName, primaryRegion);
+          newName = capitalize(newName.toLowerCase());
         }
+        
+        // Skip if duplicate
+        if (variations.some(v => v.name.toLowerCase() === newName.toLowerCase())) continue;
+        
+        // Build metadata for variation
+        const newMetadata = { ...metadata, modifications: [] };
+        if (metadata.method === 'syllable') {
+          newMetadata.syllables = newParts.map(p => ({ text: p.text, pattern: p.pattern, region: p.region }));
+        } else if (metadata.method === 'elements') {
+          newMetadata.elements = {
+            start: newParts[0]?.text,
+            startRegion: newParts[0]?.region,
+            end: newParts[1]?.text,
+            endRegion: newParts[1]?.region
+          };
+        } else if (metadata.method === 'type-elements') {
+          newMetadata.elements = {
+            start: newParts[0]?.text,
+            end: newParts[1]?.text
+          };
+        }
+        
+        variations.push({
+          id: Date.now() + Math.random(),
+          name: newName,
+          syllables: countSyllables(newName),
+          gender: classifyGender(newName),
+          metadata: newMetadata
+        });
       }
-      
-      setGeneratedNames(names);
-      setIsGenerating(false);
+    });
+    
+    // Update generated names with variations
+    setGeneratedNames(variations.slice(0, config.nameCount));
+    
+    // Scroll to results
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
-  }, [config, refineSelections]);
-
-  const clearRefineSelections = () => setRefineSelections([]);
+  }, [config.nameCount]);
 
   // History navigation
   const canUndo = historyIndex > 0;
@@ -2409,12 +6596,21 @@ export default function AetherNames() {
   const currentTheme = themeConfig[config.genre] || themeConfig.mixed;
 
   return (
-    <div className="min-h-screen text-slate-100 relative" style={{ fontFamily: currentTheme.font }}>
+    <div className={`min-h-screen text-slate-100 relative ${config.genre === 'fantasy' ? 'font-medium' : ''}`} style={{ fontFamily: currentTheme.font }}>
       <AnimatedBackground theme={config.genre} />
       
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 pb-32">
         {/* Header */}
         <header className={`text-center py-8 mb-8 transition-all duration-1000 ${animateHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
+          {/* Navigation */}
+          <div className="flex justify-center mb-6">
+            <Navigation 
+              currentPage={currentPage} 
+              setCurrentPage={setCurrentPage} 
+              theme={config.genre}
+            />
+          </div>
+
           <div className="inline-flex items-center gap-4 mb-4">
             <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0">
               {/* Soft glow effect */}
@@ -2522,12 +6718,14 @@ export default function AetherNames() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-slate-200 mb-1">Name Card Icons</h4>
+                  <h4 className="font-semibold text-slate-200 mb-1">Name Card Icons (hover for tooltips)</h4>
                   <ul className="space-y-1 ml-4">
                     <li><Star className="w-4 h-4 inline text-yellow-400" /> <span className="text-yellow-400">Star</span> — Add to favorites. Favorites are saved at the bottom and can be exported.</li>
-                    <li><FlaskConical className="w-4 h-4 inline text-teal-400" /> <span className="text-teal-400">Flask</span> — Select for refinement. Pick 2-4 names you like, then generate similar ones.</li>
+                    <li><FlaskConical className="w-4 h-4 inline text-teal-400" /> <span className="text-teal-400">Flask</span> — Explode into variations. Instantly generates similar names by varying each part.</li>
                     <li><Volume2 className="w-4 h-4 inline text-cyan-400" /> <span className="text-cyan-400">Speaker</span> — Hear an approximate pronunciation of the name.</li>
                     <li><Glasses className="w-4 h-4 inline text-amber-400" /> <span className="text-amber-400">Glasses</span> — Stats for nerds! See how the name was generated.</li>
+                    <li><RefreshCw className="w-4 h-4 inline text-purple-400" /> <span className="text-purple-400">Refresh</span> — Tweak specific syllables while keeping others you like.</li>
+                    <li><User className="w-4 h-4 inline text-indigo-400" /> <span className="text-indigo-400">Person</span> — Send this name to the Character Creator.</li>
                   </ul>
                 </div>
                 <div>
@@ -2546,9 +6744,9 @@ export default function AetherNames() {
           </div>
         </header>
 
-        <div className="grid lg:grid-cols-5 gap-6">
-          {/* Config Panel */}
-          <div className="lg:col-span-2 space-y-4">
+        {currentPage === 'generator' ? (
+          <div className="grid lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-2 space-y-4">
             <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 shadow-xl">
               <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                 <RefreshCw className="w-5 h-5 text-indigo-400" /> Configuration
@@ -2853,42 +7051,19 @@ export default function AetherNames() {
                       onCopy={() => copyToClipboard(n.name)}
                       onFavorite={() => toggleFavorite(n)}
                       copied={copiedName === n.name}
-                      isSelectedForRefine={isSelectedForRefine(n.name)}
-                      onRefineSelect={() => toggleRefineSelection(n)}
                       metadata={n.metadata}
                       onRerollSiblings={(selectedPartIds, allParts) => tweakName(n, index, selectedPartIds, allParts)}
+                      onSendToCharacter={() => {
+                        setCharacterImportName(n.name);
+                        setCurrentPage('character');
+                      }}
+                      onExplode={() => explodeNameVariations(n)}
                     />
                   ))
                 )}
               </div>
 
-              {/* Refine Section */}
-              {refineSelections.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-slate-800/50">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-teal-400 flex items-center gap-2">
-                      <FlaskConical className="w-4 h-4" /> Refine Selection ({refineSelections.length}/4)
-                    </h3>
-                    <button onClick={clearRefineSelections} className="text-xs text-slate-400 hover:text-red-400 transition-colors">
-                      Clear
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {refineSelections.map(n => (
-                      <div key={n.name} className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/30 rounded-full text-sm text-teal-300 max-w-[200px]">
-                        <span className="truncate">{n.name}</span>
-                        <button onClick={() => toggleRefineSelection(n)} className="text-teal-500/50 hover:text-red-400 transition-colors">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <GlowButton onClick={generateRefined} disabled={isGenerating} className="w-full" theme={config.genre}>
-                    <FlaskConical className="w-5 h-5" />
-                    Generate Similar Names
-                  </GlowButton>
-                </div>
-              )}
+              {/* Refine section removed - flask now instantly generates variations */}
 
               {/* Favorites */}
               {favorites.length > 0 && (
@@ -2908,8 +7083,18 @@ export default function AetherNames() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {favorites.map(f => (
-                      <div key={f.id || f.name} className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm text-yellow-300 max-w-[200px]">
+                      <div key={f.id || f.name} className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm text-yellow-300 max-w-[250px]">
                         <span className="truncate">{f.name}</span>
+                        <button 
+                          onClick={() => {
+                            setCharacterImportName(f.name);
+                            setCurrentPage('character');
+                          }} 
+                          className="text-yellow-500/50 hover:text-indigo-400 transition-colors"
+                          title="Send to Character Creator"
+                        >
+                          <User className="w-3.5 h-3.5" />
+                        </button>
                         <button onClick={() => setFavorites(prev => prev.filter(fav => fav.name !== f.name))} className="text-yellow-500/50 hover:text-red-400 transition-colors">
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -2958,11 +7143,19 @@ export default function AetherNames() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        ) : (
+          <CharacterCreator 
+            theme={config.genre}
+            importedName={characterImportName}
+            setImportedName={setCharacterImportName}
+            onGoToGenerator={() => setCurrentPage('generator')}
+          />
+        )}
       </div>
 
       {/* Floating Generate Button - Mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 z-50">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 z-50">
         <GlowButton onClick={generate} disabled={isGenerating} className="w-full" theme={config.genre}>
           <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
           {isGenerating ? 'Forging...' : 'Generate Names'}
