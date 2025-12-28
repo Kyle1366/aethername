@@ -3505,10 +3505,10 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Race Grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
             {Object.entries(RACES).map(([id, race]) => {
               const isSelected = selectedRaceId === id;
               return (
@@ -4026,7 +4026,7 @@ const ReviewStep = ({ character, updateCharacter }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Left Column */}
         <div className="space-y-4">
           {/* Combat Stats */}
@@ -5169,10 +5169,10 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Background Grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
             {Object.entries(BACKGROUNDS).map(([id, bg]) => {
               const isSelected = selectedBackgroundId === id;
               
@@ -5358,10 +5358,10 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Class Grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
             {Object.entries(CLASSES).map(([id, cls]) => {
               const isSelected = selectedClassId === id;
               const primaryAbs = cls.primaryAbility.map(a => ABILITY_LABELS[a]?.short).join('/');
@@ -5569,18 +5569,28 @@ const CharacterCreator = ({
   const currentTheme = themeConfig[theme] || themeConfig.mixed;
   const [currentStep, setCurrentStep] = useState(0);
   const stepContentRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Auto-scroll to top when step changes
   useEffect(() => {
-    // Small delay to ensure content has rendered
     const timer = setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (stepContentRef.current) {
-        stepContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 50);
     return () => clearTimeout(timer);
   }, [currentStep]);
+
+  // Scroll to character creator on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
   const [character, setCharacter] = useState({
     name: importedName || '',
     playerName: '',
@@ -5664,9 +5674,9 @@ const CharacterCreator = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-4 md:space-y-6 overflow-x-hidden">
       {/* Step Progress Bar */}
-      <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-slate-800/50">
+      <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-3 md:p-4 border border-slate-800/50 overflow-x-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <User className="w-5 h-5 text-indigo-400" />
@@ -5678,7 +5688,7 @@ const CharacterCreator = ({
         </div>
         
         {/* Progress Steps */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 min-w-max pb-1">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isActive = index === currentStep;
@@ -5688,7 +5698,7 @@ const CharacterCreator = ({
               <React.Fragment key={step.id}>
                 <button
                   onClick={() => setCurrentStep(index)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`flex items-center gap-1 px-2 py-1.5 md:px-3 md:gap-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                     isActive
                       ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50'
                       : isComplete
@@ -5697,14 +5707,14 @@ const CharacterCreator = ({
                   }`}
                 >
                   {isComplete ? (
-                    <Check className="w-3 h-3" />
+                    <Check className="w-3 h-3 flex-shrink-0" />
                   ) : (
-                    <Icon className="w-3 h-3" />
+                    <Icon className="w-3 h-3 flex-shrink-0" />
                   )}
                   <span className="hidden sm:inline">{step.label}</span>
                 </button>
                 {index < steps.length - 1 && (
-                  <div className={`w-4 h-0.5 ${isComplete ? 'bg-green-500/50' : 'bg-slate-700'}`} />
+                  <div className={`w-2 md:w-4 h-0.5 flex-shrink-0 ${isComplete ? 'bg-green-500/50' : 'bg-slate-700'}`} />
                 )}
               </React.Fragment>
             );
@@ -5713,7 +5723,7 @@ const CharacterCreator = ({
       </div>
 
       {/* Step Content */}
-      <div ref={stepContentRef} className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 min-h-[500px]">
+      <div ref={stepContentRef} className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-slate-800/50 min-h-[400px] md:min-h-[500px] overflow-x-hidden">
         {currentStep === 0 && (
           <div className="space-y-6">
             <h3 className="text-xl font-bold text-white mb-4">Basic Information</h3>
@@ -5838,23 +5848,23 @@ const CharacterCreator = ({
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between">
+      <div className="flex justify-between gap-3 pb-20 md:pb-0">
         <button
           onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
           disabled={currentStep === 0}
-          className={`px-6 py-3 rounded-xl font-medium transition-all ${
+          className={`px-4 py-2.5 md:px-6 md:py-3 rounded-xl font-medium transition-all text-sm md:text-base ${
             currentStep === 0
               ? 'bg-slate-800/30 text-slate-600 cursor-not-allowed'
               : 'bg-slate-800/80 text-slate-200 hover:bg-slate-700/80 border border-slate-600/50'
           }`}
         >
-          ← Previous
+          ← Back
         </button>
         
         <button
           onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
           disabled={currentStep === steps.length - 1}
-          className={`px-6 py-3 rounded-xl font-medium transition-all ${
+          className={`px-4 py-2.5 md:px-6 md:py-3 rounded-xl font-medium transition-all text-sm md:text-base ${
             currentStep === steps.length - 1
               ? 'bg-slate-800/30 text-slate-600 cursor-not-allowed'
               : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
