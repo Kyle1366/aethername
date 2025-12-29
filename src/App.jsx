@@ -5328,12 +5328,13 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           </div>
 
           {/* Proficiencies - Mobile Collapsible */}
-          <details className="md:contents" open>
-            <summary className="md:hidden p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
+          <details className="md:hidden" open>
+            <summary className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
               <h4 className="text-sm font-semibold text-slate-300">Proficiencies</h4>
               <ChevronDown className="w-4 h-4 text-slate-400 transition-transform [[open]>&]:rotate-180" />
             </summary>
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 md:mb-0 mb-4">
+          </details>
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
               <h4 className="hidden md:block text-sm font-semibold text-slate-300 mb-3">Proficiencies</h4>
             <div className="space-y-2 text-sm">
               <div>
@@ -5387,15 +5388,17 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           </div>
           </details>
 
+        </div>
         {/* Right Column */}
         <div className="space-y-4">
           {/* Features - Mobile Collapsible */}
-          <details className="md:contents" open>
-            <summary className="md:hidden p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
+          <details className="md:hidden" open>
+            <summary className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
               <h4 className="text-sm font-semibold text-slate-300">Features & Traits</h4>
               <ChevronDown className="w-4 h-4 text-slate-400" />
             </summary>
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 md:mb-0 mb-4">
+          </details>
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
               <h4 className="hidden md:block text-sm font-semibold text-slate-300 mb-3">Features & Traits</h4>
             <div className="space-y-3">
               {race?.traits && race.traits.length > 0 && (
@@ -5703,7 +5706,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             {!isComplete && (
               <div>
                 <div className="text-xs text-slate-500 mb-2">Choose {totalChoices - chosenLangs.length} more</div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-32 overflow-y-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 max-h-32 sm:max-h-48 overflow-y-auto">
                   {availableLanguages.map(([id, lang]) => (
                     <button
                       key={id}
