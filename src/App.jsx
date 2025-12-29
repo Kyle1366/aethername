@@ -5196,7 +5196,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
+          <div className={`px-4 py-2 rounded-full text-base font-semibold whitespace-nowrap ${
             completionCount === totalRequired 
               ? 'bg-green-500/20 text-green-300 border border-green-500/30'
               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
@@ -5207,10 +5207,10 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             {/* Randomize Again */}
             <button
               onClick={onRandomize}
-              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap justify-center"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap justify-center"
               title="Generate a new random character"
             >
-              <Sparkles className="w-3 h-3" />
+              <Sparkles className="w-4 h-4" />
               <span className="hidden sm:inline">Randomize</span>
               <span className="sm:hidden">Random</span>
             </button>
@@ -5218,7 +5218,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             <button
               onClick={onUndo}
               disabled={!canUndo}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 canUndo 
                   ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
                   : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
