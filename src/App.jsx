@@ -5195,39 +5195,36 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className={`px-4 py-2 rounded-full text-base font-semibold whitespace-nowrap ${
+        <div className="flex items-center gap-3">
+          <div className={`px-4 py-2 rounded-full text-lg font-semibold whitespace-nowrap ${
             completionCount === totalRequired 
               ? 'bg-green-500/20 text-green-300 border border-green-500/30'
               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
           }`}>
             {completionCount}/{totalRequired} Complete
           </div>
-          <div className="flex flex-col gap-2 flex-1 sm:flex-none">
-            {/* Randomize Again */}
-            <button
-              onClick={onRandomize}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap justify-center"
-              title="Generate a new random character"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span className="hidden sm:inline">Randomize</span>
-              <span className="sm:hidden">Random</span>
-            </button>
-            {/* Undo */}
-            <button
-              onClick={onUndo}
-              disabled={!canUndo}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                canUndo 
-                  ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
-                  : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
-              }`}
-              title="Undo last randomize"
-            >
-              Undo
-            </button>
-          </div>
+          {/* Randomize Again */}
+          <button
+            onClick={onRandomize}
+            className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 whitespace-nowrap"
+            title="Generate a new random character"
+          >
+            <Sparkles className="w-5 h-5" />
+            Randomize
+          </button>
+          {/* Undo */}
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className={`px-5 py-2.5 rounded-lg text-base font-semibold transition-all ${
+              canUndo 
+                ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
+                : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
+            }`}
+            title="Undo last randomize"
+          >
+            Undo
+          </button>
         </div>
       </div>
 
