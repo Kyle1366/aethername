@@ -3782,26 +3782,40 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
             const isAssigned = (method === 'standard' || method === 'roll') ? assignments[ability] !== undefined : true;
             const assignedScore = isAssigned && assignments[ability] !== undefined ? scoresArray[assignments[ability]] : null;
             
+            // Check if this is a primary ability for the selected class
+            const isPrimaryAbility = character.class && CLASSES[character.class]?.primaryAbility?.includes(ability);
+            
             return (
               <div
                 key={ability}
                 onClick={() => (method === 'standard' || method === 'roll') && selectedIndex !== null && assignScore(ability)}
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  isPrimaryAbility
+                    ? 'border-amber-500/60 shadow-lg shadow-amber-500/10'
+                    : isAssigned && (method === 'standard' || method === 'roll')
+                      ? 'border-green-500/30'
+                      : 'border-slate-700/50'
+                } ${
                   selectedIndex !== null && (method === 'standard' || method === 'roll')
                     ? 'cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/10'
                     : ''
                 } ${
                   isAssigned && (method === 'standard' || method === 'roll')
-                    ? 'bg-green-500/10 border-green-500/30'
-                    : 'bg-slate-800/50 border-slate-700/50'
+                    ? 'bg-green-500/10'
+                    : 'bg-slate-800/50'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2">
                       <div className="text-lg font-bold text-white">{info.short}</div>
+                      {isPrimaryAbility && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold" title="Primary Ability for this class">
+                          PRIMARY
+                        </span>
+                      )}
                       {character.class && CLASSES[character.class]?.savingThrows?.includes(ability) && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30" title="Saving Throw Proficiency">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/20 text-green-300 border border-green-500/30" title="Saving Throw Proficiency">
                           SAVE
                         </span>
                       )}
