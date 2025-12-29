@@ -1943,11 +1943,11 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
   
   const pages = [
     { id: 'generator', label: 'Name Generator', icon: Sparkles, description: 'Create unique fantasy & sci-fi names' },
-    { id: 'character', label: 'Character Creator', icon: User, description: 'Build your D&D character sheet' }
+    { id: 'character', label: 'D&D 5e Character Creator', icon: User, description: 'Build your D&D character sheet' }
   ];
 
   return (
-    <div className="relative">
+    <div className="relative z-50">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-indigo-500/50 transition-all"
@@ -1962,10 +1962,10 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
       {isOpen && (
         <>
           <div 
-            className="fixed inset-0 z-40" 
+            className="fixed inset-0 z-[60]" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl z-[70] overflow-hidden">
             {pages.map((page) => {
               const Icon = page.icon;
               const isActive = currentPage === page.id;
@@ -2053,7 +2053,21 @@ const RACES = {
     speed: 30,
     traits: ['Extra Language (choice)'],
     languages: ['Common', 'One of your choice'],
-    subraces: null
+    subraces: {
+      standard: {
+        name: 'Standard Human',
+        description: 'The classic human, equally capable in all areas.',
+        abilityBonuses: {}, // Uses parent +1 to all
+        traits: []
+      },
+      variant: {
+        name: 'Variant Human',
+        description: 'More specialized, with a bonus feat and focused abilities.',
+        abilityBonuses: { choice2: 1 }, // +1 to two abilities of choice (handled specially)
+        traits: ['Bonus Skill Proficiency', 'Bonus Feat'],
+        overrideParentBonuses: true // Flag to not use the +1 to all
+      }
+    }
   },
   elf: {
     name: 'Elf',
@@ -2570,7 +2584,41 @@ const BACKGROUNDS = {
     languages: 2,
     equipment: ['Holy symbol', 'Prayer book or wheel', '5 sticks of incense', 'Vestments', '15 gp'],
     feature: 'Shelter of the Faithful',
-    featureDesc: 'You and your companions can receive free healing at temples of your faith, and supporters will provide modest lifestyle.'
+    featureDesc: 'You and your companions can receive free healing at temples of your faith, and supporters will provide modest lifestyle.',
+    personalityTraits: [
+      'I idolize a particular hero of my faith and refer to that person\'s deeds in all things.',
+      'I can find common ground between the fiercest enemies, empathizing with them.',
+      'I see omens in every event and action. The gods speak to us; we just need to listen.',
+      'Nothing can shake my optimistic attitude.',
+      'I quote sacred texts and proverbs in almost every situation.',
+      'I am tolerant of other faiths and respect their worship.',
+      'I\'ve enjoyed fine food, drink, and high society among the elite. Rough living grates on me.',
+      'I\'ve spent so long in the temple that I have little practical experience dealing with people.'
+    ],
+    ideals: [
+      'Tradition: The ancient traditions of worship must be preserved.',
+      'Charity: I always try to help those in need.',
+      'Change: We must help bring about changes the gods are constantly working in the world.',
+      'Power: I hope to one day rise to the top of my faith\'s religious hierarchy.',
+      'Faith: I trust that my deity will guide my actions.',
+      'Aspiration: I seek to prove myself worthy of my god\'s favor.'
+    ],
+    bonds: [
+      'I would die to recover an ancient relic of my faith that was lost long ago.',
+      'I will someday get revenge on the corrupt temple hierarchy who branded me a heretic.',
+      'I owe my life to the priest who took me in when my parents died.',
+      'Everything I do is for the common people.',
+      'I will do anything to protect the temple where I served.',
+      'I seek to preserve a sacred text that my enemies seek to destroy.'
+    ],
+    flaws: [
+      'I judge others harshly, and myself even more severely.',
+      'I put too much trust in those who wield power within my temple\'s hierarchy.',
+      'My piety sometimes leads me to blindly trust those that profess faith in my god.',
+      'I am inflexible in my thinking.',
+      'I am suspicious of strangers and expect the worst of them.',
+      'Once I pick a goal, I become obsessed with it to the detriment of everything else.'
+    ]
   },
   charlatan: {
     name: 'Charlatan',
@@ -2881,6 +2929,70 @@ const SPELL_SCHOOLS = {
   illusion: { name: 'Illusion', color: 'purple', icon: '🎭' },
   necromancy: { name: 'Necromancy', color: 'green', icon: '💀' },
   transmutation: { name: 'Transmutation', color: 'orange', icon: '🔄' }
+};
+
+// ============================================================================
+// D&D 5E ALIGNMENTS
+// ============================================================================
+
+const ALIGNMENTS = {
+  lawfulGood: { name: 'Lawful Good', short: 'LG', description: 'Creatures act with compassion and honor, with a strong sense of duty and respect for law.' },
+  neutralGood: { name: 'Neutral Good', short: 'NG', description: 'Folk do the best they can to help others without bias for or against order.' },
+  chaoticGood: { name: 'Chaotic Good', short: 'CG', description: 'Creatures act as their conscience directs with little regard for what others expect.' },
+  lawfulNeutral: { name: 'Lawful Neutral', short: 'LN', description: 'Individuals act in accordance with law, tradition, or personal codes.' },
+  trueNeutral: { name: 'True Neutral', short: 'N', description: 'The alignment of those who prefer to avoid moral questions and don\'t take sides.' },
+  chaoticNeutral: { name: 'Chaotic Neutral', short: 'CN', description: 'Creatures follow their whims, holding personal freedom above all else.' },
+  lawfulEvil: { name: 'Lawful Evil', short: 'LE', description: 'Creatures methodically take what they want within the limits of a code of conduct.' },
+  neutralEvil: { name: 'Neutral Evil', short: 'NE', description: 'The alignment of those who do whatever they can get away with, without compassion or qualms.' },
+  chaoticEvil: { name: 'Chaotic Evil', short: 'CE', description: 'Creatures act with arbitrary violence, spurred by greed, hatred, or bloodlust.' }
+};
+
+// ============================================================================
+// D&D 5E FEATS (for Variant Human)
+// ============================================================================
+
+const FEATS = {
+  alert: { name: 'Alert', description: '+5 bonus to initiative. You can\'t be surprised while conscious. Other creatures don\'t gain advantage on attack rolls against you as a result of being unseen.' },
+  athlete: { name: 'Athlete', description: 'Increase Str or Dex by 1 (max 20). Climbing doesn\'t cost extra movement. Standing up uses only 5 feet. Running jumps only need 5-foot run.' },
+  actor: { name: 'Actor', description: 'Increase Charisma by 1 (max 20). Advantage on Deception and Performance when impersonating. Mimic speech of others or sounds you\'ve heard.' },
+  charger: { name: 'Charger', description: 'When you Dash, you can use a bonus action to make one melee weapon attack or shove. If you move 10+ feet, gain +5 to damage (attack) or push 10 feet (shove).' },
+  crossbowExpert: { name: 'Crossbow Expert', description: 'Ignore loading property of crossbows. No disadvantage for ranged attacks within 5 feet. When you use Attack action with a one-handed weapon, bonus action to attack with loaded hand crossbow.' },
+  defensiveDuelist: { name: 'Defensive Duelist', description: 'Prerequisite: Dex 13+. When wielding a finesse weapon and hit by melee attack, use reaction to add proficiency bonus to AC, potentially causing the attack to miss.' },
+  dualWielder: { name: 'Dual Wielder', description: '+1 AC while wielding separate melee weapons in each hand. Can two-weapon fight with non-light weapons. Can draw or stow two weapons when you would normally draw/stow one.' },
+  dungeonDelver: { name: 'Dungeon Delver', description: 'Advantage on Perception and Investigation for secret doors. Advantage on saves vs traps. Resistance to trap damage. Search for traps while traveling at normal pace.' },
+  durable: { name: 'Durable', description: 'Increase Constitution by 1 (max 20). When you roll Hit Dice to regain HP, minimum amount equals 2× your Con modifier (minimum 2).' },
+  elementalAdept: { name: 'Elemental Adept', description: 'Choose: acid, cold, fire, lightning, or thunder. Spells you cast ignore resistance to that damage type. Treat any 1 on damage dice as a 2 for that damage type.' },
+  grappler: { name: 'Grappler', description: 'Prerequisite: Str 13+. Advantage on attacks vs creatures you\'re grappling. Can use action to pin a grappled creature (both restrained). Can grapple creatures one size larger.' },
+  greatWeaponMaster: { name: 'Great Weapon Master', description: 'On crit or reducing creature to 0 HP with melee weapon, bonus action for one melee weapon attack. Before melee attack with heavy weapon, take -5 to hit for +10 damage.' },
+  healer: { name: 'Healer', description: 'When you use healer\'s kit to stabilize, creature regains 1 HP. As action, use kit (1 use) to restore 1d6+4 HP plus HP equal to creature\'s max Hit Dice. Can\'t do again until short/long rest.' },
+  heavilyArmored: { name: 'Heavily Armored', description: 'Prerequisite: Medium armor proficiency. Increase Str by 1 (max 20). Gain proficiency with heavy armor.' },
+  heavyArmorMaster: { name: 'Heavy Armor Master', description: 'Prerequisite: Heavy armor proficiency. Increase Str by 1 (max 20). While in heavy armor, reduce non-magical bludgeoning/piercing/slashing damage by 3.' },
+  inspiringLeader: { name: 'Inspiring Leader', description: 'Prerequisite: Cha 13+. Spend 10 minutes inspiring up to 6 friendly creatures (including you) within 30 feet. Each gains temporary HP equal to your level + Cha modifier.' },
+  keenMind: { name: 'Keen Mind', description: 'Increase Intelligence by 1 (max 20). Always know which way is north. Always know hours until sunrise/sunset. Accurately recall anything you\'ve seen or heard in the past month.' },
+  lightlyArmored: { name: 'Lightly Armored', description: 'Increase Str or Dex by 1 (max 20). Gain proficiency with light armor.' },
+  linguist: { name: 'Linguist', description: 'Increase Intelligence by 1 (max 20). Learn three languages. Can create written ciphers (DC = Int score + proficiency to decipher without the cipher).' },
+  lucky: { name: 'Lucky', description: 'You have 3 luck points. Spend 1 to roll an extra d20 when making an attack/ability check/save (choose which to use after rolling). Or when attacked, spend 1 to roll d20 and choose which the attacker uses. Regain spent luck points after long rest.' },
+  magicInitiate: { name: 'Magic Initiate', description: 'Choose a class: bard, cleric, druid, sorcerer, warlock, or wizard. Learn 2 cantrips and 1 first-level spell from that class. Cast the spell once per long rest. Spellcasting ability is that class\'s.' },
+  martialAdept: { name: 'Martial Adept', description: 'Learn 2 maneuvers from Battle Master. Gain one d6 superiority die (d8 if you have superiority dice). Regain expended superiority die on short/long rest. Save DC = 8 + prof + Str or Dex mod.' },
+  mediumArmorMaster: { name: 'Medium Armor Master', description: 'Prerequisite: Medium armor proficiency. Wearing medium armor doesn\'t impose disadvantage on Stealth. Max Dex bonus for AC increases to 3 instead of 2.' },
+  mobile: { name: 'Mobile', description: 'Speed increases by 10 feet. When you Dash, difficult terrain doesn\'t cost extra. When you make melee attack against a creature, you don\'t provoke opportunity attacks from that creature for the rest of the turn (hit or miss).' },
+  moderatelyArmored: { name: 'Moderately Armored', description: 'Prerequisite: Light armor proficiency. Increase Str or Dex by 1 (max 20). Gain proficiency with medium armor and shields.' },
+  mountedCombatant: { name: 'Mounted Combatant', description: 'Advantage on melee attacks vs unmounted creatures smaller than your mount. Force attack targeting mount to target you instead. If mount hit by attack, you can use reaction to halve damage if mount succeeds on Dex save, or give it advantage on the save.' },
+  observant: { name: 'Observant', description: 'Increase Int or Wis by 1 (max 20). If you can see a creature\'s mouth, you can lip read. +5 bonus to passive Perception and passive Investigation.' },
+  polearmMaster: { name: 'Polearm Master', description: 'When you take Attack action with glaive, halberd, pike, quarterstaff, or spear, bonus action for melee attack with opposite end (d4 bludgeoning). While wielding glaive, halberd, pike, quarterstaff, or spear, creatures provoke opportunity attack when entering your reach.' },
+  resilient: { name: 'Resilient', description: 'Choose one ability score. Increase that score by 1 (max 20). Gain proficiency in saving throws using that ability.' },
+  ritualCaster: { name: 'Ritual Caster', description: 'Prerequisite: Int or Wis 13+. Choose a class. You acquire a ritual book with two 1st-level ritual spells from that class. Can cast spells in the book as rituals. Can copy ritual spells you find into the book (spell level ≤ half your level, rounded up). Spellcasting ability is that class\'s.' },
+  savageAttacker: { name: 'Savage Attacker', description: 'Once per turn when you roll damage for a melee weapon attack, you can reroll the weapon\'s damage dice and use either total.' },
+  sentinel: { name: 'Sentinel', description: 'When you hit a creature with opportunity attack, its speed becomes 0 for the rest of the turn. Creatures provoke opportunity attacks even if they Disengage. When a creature within 5 feet attacks a target other than you, you can use reaction to make melee weapon attack against that creature.' },
+  sharpshooter: { name: 'Sharpshooter', description: 'Attacking at long range doesn\'t impose disadvantage. Ranged weapon attacks ignore half and three-quarters cover. Before ranged weapon attack, take -5 to hit for +10 damage.' },
+  shieldMaster: { name: 'Shield Master', description: 'If you take Attack action, bonus action to shove with shield. If not incapacitated, add shield\'s AC bonus to Dex saves vs spells/harmful effects targeting only you. If you succeed on Dex save for half damage, use reaction to take no damage instead.' },
+  skilled: { name: 'Skilled', description: 'Gain proficiency in any combination of 3 skills or tools.' },
+  skulker: { name: 'Skulker', description: 'Prerequisite: Dex 13+. You can try to hide when lightly obscured. When hidden and you miss with a ranged weapon attack, making the attack doesn\'t reveal your position. Dim light doesn\'t impose disadvantage on Perception checks relying on sight.' },
+  spellSniper: { name: 'Spell Sniper', description: 'Prerequisite: Ability to cast a spell. When you cast a spell that requires an attack roll, double the spell\'s range. Ranged spell attacks ignore half and three-quarters cover. Learn one cantrip that requires an attack roll from any class\'s spell list. Spellcasting ability is that class\'s.' },
+  tavernBrawler: { name: 'Tavern Brawler', description: 'Increase Str or Con by 1 (max 20). Proficiency with improvised weapons and unarmed strikes. Unarmed strike uses d4 for damage. When you hit with unarmed strike or improvised weapon, bonus action to grapple.' },
+  tough: { name: 'Tough', description: 'Your HP maximum increases by 2× your level, and increases by 2 every time you gain a level.' },
+  warCaster: { name: 'War Caster', description: 'Prerequisite: Ability to cast a spell. Advantage on Con saves to maintain concentration. Can perform somatic components even with weapon/shield in hands. When hostile creature provokes opportunity attack, you can use reaction to cast a spell at it (instead of making opportunity attack). Spell must target only that creature and have casting time of 1 action.' },
+  weaponMaster: { name: 'Weapon Master', description: 'Increase Str or Dex by 1 (max 20). Gain proficiency with 4 weapons of your choice. Each must be a simple or martial weapon.' }
 };
 
 const SPELLS = {
@@ -3225,24 +3337,24 @@ const getBackgroundLanguageChoices = (backgroundId) => {
 // ============================================================================
 
 const SKILLS = {
-  acrobatics: { name: 'Acrobatics', ability: 'dexterity' },
-  animalHandling: { name: 'Animal Handling', ability: 'wisdom' },
-  arcana: { name: 'Arcana', ability: 'intelligence' },
-  athletics: { name: 'Athletics', ability: 'strength' },
-  deception: { name: 'Deception', ability: 'charisma' },
-  history: { name: 'History', ability: 'intelligence' },
-  insight: { name: 'Insight', ability: 'wisdom' },
-  intimidation: { name: 'Intimidation', ability: 'charisma' },
-  investigation: { name: 'Investigation', ability: 'intelligence' },
-  medicine: { name: 'Medicine', ability: 'wisdom' },
-  nature: { name: 'Nature', ability: 'intelligence' },
-  perception: { name: 'Perception', ability: 'wisdom' },
-  performance: { name: 'Performance', ability: 'charisma' },
-  persuasion: { name: 'Persuasion', ability: 'charisma' },
-  religion: { name: 'Religion', ability: 'intelligence' },
-  sleightOfHand: { name: 'Sleight of Hand', ability: 'dexterity' },
-  stealth: { name: 'Stealth', ability: 'dexterity' },
-  survival: { name: 'Survival', ability: 'wisdom' }
+  acrobatics: { name: 'Acrobatics', ability: 'dexterity', description: 'Balance, tumbling, and staying on your feet in tricky situations.' },
+  animalHandling: { name: 'Animal Handling', ability: 'wisdom', description: 'Calming, training, or reading the intentions of animals.' },
+  arcana: { name: 'Arcana', ability: 'intelligence', description: 'Recalling lore about spells, magic items, eldritch symbols, and magical traditions.' },
+  athletics: { name: 'Athletics', ability: 'strength', description: 'Climbing, jumping, swimming, and other physical activities.' },
+  deception: { name: 'Deception', ability: 'charisma', description: 'Convincingly hiding the truth through misdirection or lies.' },
+  history: { name: 'History', ability: 'intelligence', description: 'Recalling lore about historical events, legendary people, ancient kingdoms, and past disputes.' },
+  insight: { name: 'Insight', ability: 'wisdom', description: 'Determining the true intentions of a creature, reading body language, or sensing deception.' },
+  intimidation: { name: 'Intimidation', ability: 'charisma', description: 'Influencing someone through threats, hostile actions, or physical violence.' },
+  investigation: { name: 'Investigation', ability: 'intelligence', description: 'Looking for clues, making deductions, finding hidden objects, or deciphering puzzles.' },
+  medicine: { name: 'Medicine', ability: 'wisdom', description: 'Stabilizing dying companions, diagnosing illnesses, or treating wounds.' },
+  nature: { name: 'Nature', ability: 'intelligence', description: 'Recalling lore about terrain, plants, animals, weather, and natural cycles.' },
+  perception: { name: 'Perception', ability: 'wisdom', description: 'Spotting, hearing, or detecting the presence of something using your senses.' },
+  performance: { name: 'Performance', ability: 'charisma', description: 'Entertaining an audience through music, dance, acting, storytelling, or other arts.' },
+  persuasion: { name: 'Persuasion', ability: 'charisma', description: 'Influencing someone through tact, social graces, or good nature.' },
+  religion: { name: 'Religion', ability: 'intelligence', description: 'Recalling lore about deities, rites, prayers, religious hierarchies, and holy symbols.' },
+  sleightOfHand: { name: 'Sleight of Hand', ability: 'dexterity', description: 'Picking pockets, concealing objects, performing tricks, or other acts of manual trickery.' },
+  stealth: { name: 'Stealth', ability: 'dexterity', description: 'Hiding, moving silently, or slipping past guards without being noticed.' },
+  survival: { name: 'Survival', ability: 'wisdom', description: 'Tracking, hunting, navigating wilderness, predicting weather, or avoiding natural hazards.' }
 };
 
 // Get skill ID from skill name
@@ -3289,6 +3401,82 @@ const getAvailableReplacementSkills = (classId, backgroundId, alreadyChosen = []
   );
 };
 
+// Get levels at which character gets ASI/Feat (Ability Score Improvement)
+const getASILevels = (characterLevel) => {
+  const asiLevels = [4, 8, 12, 16, 19];
+  return asiLevels.filter(level => characterLevel >= level);
+};
+
+// Tooltip dictionaries for Racial Traits and Class Features
+const TRAIT_INFO = {
+  'Darkvision': 'You can see in dim light within 60 feet as if it were bright light, and in darkness as if it were dim light. You can’t discern color in darkness.',
+  'Keen Senses': 'You have proficiency in the Perception skill.',
+  'Fey Ancestry': 'You have advantage on saving throws against being charmed, and magic can’t put you to sleep.',
+  'Trance': 'Elves don’t need sleep. They meditate deeply for 4 hours a day and gain long rest benefits.',
+  'Elf Weapon Training': 'You have proficiency with longsword, shortsword, shortbow, and longbow.',
+  'Cantrip': 'You know one cantrip of your choice from the wizard spell list. Intelligence is your spellcasting ability.',
+  'Extra Language (choice)': 'You can speak, read, and write one extra language of your choice.',
+  'Fleet of Foot': 'Your base walking speed increases by 5 feet.',
+  'Mask of the Wild': 'You can attempt to hide even when only lightly obscured by foliage, heavy rain, falling snow, mist, and other natural phenomena.',
+  'Superior Darkvision': 'You can see in darkness up to 120 feet.',
+  'Sunlight Sensitivity': 'You have disadvantage on attack rolls and Perception checks that rely on sight when you, the target, or whatever you are trying to perceive is in direct sunlight.',
+  'Drow Magic': 'You know the dancing lights cantrip. At 3rd level, you can cast faerie fire; at 5th level, darkness. Charisma is your spellcasting ability.',
+  'Drow Weapon Training': 'You have proficiency with rapiers, shortswords, and hand crossbows.',
+  'Dwarven Resilience': 'You have advantage on saving throws against poison, and resistance against poison damage.',
+  'Stonecunning': 'Whenever you make a History check related to the origin of stonework, you are considered proficient and add double your proficiency bonus.',
+  'Dwarven Toughness': 'Your hit point maximum increases by 1, and increases by 1 every time you level.',
+  'Dwarven Armor Training': 'You have proficiency with light and medium armor.',
+  'Lucky': 'When you roll a 1 on an attack roll, ability check, or saving throw, you can reroll the die and must use the new roll.',
+  'Brave': 'You have advantage on saving throws against being frightened.',
+  'Halfling Nimbleness': 'You can move through the space of any creature that is of a size larger than yours.',
+  'Naturally Stealthy': 'You can attempt to hide even when you are obscured only by a creature that is at least one size larger than you.',
+  'Stout Resilience': 'You have advantage on saving throws against poison, and resistance against poison damage.',
+  'Gnome Cunning': 'You have advantage on all Intelligence, Wisdom, and Charisma saving throws against magic.',
+  'Natural Illusionist': 'You know the minor illusion cantrip. Intelligence is your spellcasting ability.',
+  'Speak with Small Beasts': 'Through sounds and gestures, you can communicate simple ideas with Small or smaller beasts.',
+  'Artificer’s Lore': 'Add double your proficiency bonus to History checks related to magic items, alchemical objects, or technological devices.',
+  'Tinker': 'You can construct tiny clockwork devices using tools; they have minor effects.',
+  'Skill Versatility': 'You gain proficiency in two skills of your choice.',
+  'Menacing': 'You gain proficiency in the Intimidation skill.',
+  'Relentless Endurance': 'When reduced to 0 HP but not killed, you drop to 1 HP once per long rest.',
+  'Savage Attacks': 'When you score a critical hit with a melee weapon attack, add one additional weapon damage die.',
+  'Hellish Resistance': 'You have resistance to fire damage.',
+  'Infernal Legacy': 'You know thaumaturgy cantrip; at higher levels you can cast hellish rebuke and darkness. Charisma is your spellcasting ability.',
+  'Draconic Ancestry': 'You have a draconic ancestry granting a breath weapon and damage resistance based on your dragon type.',
+  'Breath Weapon': 'You can use your action to exhale destructive energy; damage type and area depend on your ancestry.',
+  'Damage Resistance': 'You have resistance to the damage type associated with your draconic ancestry.'
+};
+
+const FEATURE_INFO = {
+  'Rage': 'Enter a battle rage as a bonus action; you gain damage resistance and bonus damage while raging.',
+  'Unarmored Defense': 'Calculate AC without armor using specific ability modifiers (Barbarian: 10 + DEX + CON; Monk: 10 + DEX + WIS).',
+  'Spellcasting': 'You can cast spells using your class’s spellcasting rules and ability.',
+  'Bardic Inspiration': 'Use a bonus action to grant an ally an inspiration die they can add to rolls.',
+  'Divine Domain': 'Choose a domain that grants additional features at certain levels.',
+  'Druidic': 'You know Druidic, a secret language; speak it and leave hidden messages.',
+  'Martial Arts': 'Use DEX for monk weapons and unarmed strikes; gain bonus unarmed strike as a bonus action.',
+  'Fighting Style': 'Choose a style that grants a passive combat benefit (e.g., Archery, Defense).',
+  'Second Wind': 'Use a bonus action to regain 1d10 + fighter level hit points once per short rest.',
+  'Divine Sense': 'Detect celestials, fiends, and undead within 60 feet a limited number of times per long rest.',
+  'Lay on Hands': 'Pool of healing equal to 5 × paladin level; touch to restore hit points.',
+  'Favored Enemy': 'Gain bonuses against chosen enemy types (tracking, knowledge).',
+  'Natural Explorer': 'You are adept at traveling and surviving in your favored terrain.',
+  'Expertise': 'Choose skills to double proficiency bonus on checks.',
+  'Sneak Attack': 'Deal extra damage once per turn with finesse or ranged weapon when you have advantage or an ally adjacent.',
+  'Thieves\' Cant': 'Secret mix of dialect, jargon, and code allows you to convey messages to other rogues.',
+  'Sorcerous Origin': 'Choose a bloodline granting features at certain levels.',
+  'Arcane Recovery': 'Regain some spell slots during a short rest once per day.',
+  'Otherworldly Patron': 'Choose a patron granting features and invocations.',
+  'Pact Magic': 'Warlocks use pact magic with limited spell slots that recover on short rests.',
+  'Arcane Recovery': 'Regain spell slots on a short rest (Wizard feature).'
+};
+
+// Helper to find language ID by display name
+const getLanguageIdByName = (name) => {
+  const entry = Object.entries(LANGUAGES).find(([_, lang]) => lang.name.toLowerCase() === (name || '').toLowerCase());
+  return entry ? entry[0] : null;
+};
+
 const getRacialBonuses = (raceId, subraceId) => {
   if (!raceId || !RACES[raceId]) return {};
   const race = RACES[raceId];
@@ -3311,9 +3499,19 @@ const getRacialBonuses = (raceId, subraceId) => {
     delete bonuses.choice;
   }
 
+  if (bonuses.choice2) {
+    delete bonuses.choice2;
+  }
+
   // Subrace bonuses overlay
   if (subraceId && race.subraces && race.subraces[subraceId]?.abilityBonuses) {
-    bonuses = { ...bonuses, ...race.subraces[subraceId].abilityBonuses };
+    const subBonuses = { ...race.subraces[subraceId].abilityBonuses };
+    if (subBonuses.choice2) delete subBonuses.choice2;
+    if (race.subraces[subraceId].overrideParentBonuses) {
+      bonuses = subBonuses;
+    } else {
+      bonuses = { ...bonuses, ...subBonuses };
+    }
   }
 
   return bonuses;
@@ -3911,6 +4109,234 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
 };
 
 // ============================================================================
+// ASI/FEATS STEP (Ability Score Improvement or Feat selection at levels 4, 8, etc.)
+// ============================================================================
+
+const ASIFeatsStep = ({ character, updateCharacter }) => {
+  const asiLevels = getASILevels(character.level || 1);
+  
+  // Initialize ASI choices if not exist
+  const asiChoices = character.asiChoices || {};
+  
+  const updateASIChoice = (level, choice) => {
+    const updated = { ...asiChoices, [level]: choice };
+    updateCharacter('asiChoices', updated);
+  };
+  
+  if (asiLevels.length === 0) {
+    return (
+      <div className="text-center py-20 text-slate-500">
+        <Star className="w-16 h-16 mx-auto mb-4 opacity-50" />
+        <p className="text-lg">No ASI/Feats Available</p>
+        <p className="text-sm mt-2">Characters gain Ability Score Improvements or Feats at levels 4, 8, 12, 16, and 19.</p>
+        <p className="text-sm text-amber-400 mt-4">You can skip this step.</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Ability Score Improvements & Feats</h3>
+        <p className="text-sm text-slate-500">
+          At certain levels, you can choose to increase ability scores OR gain a feat.
+        </p>
+      </div>
+      
+      {asiLevels.map(level => {
+        const choice = asiChoices[level] || {};
+        const choiceType = choice.type; // 'asi' or 'feat'
+        
+        return (
+          <div key={level} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <div className="flex items-center gap-2 mb-4">
+              <Star className="w-5 h-5 text-amber-400" />
+              <h4 className="text-lg font-semibold text-white">Level {level}</h4>
+            </div>
+            
+            {/* Choice Type Selector */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <button
+                onClick={() => updateASIChoice(level, { type: 'asi', abilityIncreases: {} })}
+                className={`p-3 rounded-lg border transition-all ${
+                  choiceType === 'asi'
+                    ? 'bg-indigo-500/20 border-indigo-500/50'
+                    : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                }`}
+              >
+                <div className="text-sm font-semibold text-indigo-300">Ability Score Improvement</div>
+                <div className="text-xs text-slate-400 mt-1">+2 to one ability, OR +1 to two abilities</div>
+              </button>
+              <button
+                onClick={() => updateASIChoice(level, { type: 'feat', feat: null })}
+                className={`p-3 rounded-lg border transition-all ${
+                  choiceType === 'feat'
+                    ? 'bg-purple-500/20 border-purple-500/50'
+                    : 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/30'
+                }`}
+              >
+                <div className="text-sm font-semibold text-purple-300">Feat</div>
+                <div className="text-xs text-slate-400 mt-1">Gain a special ability or feature</div>
+              </button>
+            </div>
+            
+            {/* ASI Selection */}
+            {choiceType === 'asi' && (
+              <div className="p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/30">
+                <div className="text-sm font-semibold text-indigo-300 mb-3">Choose Your Increases</div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <button
+                    onClick={() => updateASIChoice(level, { ...choice, asiType: 'single' })}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                      choice.asiType === 'single'
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-indigo-500/30'
+                    }`}
+                  >
+                    +2 to One Ability
+                  </button>
+                  <button
+                    onClick={() => updateASIChoice(level, { ...choice, asiType: 'double' })}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                      choice.asiType === 'double'
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-indigo-500/30'
+                    }`}
+                  >
+                    +1 to Two Abilities
+                  </button>
+                </div>
+                
+                {choice.asiType === 'single' && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {ABILITY_NAMES.map(ability => {
+                      const currentScore = character.abilities?.[ability] || 10;
+                      const isSelected = choice.singleAbility === ability;
+                      const atMax = currentScore >= 20;
+                      
+                      return (
+                        <button
+                          key={ability}
+                          onClick={() => updateASIChoice(level, { ...choice, singleAbility: ability })}
+                          disabled={atMax}
+                          className={`px-2 py-2 rounded text-xs font-medium transition-all border ${
+                            isSelected
+                              ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200'
+                              : atMax
+                                ? 'bg-slate-900/30 border-slate-800/30 text-slate-600 cursor-not-allowed'
+                                : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-indigo-500/30'
+                          }`}
+                        >
+                          <div>{ABILITY_LABELS[ability].short}</div>
+                          <div className="text-[10px] text-slate-500">{currentScore} → {currentScore + 2}</div>
+                          {isSelected && <div className="text-green-400">✓</div>}
+                          {atMax && <div className="text-red-400 text-[10px]">Max</div>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {choice.asiType === 'double' && (
+                  <div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {ABILITY_NAMES.map(ability => {
+                        const currentScore = character.abilities?.[ability] || 10;
+                        const doubleAbilities = choice.doubleAbilities || [];
+                        const isSelected = doubleAbilities.includes(ability);
+                        const canSelect = doubleAbilities.length < 2 || isSelected;
+                        const atMax = currentScore >= 20;
+                        
+                        return (
+                          <button
+                            key={ability}
+                            onClick={() => {
+                              const current = choice.doubleAbilities || [];
+                              let updated;
+                              if (current.includes(ability)) {
+                                updated = current.filter(a => a !== ability);
+                              } else if (current.length < 2) {
+                                updated = [...current, ability];
+                              } else {
+                                return;
+                              }
+                              updateASIChoice(level, { ...choice, doubleAbilities: updated });
+                            }}
+                            disabled={!canSelect || atMax}
+                            className={`px-2 py-2 rounded text-xs font-medium transition-all border ${
+                              isSelected
+                                ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200'
+                                : canSelect && !atMax
+                                  ? 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-indigo-500/30'
+                                  : 'bg-slate-900/30 border-slate-800/30 text-slate-600 cursor-not-allowed'
+                            }`}
+                          >
+                            <div>{ABILITY_LABELS[ability].short}</div>
+                            <div className="text-[10px] text-slate-500">{currentScore} → {currentScore + 1}</div>
+                            {isSelected && <div className="text-green-400">✓</div>}
+                            {atMax && <div className="text-red-400 text-[10px]">Max</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-2">
+                      {(choice.doubleAbilities?.length || 0)} / 2 selected
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Feat Selection */}
+            {choiceType === 'feat' && (
+              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                <div className="text-sm font-semibold text-purple-300 mb-2">Choose a Feat</div>
+                <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+                  {Object.entries(FEATS).map(([featId, feat]) => {
+                    const isSelected = choice.feat === featId;
+                    return (
+                      <button
+                        key={featId}
+                        onClick={() => updateASIChoice(level, { ...choice, feat: isSelected ? null : featId })}
+                        className={`w-full text-left p-2.5 rounded-lg border transition-all ${
+                          isSelected
+                            ? 'bg-purple-500/20 border-purple-500/50'
+                            : 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/30'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className={`text-sm font-semibold ${isSelected ? 'text-purple-300' : 'text-slate-200'}`}>
+                              {feat.name}
+                            </div>
+                            <div className="text-xs text-slate-400 mt-1 leading-relaxed">
+                              {feat.description}
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {choice.feat && (
+                  <div className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    Selected: {FEATS[choice.feat]?.name}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ============================================================================
 // RACE SELECTION STEP (PHASE 3)
 // ============================================================================
 
@@ -3921,7 +4347,18 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
 
   const selectedRace = selectedRaceId ? RACES[selectedRaceId] : null;
 
-  const racialBonuses = getRacialBonuses(selectedRaceId, selectedSubraceId);
+  const racialBonuses = (() => {
+    const base = getRacialBonuses(selectedRaceId, selectedSubraceId);
+    // Add variant human choices
+    if (selectedRaceId === 'human' && selectedSubraceId === 'variant' && character.variantHumanChoices) {
+      const variantBonuses = { ...base };
+      character.variantHumanChoices.forEach(ability => {
+        variantBonuses[ability] = (variantBonuses[ability] || 0) + 1;
+      });
+      return variantBonuses;
+    }
+    return base;
+  })();
   const previewAbilities = applyBonusesToAbilities(character.abilities, racialBonuses);
 
   const pickRace = (raceId) => {
@@ -4085,6 +4522,95 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
                   );
                 })}
               </div>
+
+              {/* Variant Human Ability Choice */}
+              {selectedRaceId === 'human' && selectedSubraceId === 'variant' && (
+                <div className="mt-4 space-y-3">
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <div className="text-sm font-semibold text-amber-300 mb-2">Choose Two Abilities for +1 Bonus</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {ABILITY_NAMES.map(ability => {
+                        const variantChoices = character.variantHumanChoices || [];
+                        const isSelected = variantChoices.includes(ability);
+                        const canSelect = variantChoices.length < 2 || isSelected;
+                        
+                        return (
+                          <button
+                            key={ability}
+                            onClick={() => {
+                              const current = character.variantHumanChoices || [];
+                              let updated;
+                              if (current.includes(ability)) {
+                                updated = current.filter(a => a !== ability);
+                              } else if (current.length < 2) {
+                                updated = [...current, ability];
+                              } else {
+                                return; // Already have 2
+                              }
+                              updateCharacter('variantHumanChoices', updated);
+                            }}
+                            disabled={!canSelect}
+                            className={`px-2 py-1.5 rounded text-xs font-medium transition-all border ${
+                              isSelected
+                                ? 'bg-amber-500/20 border-amber-500/50 text-amber-200'
+                                : canSelect
+                                  ? 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-amber-500/30'
+                                  : 'bg-slate-900/30 border-slate-800/30 text-slate-600 cursor-not-allowed'
+                            }`}
+                          >
+                            {ABILITY_LABELS[ability].short}
+                            {isSelected && ' ✓'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-2">
+                      {(character.variantHumanChoices?.length || 0)} / 2 selected
+                    </div>
+                  </div>
+
+                  {/* Feat Selection */}
+                  <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                    <div className="text-sm font-semibold text-purple-300 mb-2">Choose a Bonus Feat</div>
+                    <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+                      {Object.entries(FEATS).map(([featId, feat]) => {
+                        const isSelected = character.variantHumanFeat === featId;
+                        return (
+                          <button
+                            key={featId}
+                            onClick={() => updateCharacter('variantHumanFeat', isSelected ? null : featId)}
+                            className={`w-full text-left p-2.5 rounded-lg border transition-all ${
+                              isSelected
+                                ? 'bg-purple-500/20 border-purple-500/50'
+                                : 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/30'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className={`text-sm font-semibold ${isSelected ? 'text-purple-300' : 'text-slate-200'}`}>
+                                  {feat.name}
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                  {feat.description}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {character.variantHumanFeat && (
+                      <div className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Selected: {FEATS[character.variantHumanFeat]?.name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -4198,7 +4724,7 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
 // REVIEW & EXPORT STEP (PHASE 8)
 // ============================================================================
 
-const ReviewStep = ({ character, updateCharacter }) => {
+const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }) => {
   const [exportFormat, setExportFormat] = useState(null);
   const [copied, setCopied] = useState(false);
 
@@ -4206,8 +4732,51 @@ const ReviewStep = ({ character, updateCharacter }) => {
   const subrace = character.subrace && race?.subraces ? race.subraces[character.subrace] : null;
   const classData = character.class ? CLASSES[character.class] : null;
   const background = character.background ? BACKGROUNDS[character.background] : null;
-  const racialBonuses = getRacialBonuses(character.race, character.subrace);
-  const finalAbilities = applyBonusesToAbilities(character.abilities, racialBonuses);
+
+  // Start with racial/subrace bonuses and include Variant Human +1/+1
+  const baseRacialBonuses = getRacialBonuses(character.race, character.subrace);
+  const racialBonuses = (() => {
+    if (character.race === 'human' && character.subrace === 'variant' && Array.isArray(character.variantHumanChoices)) {
+      const b = { ...baseRacialBonuses };
+      character.variantHumanChoices.forEach((ability) => {
+        b[ability] = (b[ability] || 0) + 1;
+      });
+      return b;
+    }
+    return baseRacialBonuses;
+  })();
+
+  // Aggregate ASI bonuses from selections at 4/8/12/16/19
+  const asiBonuses = (() => {
+    const out = {};
+    const choices = character.asiChoices || {};
+    Object.values(choices).forEach((choice) => {
+      if (!choice || choice.type !== 'asi') return;
+      if (choice.asiType === 'single' && choice.singleAbility) {
+        out[choice.singleAbility] = (out[choice.singleAbility] || 0) + 2;
+      } else if (choice.asiType === 'double' && Array.isArray(choice.doubleAbilities)) {
+        choice.doubleAbilities.forEach((ability) => {
+          out[ability] = (out[ability] || 0) + 1;
+        });
+      }
+    });
+    return out;
+  })();
+
+  // Merge racial and ASI bonuses
+  const mergedBonuses = { ...racialBonuses };
+  ABILITY_NAMES.forEach((a) => {
+    if (asiBonuses[a]) mergedBonuses[a] = (mergedBonuses[a] || 0) + asiBonuses[a];
+  });
+
+  // Apply and clamp to 20 per 5e rules
+  const finalAbilities = (() => {
+    const out = applyBonusesToAbilities(character.abilities, mergedBonuses);
+    ABILITY_NAMES.forEach((a) => {
+      if (out[a] > 20) out[a] = 20;
+    });
+    return out;
+  })();
 
   const spellcastingInfo = character.class ? getSpellcastingInfo(character.class, character.level) : null;
 
@@ -4216,8 +4785,28 @@ const ReviewStep = ({ character, updateCharacter }) => {
   const initiative = getModifier(finalAbilities.dexterity);
   const speed = subrace?.speed || race?.speed || 30;
   
-  // AC calculation (base 10 + dex, or with armor)
-  const baseAC = 10 + getModifier(finalAbilities.dexterity);
+  // AC calculation - accounts for Unarmored Defense (Barbarian, Monk)
+  const calculateAC = () => {
+    const dexMod = getModifier(finalAbilities.dexterity);
+    const conMod = getModifier(finalAbilities.constitution);
+    const wisMod = getModifier(finalAbilities.wisdom);
+    
+    // Barbarian Unarmored Defense: 10 + DEX + CON
+    if (character.class === 'barbarian') {
+      return 10 + dexMod + conMod;
+    }
+    // Monk Unarmored Defense: 10 + DEX + WIS
+    if (character.class === 'monk') {
+      return 10 + dexMod + wisMod;
+    }
+    // Draconic Sorcerer: 13 + DEX (if subclass is draconicBloodline)
+    if (character.class === 'sorcerer' && character.subclass === 'draconicBloodline') {
+      return 13 + dexMod;
+    }
+    // Default: 10 + DEX
+    return 10 + dexMod;
+  };
+  const baseAC = calculateAC();
   
   // HP calculation - uses calculateHP helper for multi-level support
   const hitDie = classData?.hitDie || 8;
@@ -4234,10 +4823,23 @@ const ReviewStep = ({ character, updateCharacter }) => {
     const chosenLangs = (character.chosenLanguages || []).map(id => LANGUAGES[id]?.name).filter(Boolean);
     const allLanguages = [...fixedLangs, ...chosenLangs];
     
-    // Combine background skills with replacement skills
+    // Combine class skills with background skills and replacement skills, remove overlaps
+    const classSkills = character.classSkills || [];
     const bgSkills = background?.skillProficiencies || [];
+    // Normalize class skill ids to names if needed
+    const normalizedClassSkills = classSkills.map(s => {
+      // If s is an id in SKILLS, use its name; otherwise assume it's already a name
+      if (SKILLS[s]) return SKILLS[s].name;
+      return s;
+    });
+    // Overlap are background skills that appear in the class selections
+    const overlap = bgSkills.filter(skill => normalizedClassSkills.map(n => n.toLowerCase()).includes(skill.toLowerCase()));
     const replacementSkills = (character.replacementSkills || []).map(id => SKILLS[id]?.name).filter(Boolean);
-    const allSkills = [...bgSkills, ...replacementSkills];
+    const bgEffective = [
+      ...bgSkills.filter(s => !overlap.map(o => o.toLowerCase()).includes(s.toLowerCase())),
+      ...replacementSkills
+    ];
+    const allSkills = Array.from(new Set([ ...normalizedClassSkills, ...bgEffective ]));
     
     const profs = {
       armor: classData?.armorProficiencies || [],
@@ -4290,6 +4892,35 @@ const ReviewStep = ({ character, updateCharacter }) => {
   };
 
   const spellList = getSpellList();
+
+  // Helpers: find spell by name/id and format tooltip content
+  const getSpellIdByName = (name) => {
+    const entry = Object.entries(SPELLS).find(([_, s]) => s?.name?.toLowerCase() === (name || '').toLowerCase());
+    return entry ? entry[0] : null;
+  };
+
+  const renderSpellTooltipContent = (spell) => {
+    if (!spell) return null;
+    return (
+      <div className="space-y-1">
+        <div className="text-xs text-slate-200 font-semibold">{spell.name}</div>
+        <div className="text-[11px] text-slate-400">
+          {spell.school ? `${spell.school} • ` : ''}
+          {typeof spell.level === 'number' ? (spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`) : ''}
+        </div>
+        <div className="text-[11px] text-slate-400">
+          {spell.ritual ? <span className="text-amber-300">Ritual</span> : null}
+          {spell.ritual && spell.concentration ? ' • ' : ''}
+          {spell.concentration ? <span className="text-indigo-300">Concentration</span> : null}
+        </div>
+        {spell.description && (
+          <div className="text-[11px] text-slate-300 leading-relaxed">
+            {spell.description}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Generate text export
   const generateTextExport = () => {
@@ -4497,13 +5128,49 @@ const ReviewStep = ({ character, updateCharacter }) => {
           <p className="text-sm text-slate-500">
             Review your character and export when ready.
           </p>
+          {/* Alignment */}
+          {character.alignment && ALIGNMENTS[character.alignment] && (
+            <div className="mt-2">
+              <Tooltip content={ALIGNMENTS[character.alignment].description}>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-200 text-xs">
+                  <span className="font-semibold text-indigo-300">Alignment:</span>
+                  <span>{ALIGNMENTS[character.alignment].name}</span>
+                  <span className="text-slate-500">({ALIGNMENTS[character.alignment].short})</span>
+                </span>
+              </Tooltip>
+            </div>
+          )}
         </div>
-        <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-          completionCount === totalRequired 
-            ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-        }`}>
-          {completionCount}/{totalRequired} Complete
+        <div className="flex items-center gap-2">
+          <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+            completionCount === totalRequired 
+              ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+          }`}>
+            {completionCount}/{totalRequired} Complete
+          </div>
+          {/* Randomize Again */}
+          <button
+            onClick={onRandomize}
+            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5"
+            title="Generate a new random character"
+          >
+            <span className="hidden md:inline">Randomize Again</span>
+            <span className="md:hidden">Randomize</span>
+          </button>
+          {/* Undo */}
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              canUndo 
+                ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
+                : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
+            }`}
+            title="Undo last randomize"
+          >
+            Undo
+          </button>
         </div>
       </div>
 
@@ -4548,6 +5215,15 @@ const ReviewStep = ({ character, updateCharacter }) => {
               <div className="text-center p-3 rounded-lg bg-slate-900/50">
                 <div className="text-2xl font-bold text-blue-400">{baseAC}</div>
                 <div className="text-xs text-slate-500">AC</div>
+                {character.class === 'barbarian' && (
+                  <div className="text-[10px] text-amber-400 mt-1">Unarmored Defense</div>
+                )}
+                {character.class === 'monk' && (
+                  <div className="text-[10px] text-amber-400 mt-1">Unarmored Defense</div>
+                )}
+                {character.class === 'sorcerer' && character.subclass === 'draconicBloodline' && (
+                  <div className="text-[10px] text-amber-400 mt-1">Draconic Resilience</div>
+                )}
               </div>
               <div className="text-center p-3 rounded-lg bg-slate-900/50">
                 <div className="text-2xl font-bold text-slate-200">
@@ -4607,11 +5283,46 @@ const ReviewStep = ({ character, updateCharacter }) => {
               </div>
               <div>
                 <span className="text-slate-500">Skills: </span>
-                <span className="text-slate-200">{proficiencies.skills.join(', ') || 'None'}</span>
+                {proficiencies.skills.length > 0 ? (
+                  <div className="inline-flex flex-wrap gap-1 align-middle">
+                    {proficiencies.skills.map((name, i) => {
+                      const id = getSkillId(name);
+                      const info = id ? SKILLS[id]?.description : null;
+                      const chip = (
+                        <span key={i} className="px-1.5 py-0.5 rounded-md bg-green-500/20 text-green-300 text-[11px]">
+                          {name}
+                        </span>
+                      );
+                      return info ? (
+                        <Tooltip key={`${name}-${i}`} content={info}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
+                  </div>
+                ) : (
+                  <span className="text-slate-200">None</span>
+                )}
               </div>
               <div>
                 <span className="text-slate-500">Languages: </span>
-                <span className="text-slate-200">{proficiencies.languages.join(', ') || 'Common'}</span>
+                {proficiencies.languages.length > 0 ? (
+                  <div className="inline-flex flex-wrap gap-1 align-middle">
+                    {proficiencies.languages.map((name, i) => {
+                      const id = getLanguageIdByName(name);
+                      const lang = id ? LANGUAGES[id] : null;
+                      const info = lang ? `${lang.type === 'exotic' ? 'Exotic' : 'Standard'} — Speakers: ${lang.speakers}` : null;
+                      const chip = (
+                        <span key={i} className="px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 text-[11px]">
+                          {name}
+                        </span>
+                      );
+                      return info ? (
+                        <Tooltip key={`${name}-${i}`} content={info}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
+                  </div>
+                ) : (
+                  <span className="text-slate-200">Common</span>
+                )}
               </div>
             </div>
           </div>
@@ -4627,11 +5338,17 @@ const ReviewStep = ({ character, updateCharacter }) => {
                 <div>
                   <div className="text-xs text-indigo-400 mb-1">Racial Traits</div>
                   <div className="flex flex-wrap gap-1">
-                    {race.traits.map((t, i) => (
-                      <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
-                        {t}
-                      </span>
-                    ))}
+                    {race.traits.map((t, i) => {
+                      const info = TRAIT_INFO[t];
+                      const chip = (
+                        <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
+                          {t}
+                        </span>
+                      );
+                      return info ? (
+                        <Tooltip key={`${t}-${i}`} content={info}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
                   </div>
                 </div>
               )}
@@ -4639,24 +5356,77 @@ const ReviewStep = ({ character, updateCharacter }) => {
                 <div>
                   <div className="text-xs text-purple-400 mb-1">Class Features</div>
                   <div className="flex flex-wrap gap-1">
-                    {classData.features.map((f, i) => (
-                      <span key={i} className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs">
-                        {f}
-                      </span>
-                    ))}
+                    {classData.features.map((f, i) => {
+                      const info = FEATURE_INFO[f];
+                      const chip = (
+                        <span key={i} className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs">
+                          {f}
+                        </span>
+                      );
+                      return info ? (
+                        <Tooltip key={`${f}-${i}`} content={info}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
                   </div>
                 </div>
               )}
               {background?.feature && (
                 <div>
                   <div className="text-xs text-amber-400 mb-1">Background Feature</div>
-                  <span className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs">
-                    {background.feature}
-                  </span>
+                  <Tooltip content={background.featureDesc}>
+                    <span className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs">
+                      {background.feature}
+                    </span>
+                  </Tooltip>
+                </div>
+              )}
+              {character.variantHumanFeat && FEATS[character.variantHumanFeat] && (
+                <div>
+                  <div className="text-xs text-green-400 mb-1">Feat (Variant Human)</div>
+                  <Tooltip content={FEATS[character.variantHumanFeat].description}>
+                    <div className="px-2 py-1.5 rounded-md bg-green-500/20 border border-green-500/30">
+                      <div className="text-xs font-semibold text-green-300">{FEATS[character.variantHumanFeat].name}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+                        Hover to view details
+                      </div>
+                    </div>
+                  </Tooltip>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Level Advancements (ASI/Feats) */}
+          {character.asiChoices && Object.keys(character.asiChoices).length > 0 && (
+            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <h4 className="text-sm font-semibold text-slate-300 mb-3">Level Advancements</h4>
+              <div className="space-y-2">
+                {Object.entries(character.asiChoices)
+                  .sort(([aLevel], [bLevel]) => Number(aLevel) - Number(bLevel))
+                  .map(([lvl, choice]) => (
+                  <div key={lvl} className="flex items-start gap-2">
+                    <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] border border-indigo-500/30">Level {lvl}</span>
+                    {choice.type === 'asi' ? (
+                      <div className="text-xs text-slate-300">
+                        ASI: +{choice.boost1} {ABILITY_LABELS[choice.ability1]?.short}
+                        {choice.ability2 && choice.boost2 ? (
+                          <span> • +{choice.boost2} {ABILITY_LABELS[choice.ability2]?.short}</span>
+                        ) : null}
+                      </div>
+                    ) : choice.type === 'feat' && FEATS[choice.feat] ? (
+                      <Tooltip content={FEATS[choice.feat].description}>
+                        <div className="px-2 py-1 rounded bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">
+                          Feat: {FEATS[choice.feat].name}
+                        </div>
+                      </Tooltip>
+                    ) : (
+                      <div className="text-xs text-slate-500">Unknown advancement</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Equipment */}
           {equipment.length > 0 && (
@@ -4745,11 +5515,18 @@ const ReviewStep = ({ character, updateCharacter }) => {
                 <div className="mb-2">
                   <div className="text-xs text-purple-400 mb-1">Cantrips</div>
                   <div className="flex flex-wrap gap-1">
-                    {spellList.cantrips.map((s, i) => (
-                      <span key={i} className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs">
-                        {s}
-                      </span>
-                    ))}
+                    {spellList.cantrips.map((name, i) => {
+                      const id = getSpellIdByName(name);
+                      const spell = id ? SPELLS[id] : null;
+                      const chip = (
+                        <span key={i} className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs">
+                          {name}
+                        </span>
+                      );
+                      return spell ? (
+                        <Tooltip key={`${name}-${i}`} content={renderSpellTooltipContent(spell)}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
                   </div>
                 </div>
               )}
@@ -4757,11 +5534,18 @@ const ReviewStep = ({ character, updateCharacter }) => {
                 <div>
                   <div className="text-xs text-indigo-400 mb-1">Prepared/Known Spells</div>
                   <div className="flex flex-wrap gap-1">
-                    {spellList.spells.map((s, i) => (
-                      <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
-                        {s}
-                      </span>
-                    ))}
+                    {spellList.spells.map((name, i) => {
+                      const id = getSpellIdByName(name);
+                      const spell = id ? SPELLS[id] : null;
+                      const chip = (
+                        <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
+                          {name}
+                        </span>
+                      );
+                      return spell ? (
+                        <Tooltip key={`${name}-${i}`} content={renderSpellTooltipContent(spell)}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
                   </div>
                 </div>
               )}
@@ -4952,15 +5736,18 @@ const ReviewStep = ({ character, updateCharacter }) => {
             {!isComplete && (
               <div>
                 <div className="text-xs text-slate-500 mb-2">Choose {overlap.length - chosenReplacements.length} more</div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
                   {availableSkills.map(([id, skill]) => (
                     <button
                       key={id}
                       onClick={() => toggleSkill(id)}
-                      className="px-2 py-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-green-500/30 transition-all text-left"
+                      className="px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-green-500/30 transition-all text-left"
                     >
-                      <div>{skill.name}</div>
-                      <div className="text-[10px] text-slate-500">{ABILITY_LABELS[skill.ability]?.short}</div>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="font-medium">{skill.name}</div>
+                        <div className="text-[10px] text-indigo-400 shrink-0">{ABILITY_LABELS[skill.ability]?.short}</div>
+                      </div>
+                      <div className="text-[10px] text-slate-500 leading-relaxed">{skill.description}</div>
                     </button>
                   ))}
                 </div>
@@ -5053,6 +5840,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showRitualOnly, setShowRitualOnly] = useState(false);
   const [showConcentrationOnly, setShowConcentrationOnly] = useState(false);
+  const [selectedSchools, setSelectedSchools] = useState(new Set());
 
   const availableCantrips = classId ? getSpellsForClass(classId, 0) : [];
   const availableLevel1Spells = classId ? getSpellsForClass(classId, 1) : [];
@@ -5062,13 +5850,12 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const availableLevel5Spells = classId ? getSpellsForClass(classId, 5) : [];
   
   // Filter spells based on search query and filters
-  const filterSpells = (spellIds) => {
-    if (!searchQuery && !showRitualOnly && !showConcentrationOnly) {
-      return spellIds;
+  const filterSpells = (spellObjects) => {
+    if (!searchQuery && !showRitualOnly && !showConcentrationOnly && selectedSchools.size === 0) {
+      return spellObjects;
     }
     
-    return spellIds.filter(spellId => {
-      const spell = SPELLS[spellId];
+    return spellObjects.filter(spell => {
       if (!spell) return false;
       
       // Search filter
@@ -5079,6 +5866,9 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
         const schoolMatch = spell.school?.toLowerCase().includes(query);
         if (!nameMatch && !descMatch && !schoolMatch) return false;
       }
+      
+      // School filter (OR - show if spell matches any selected school)
+      if (selectedSchools.size > 0 && !selectedSchools.has(spell.school)) return false;
       
       // Ritual filter
       if (showRitualOnly && !spell.ritual) return false;
@@ -5369,12 +6159,13 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
             <Zap className="w-3.5 h-3.5" />
             Concentration
           </button>
-          {(searchQuery || showRitualOnly || showConcentrationOnly) && (
+          {(searchQuery || showRitualOnly || showConcentrationOnly || selectedSchools.size > 0) && (
             <button
               onClick={() => {
                 setSearchQuery('');
                 setShowRitualOnly(false);
                 setShowConcentrationOnly(false);
+                setSelectedSchools(new Set());
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:text-red-400 hover:border-red-500/50 transition-all"
             >
@@ -5382,6 +6173,44 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
               Clear Filters
             </button>
           )}
+        </div>
+
+        {/* School Filters */}
+        <div className="flex flex-wrap gap-2">
+          <div className="text-xs text-slate-500 w-full mb-1">Filter by School (select multiple):</div>
+          {Object.entries(SPELL_SCHOOLS).map(([schoolId, school]) => {
+            const isSelected = selectedSchools.has(schoolId);
+            const colorClasses = {
+              blue: isSelected ? 'bg-blue-500/20 border-blue-500/50 text-blue-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-blue-500/30',
+              yellow: isSelected ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-yellow-500/30',
+              cyan: isSelected ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-cyan-500/30',
+              pink: isSelected ? 'bg-pink-500/20 border-pink-500/50 text-pink-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-pink-500/30',
+              red: isSelected ? 'bg-red-500/20 border-red-500/50 text-red-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-red-500/30',
+              purple: isSelected ? 'bg-purple-500/20 border-purple-500/50 text-purple-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-purple-500/30',
+              green: isSelected ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-green-500/30',
+              orange: isSelected ? 'bg-orange-500/20 border-orange-500/50 text-orange-300' : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-orange-500/30'
+            };
+            return (
+              <button
+                key={schoolId}
+                onClick={() => {
+                  setSelectedSchools(prev => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(schoolId)) {
+                      newSet.delete(schoolId);
+                    } else {
+                      newSet.add(schoolId);
+                    }
+                    return newSet;
+                  });
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${colorClasses[school.color]}`}
+              >
+                <span>{school.icon}</span>
+                {school.name}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -6172,6 +7001,137 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
                   </ul>
                 </div>
 
+                {/* Personality Traits (if available for this background) */}
+                {selectedBackground.personalityTraits && (
+                  <div className="space-y-3">
+                    {/* Personality Traits */}
+                    <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                      <div className="text-xs text-slate-500 mb-2">
+                        Personality Traits (choose up to 2)
+                        {character.personalityTraits?.length > 0 && (
+                          <span className="text-purple-400 ml-2">({character.personalityTraits.length}/2 selected)</span>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        {selectedBackground.personalityTraits.map((trait, i) => {
+                          const isSelected = character.personalityTraits?.includes(trait);
+                          const canSelect = !isSelected && (character.personalityTraits?.length || 0) < 2;
+                          
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                if (isSelected) {
+                                  updateCharacter('personalityTraits', character.personalityTraits.filter(t => t !== trait));
+                                } else if (canSelect) {
+                                  updateCharacter('personalityTraits', [...(character.personalityTraits || []), trait]);
+                                }
+                              }}
+                              disabled={!isSelected && !canSelect}
+                              className={`w-full p-2 rounded-lg border text-left transition-all text-xs ${
+                                isSelected
+                                  ? 'bg-purple-500/20 border-purple-500/50 text-purple-200'
+                                  : canSelect
+                                  ? 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-purple-500/30'
+                                  : 'bg-slate-900/50 border-slate-800/30 text-slate-600 cursor-not-allowed'
+                              }`}
+                            >
+                              {trait}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Ideals */}
+                    {selectedBackground.ideals && (
+                      <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                        <div className="text-xs text-slate-500 mb-2">
+                          Ideal (choose 1)
+                          {character.ideals && <span className="text-blue-400 ml-2">✓ Selected</span>}
+                        </div>
+                        <div className="space-y-1.5">
+                          {selectedBackground.ideals.map((ideal, i) => {
+                            const isSelected = character.ideals === ideal;
+                            
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => updateCharacter('ideals', ideal)}
+                                className={`w-full p-2 rounded-lg border text-left transition-all text-xs ${
+                                  isSelected
+                                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-200'
+                                    : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-blue-500/30'
+                                }`}
+                              >
+                                {ideal}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bonds */}
+                    {selectedBackground.bonds && (
+                      <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                        <div className="text-xs text-slate-500 mb-2">
+                          Bond (choose 1)
+                          {character.bonds && <span className="text-green-400 ml-2">✓ Selected</span>}
+                        </div>
+                        <div className="space-y-1.5">
+                          {selectedBackground.bonds.map((bond, i) => {
+                            const isSelected = character.bonds === bond;
+                            
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => updateCharacter('bonds', bond)}
+                                className={`w-full p-2 rounded-lg border text-left transition-all text-xs ${
+                                  isSelected
+                                    ? 'bg-green-500/20 border-green-500/50 text-green-200'
+                                    : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-green-500/30'
+                                }`}
+                              >
+                                {bond}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Flaws */}
+                    {selectedBackground.flaws && (
+                      <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                        <div className="text-xs text-slate-500 mb-2">
+                          Flaw (choose 1)
+                          {character.flaws && <span className="text-red-400 ml-2">✓ Selected</span>}
+                        </div>
+                        <div className="space-y-1.5">
+                          {selectedBackground.flaws.map((flaw, i) => {
+                            const isSelected = character.flaws === flaw;
+                            
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => updateCharacter('flaws', flaw)}
+                                className={`w-full p-2 rounded-lg border text-left transition-all text-xs ${
+                                  isSelected
+                                    ? 'bg-red-500/20 border-red-500/50 text-red-200'
+                                    : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-red-500/30'
+                                }`}
+                              >
+                                {flaw}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Synergy hint */}
                 {character.class && (() => {
                   const classSkills = CLASSES[character.class]?.skillChoices.from;
@@ -6212,6 +7172,7 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
   const pickClass = (classId) => {
     updateCharacter('class', classId);
     updateCharacter('subclass', null); // Clear subclass when class changes
+    updateCharacter('classSkills', []); // Clear class skills when class changes
     setShowAllClasses(false);
   };
 
@@ -6405,6 +7366,53 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
                   </div>
                 </div>
 
+                {/* Skill Selection */}
+                <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
+                  <div className="text-xs text-slate-500 mb-2">
+                    Choose {selectedClass.skillChoices.count} Class Skills
+                    {character.classSkills?.length > 0 && (
+                      <span className="text-green-400 ml-2">({character.classSkills.length}/{selectedClass.skillChoices.count} selected)</span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(selectedClass.skillChoices.from === 'any' ? Object.keys(SKILLS) : selectedClass.skillChoices.from).map(skill => {
+                      const isSelected = character.classSkills?.includes(skill);
+                      const skillInfo = SKILLS[skill];
+                      const canSelect = !isSelected && (character.classSkills?.length || 0) < selectedClass.skillChoices.count;
+                      
+                      return (
+                        <button
+                          key={skill}
+                          onClick={() => {
+                            if (isSelected) {
+                              // Deselect
+                              updateCharacter('classSkills', character.classSkills.filter(s => s !== skill));
+                            } else if (canSelect) {
+                              // Select
+                              updateCharacter('classSkills', [...(character.classSkills || []), skill]);
+                            }
+                          }}
+                          disabled={!isSelected && !canSelect}
+                          className={`p-2 rounded-lg border text-left transition-all text-xs ${
+                            isSelected
+                              ? 'bg-green-500/20 border-green-500/50 text-green-300'
+                              : canSelect
+                              ? 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-green-500/30'
+                              : 'bg-slate-900/50 border-slate-800/30 text-slate-600 cursor-not-allowed'
+                          }`}
+                        >
+                          <div className="font-medium">{skill}</div>
+                          {skillInfo?.description && (
+                            <div className="text-xs text-slate-500 mt-1 leading-tight line-clamp-2">
+                              {skillInfo.description}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Spellcasting */}
                 {selectedClass.spellcasting && (
                   <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
@@ -6523,6 +7531,341 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
 };
 
 // ============================================================================
+// RANDOM CHARACTER GENERATOR (SMART)
+// ============================================================================
+
+// Generates a random character with synergistic choices
+const generateRandomCharacter = (importedName = '') => {
+  // Helper to pick random from array
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  // Step 1: Pick a random class first (determines build strategy)
+  const classId = pick(Object.keys(CLASSES));
+  const selectedClass = CLASSES[classId];
+  
+  // Step 2: Pick a synergistic race based on class primary abilities
+  const getRacesForClass = (cls) => {
+    const primaryAbilities = cls.primaryAbility;
+    
+    // Define race-ability synergies
+    const raceAbilityMap = {
+      mountainDwarf: ['strength', 'constitution'],
+      hillDwarf: ['constitution', 'wisdom'],
+      highElf: ['dexterity', 'intelligence'],
+      woodElf: ['dexterity', 'wisdom'],
+      darkElf: ['dexterity', 'charisma'],
+      lightfootHalfling: ['dexterity', 'charisma'],
+      stoutHalfling: ['dexterity', 'constitution'],
+      human: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'], // versatile
+      variantHuman: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'], // versatile
+      dragonborn: ['strength', 'charisma'],
+      gnome: ['intelligence', 'constitution'],
+      halfElf: ['charisma', 'dexterity'],
+      halfOrc: ['strength', 'constitution'],
+      tiefling: ['charisma', 'intelligence']
+    };
+    
+    // Find races that boost the class's primary abilities
+    return Object.keys(RACES).filter(raceId => {
+      const raceAbilities = raceAbilityMap[raceId] || [];
+      return primaryAbilities.some(ability => raceAbilities.includes(ability));
+    });
+  };
+  
+  const compatibleRaces = getRacesForClass(selectedClass);
+  const raceId = compatibleRaces.length > 0 ? pick(compatibleRaces) : pick(Object.keys(RACES));
+  const selectedRace = RACES[raceId];
+  
+  // Step 3: Pick subrace if available
+  let subraceId = null;
+  if (selectedRace.subraces && selectedRace.subraces.length > 0) {
+    subraceId = pick(selectedRace.subraces);
+  }
+  
+  // Step 4: Pick a thematic background
+  const getBackgroundsForClass = (cls) => {
+    const thematicMap = {
+      barbarian: ['outlander', 'folkHero', 'soldier'],
+      bard: ['entertainer', 'charlatan', 'noble'],
+      cleric: ['acolyte', 'hermit', 'sage'],
+      druid: ['hermit', 'outlander', 'sage'],
+      fighter: ['soldier', 'folkHero', 'noble'],
+      monk: ['hermit', 'outlander', 'urchin'],
+      paladin: ['acolyte', 'noble', 'soldier'],
+      ranger: ['outlander', 'folkHero', 'sailor'],
+      rogue: ['criminal', 'charlatan', 'urchin'],
+      sorcerer: ['noble', 'hermit', 'entertainer'],
+      warlock: ['charlatan', 'hermit', 'sage'],
+      wizard: ['sage', 'hermit', 'acolyte']
+    };
+    
+    return thematicMap[cls.name.toLowerCase()] || Object.keys(BACKGROUNDS);
+  };
+  
+  const compatibleBackgrounds = getBackgroundsForClass(selectedClass);
+  const backgroundId = pick(compatibleBackgrounds);
+  const selectedBackground = BACKGROUNDS[backgroundId];
+  
+  // Step 5: Assign ability scores using standard array optimally
+  const standardArray = [15, 14, 13, 12, 10, 8];
+  const abilityPriority = {
+    barbarian: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+    bard: ['charisma', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'strength'],
+    cleric: ['wisdom', 'constitution', 'strength', 'charisma', 'dexterity', 'intelligence'],
+    druid: ['wisdom', 'constitution', 'dexterity', 'intelligence', 'charisma', 'strength'],
+    fighter: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+    monk: ['dexterity', 'wisdom', 'constitution', 'strength', 'charisma', 'intelligence'],
+    paladin: ['strength', 'charisma', 'constitution', 'wisdom', 'dexterity', 'intelligence'],
+    ranger: ['dexterity', 'wisdom', 'constitution', 'strength', 'intelligence', 'charisma'],
+    rogue: ['dexterity', 'charisma', 'constitution', 'intelligence', 'wisdom', 'strength'],
+    sorcerer: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
+    warlock: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
+    wizard: ['intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength']
+  };
+  
+  const priority = abilityPriority[selectedClass.name.toLowerCase()] || 
+    ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+  
+  const abilities = {};
+  priority.forEach((ability, i) => {
+    abilities[ability] = standardArray[i];
+  });
+  
+  // Step 6: Variant Human special handling
+  let variantHumanChoices = [];
+  let variantHumanFeat = null;
+  
+  if (raceId === 'variantHuman') {
+    // Boost the two most important abilities
+    variantHumanChoices = [priority[0], priority[1]];
+    
+    // Pick a feat that synergizes with the class
+    const featsByClass = {
+      barbarian: ['greatWeaponMaster', 'polearmMaster', 'toughness', 'athlete'],
+      bard: ['actor', 'inspiringLeader', 'keenMind', 'skilled'],
+      cleric: ['warCaster', 'resilient', 'healer', 'observant'],
+      druid: ['warCaster', 'resilient', 'observant', 'alert'],
+      fighter: ['greatWeaponMaster', 'sharpshooter', 'polearmMaster', 'sentinel'],
+      monk: ['mobile', 'alert', 'athlete', 'observant'],
+      paladin: ['greatWeaponMaster', 'polearmMaster', 'inspiringLeader', 'mounted Combatant'],
+      ranger: ['sharpshooter', 'crossbowExpert', 'alert', 'observant'],
+      rogue: ['crossbowExpert', 'alert', 'mobile', 'skulker'],
+      sorcerer: ['warCaster', 'elemental Adept', 'resilient', 'alert'],
+      warlock: ['warCaster', 'actor', 'resilient', 'alert'],
+      wizard: ['warCaster', 'keenMind', 'resilient', 'observant']
+    };
+    
+    const compatibleFeats = featsByClass[selectedClass.name.toLowerCase()] || ['alert', 'athlete', 'actor', 'toughness'];
+    const availableFeats = compatibleFeats.filter(f => FEATS[f]);
+    variantHumanFeat = availableFeats.length > 0 ? pick(availableFeats) : pick(Object.keys(FEATS));
+  }
+  
+  // Step 7: Select class skills
+  const availableSkills = selectedClass.skillChoices.from === 'any' 
+    ? Object.keys(SKILLS) 
+    : selectedClass.skillChoices.from;
+  
+  const classSkills = [];
+  const skillsNeeded = selectedClass.skillChoices.count;
+  const shuffled = [...availableSkills].sort(() => Math.random() - 0.5);
+  
+  for (let i = 0; i < Math.min(skillsNeeded, shuffled.length); i++) {
+    classSkills.push(shuffled[i]);
+  }
+  
+  // Step 8: Choose alignment (random but biased toward class archetype)
+  const alignmentsByClass = {
+    barbarian: ['chaoticGood', 'chaoticNeutral', 'neutralGood'],
+    bard: ['chaoticGood', 'neutralGood', 'chaoticNeutral'],
+    cleric: ['lawfulGood', 'neutralGood', 'lawfulNeutral'],
+    druid: ['neutralGood', 'trueNeutral', 'chaoticGood'],
+    fighter: ['lawfulGood', 'lawfulNeutral', 'neutralGood'],
+    monk: ['lawfulGood', 'lawfulNeutral', 'trueNeutral'],
+    paladin: ['lawfulGood', 'lawfulNeutral'],
+    ranger: ['neutralGood', 'chaoticGood', 'trueNeutral'],
+    rogue: ['chaoticNeutral', 'neutralGood', 'chaoticGood'],
+    sorcerer: ['chaoticGood', 'chaoticNeutral', 'neutralGood'],
+    warlock: ['chaoticNeutral', 'neutralEvil', 'chaoticEvil'],
+    wizard: ['lawfulNeutral', 'trueNeutral', 'neutralGood']
+  };
+  
+  const possibleAlignments = alignmentsByClass[selectedClass.name.toLowerCase()] || Object.keys(ALIGNMENTS);
+  const alignment = pick(possibleAlignments);
+  
+  // Step 9: Random level (weighted toward low levels)
+  const levelWeights = [1, 1, 1, 1, 1, 3, 2, 2, 1, 1]; // More likely to be level 1-5
+  const weightedLevels = [];
+  levelWeights.forEach((weight, i) => {
+    for (let j = 0; j < weight; j++) {
+      weightedLevels.push(i + 1);
+    }
+  });
+  const level = pick(weightedLevels);
+  
+  // Step 10: Personality traits (if background has them)
+  let personalityTraits = [];
+  let ideals = null;
+  let bonds = null;
+  let flaws = null;
+  
+  if (selectedBackground.personalityTraits) {
+    const traits = [...selectedBackground.personalityTraits].sort(() => Math.random() - 0.5);
+    personalityTraits = traits.slice(0, 2);
+  }
+  
+  if (selectedBackground.ideals) {
+    ideals = pick(selectedBackground.ideals);
+  }
+  
+  if (selectedBackground.bonds) {
+    bonds = pick(selectedBackground.bonds);
+  }
+  
+  if (selectedBackground.flaws) {
+    flaws = pick(selectedBackground.flaws);
+  }
+  
+  // Step 11: ASI or Feats for milestone levels
+  const asiChoices = {};
+  const asiLevels = [4, 8, 12, 16, 19].filter(l => l <= level);
+  
+  asiLevels.forEach(asiLevel => {
+    // Decide between ASI and Feat (60% ASI, 40% Feat for variety)
+    const chooseASI = Math.random() < 0.6;
+    
+    if (chooseASI) {
+      // Pick top 2 abilities to boost
+      const topTwo = priority.slice(0, 2);
+      const boostOne = Math.random() < 0.5; // 50% chance to boost one ability by +2 vs two by +1
+      
+      asiChoices[asiLevel] = {
+        type: 'asi',
+        ability1: topTwo[0],
+        boost1: boostOne ? 2 : 1,
+        ability2: boostOne ? null : topTwo[1],
+        boost2: boostOne ? 0 : 1
+      };
+    } else {
+      // Pick a feat appropriate for the class
+      const featsByClass = {
+        barbarian: ['greatWeaponMaster', 'polearmMaster', 'toughness', 'athlete', 'sentinel'],
+        bard: ['actor', 'inspiringLeader', 'keenMind', 'skilled', 'warCaster'],
+        cleric: ['warCaster', 'resilient', 'healer', 'observant', 'ritual Caster'],
+        druid: ['warCaster', 'resilient', 'observant', 'alert', 'sentinel'],
+        fighter: ['greatWeaponMaster', 'sharpshooter', 'polearmMaster', 'sentinel', 'crossbowExpert'],
+        monk: ['mobile', 'alert', 'athlete', 'observant', 'sentinel'],
+        paladin: ['greatWeaponMaster', 'polearmMaster', 'inspiringLeader', 'sentinel', 'mounted Combatant'],
+        ranger: ['sharpshooter', 'crossbowExpert', 'alert', 'observant', 'mobile'],
+        rogue: ['crossbowExpert', 'alert', 'mobile', 'skulker', 'sentinel'],
+        sorcerer: ['warCaster', 'elemental Adept', 'resilient', 'alert', 'metamagic Adept'],
+        warlock: ['warCaster', 'actor', 'resilient', 'alert', 'fey Touched'],
+        wizard: ['warCaster', 'keenMind', 'resilient', 'observant', 'ritual Caster']
+      };
+      
+      const compatibleFeats = featsByClass[selectedClass.name.toLowerCase()] || ['alert', 'athlete', 'actor', 'toughness'];
+      const availableFeats = compatibleFeats.filter(f => FEATS[f]);
+      const feat = availableFeats.length > 0 ? pick(availableFeats) : pick(Object.keys(FEATS));
+      
+      asiChoices[asiLevel] = {
+        type: 'feat',
+        feat: feat
+      };
+    }
+  });
+  
+  // Step 12: Replacement skills (if background skills overlap with class skills)
+  const replacementSkills = [];
+  if (selectedBackground.skillProficiencies && classSkills.length > 0) {
+    const overlap = selectedBackground.skillProficiencies.filter(
+      skill => classSkills.includes(skill)
+    );
+    
+    if (overlap.length > 0) {
+      // Pick replacement skills from all skills not already chosen
+      const allSkills = Object.keys(SKILLS);
+      const unavailable = [...classSkills, ...selectedBackground.skillProficiencies];
+      const available = allSkills.filter(s => !unavailable.includes(s));
+      
+      const shuffledAvailable = [...available].sort(() => Math.random() - 0.5);
+      
+      for (let i = 0; i < Math.min(overlap.length, shuffledAvailable.length); i++) {
+        replacementSkills.push(shuffledAvailable[i]);
+      }
+    }
+  }
+  
+  // Step 13: Spells for casters
+  const spells = [];
+  const cantrips = [];
+  
+  if (selectedClass.spellcasting) {
+    const spellAbility = selectedClass.spellcasting.ability;
+    const cantripsKnown = selectedClass.spellcasting.cantrips || 0;
+    
+    // Filter spells by class
+    const classSpells = Object.entries(SPELLS).filter(([id, spell]) => 
+      spell.classes?.includes(selectedClass.name.toLowerCase())
+    );
+    
+    // Pick cantrips
+    const availableCantrips = classSpells.filter(([id, spell]) => spell.level === 0);
+    const shuffledCantrips = [...availableCantrips].sort(() => Math.random() - 0.5);
+    
+    for (let i = 0; i < Math.min(cantripsKnown, shuffledCantrips.length); i++) {
+      cantrips.push(shuffledCantrips[i][0]);
+    }
+    
+    // Pick 1st level spells (simplified - just pick a few)
+    const available1stLevel = classSpells.filter(([id, spell]) => spell.level === 1);
+    const shuffled1st = [...available1stLevel].sort(() => Math.random() - 0.5);
+    const spellsToKnow = Math.min(4, shuffled1st.length); // Pick ~4 spells
+    
+    for (let i = 0; i < spellsToKnow; i++) {
+      spells.push(shuffled1st[i][0]);
+    }
+  }
+  
+  // Return the generated character
+  return {
+    name: importedName || `Random ${selectedRace.name}`,
+    playerName: '',
+    race: raceId,
+    subrace: subraceId,
+    class: classId,
+    subclass: null, // User can choose subclass manually
+    background: backgroundId,
+    alignment: alignment,
+    level: level,
+    abilities: abilities,
+    abilityMethod: 'standard',
+    chosenLanguages: [],
+    replacementSkills: [],
+    classSkills: classSkills,
+    personalityTraits: personalityTraits,
+    ideals: ideals,
+    bonds: bonds,
+    flaws: flaws,
+    skills: [],
+    equipment: [],
+    spells: spells,
+    cantrips: cantrips,
+    traits: [],
+    variantHumanChoices: variantHumanChoices,
+    variantHumanFeat: variantHumanFeat,
+    asiChoices: asiChoices,
+    replacementSkills: replacementSkills,
+    proficiencies: {
+      armor: [],
+      weapons: [],
+      tools: [],
+      languages: [],
+      savingThrows: [],
+      skills: []
+    }
+  };
+};
+
+// ============================================================================
 // CHARACTER CREATOR COMPONENT (SKELETON)
 // ============================================================================
 
@@ -6565,6 +7908,7 @@ const CharacterCreator = ({
     class: null,
     subclass: null,
     background: null,
+    alignment: null,
     level: 1,
     abilities: {
       strength: 10,
@@ -6577,8 +7921,14 @@ const CharacterCreator = ({
     abilityMethod: null, // 'standard', 'pointbuy', 'roll', 'manual'
     chosenLanguages: [], // Languages chosen by player (not automatic ones)
     replacementSkills: [], // Skills chosen to replace overlapping background/class skills
+    classSkills: [], // Skills chosen from class skill list
+    personalityTraits: [], // Up to 2 personality traits
+    ideals: null, // One ideal
+    bonds: null, // One bond
+    flaws: null, // One flaw
     skills: [],
     equipment: [],
+    cantrips: [],
     spells: [],
     traits: [],
     proficiencies: {
@@ -6603,6 +7953,7 @@ const CharacterCreator = ({
     { id: 'race', label: 'Race', icon: User },
     { id: 'class', label: 'Class', icon: Sword },
     { id: 'abilities', label: 'Abilities', icon: Zap },
+    { id: 'asi', label: 'ASI/Feats', icon: Star },
     { id: 'background', label: 'Background', icon: Scroll },
     { id: 'equipment', label: 'Equipment', icon: Sword },
     { id: 'spells', label: 'Spells', icon: Sparkles },
@@ -6639,14 +7990,31 @@ const CharacterCreator = ({
     });
   };
 
+  // One-level undo snapshot for randomize on Review step
+  const [lastRandomSnapshot, setLastRandomSnapshot] = useState(null);
+
+  const randomizeFromReview = () => {
+    const prev = character;
+    const randomChar = generateRandomCharacter(importedName);
+    setLastRandomSnapshot(prev);
+    setCharacter(randomChar);
+  };
+
+  const undoRandomizeFromReview = () => {
+    if (lastRandomSnapshot) {
+      setCharacter(lastRandomSnapshot);
+      setLastRandomSnapshot(null);
+    }
+  };
+
   return (
     <div ref={containerRef} className="space-y-4 md:space-y-6 overflow-x-hidden">
       {/* Step Progress Bar */}
-      <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-4 border border-slate-800/50">
+      <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-4 border border-slate-800/50 relative z-10">
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h2 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
             <User className="w-4 h-4 md:w-5 md:h-5 text-indigo-400" />
-            Character Creator
+            D&D 5e Character Creator
           </h2>
           <span className="text-xs md:text-sm text-slate-400">
             Step {currentStep + 1} of {steps.length}
@@ -6654,7 +8022,7 @@ const CharacterCreator = ({
         </div>
         
         {/* Mobile: Compact Progress Dots + Current Step Name */}
-        <div className="md:hidden">
+        <div className="md:hidden relative z-20">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               {steps.map((step, index) => {
@@ -6684,8 +8052,9 @@ const CharacterCreator = ({
           <select
             value={currentStep}
             onChange={(e) => setCurrentStep(Number(e.target.value))}
-            className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50"
+            className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 relative z-50"
           >
+            <option disabled>D&D 5e Character Creator</option>
             {steps.map((step, index) => (
               <option key={step.id} value={index}>
                 {index + 1}. {step.label} {index < currentStep ? '✓' : ''}
@@ -6733,7 +8102,21 @@ const CharacterCreator = ({
       <div ref={stepContentRef} className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-slate-800/50 min-h-[400px] md:min-h-[500px] overflow-x-hidden">
         {currentStep === 0 && (
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-white mb-4">Basic Information</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white">Basic Information</h3>
+              <button
+                onClick={() => {
+                  const randomChar = generateRandomCharacter(importedName);
+                  setCharacter(randomChar);
+                                  // Jump to review step (last step)
+                                  setCurrentStep(8);
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm"
+              >
+                <Sparkles className="w-4 h-4" />
+                Random Character
+              </button>
+            </div>
             
             {/* Character Name */}
             <div>
@@ -6785,8 +8168,8 @@ const CharacterCreator = ({
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Starting Level
               </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map(level => (
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
                   <button
                     key={level}
                     onClick={() => updateCharacter('level', level)}
@@ -6801,7 +8184,34 @@ const CharacterCreator = ({
                 ))}
               </div>
               <p className="text-xs text-slate-500 mt-2">
-                Most campaigns start at level 1. Higher levels unlock more features and spells.
+                Most campaigns start at level 1. Levels 4 and 8 grant Ability Score Improvements or Feats. Level 9+ unlocks 5th-level spells.
+              </p>
+            </div>
+
+            {/* Alignment */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Alignment
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
+                {Object.entries(ALIGNMENTS).map(([key, alignment]) => (
+                  <button
+                    key={key}
+                    onClick={() => updateCharacter('alignment', key)}
+                    className={`p-3 md:p-4 rounded-lg border text-left transition-all ${
+                      character.alignment === key
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-white'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-slate-600'
+                    }`}
+                  >
+                    <div className="font-semibold text-sm md:text-base">{alignment.name}</div>
+                    <div className="text-xs text-slate-400 mt-1">{alignment.short}</div>
+                    <div className="text-xs text-slate-500 mt-2 leading-relaxed">{alignment.description}</div>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Alignment represents your character's moral and ethical outlook. It affects roleplay but has minimal mechanical impact in 5e.
               </p>
             </div>
 
@@ -6831,28 +8241,41 @@ const CharacterCreator = ({
         )}
 
         {currentStep === 4 && (
-          <BackgroundSelectionStep 
+          <ASIFeatsStep 
             character={character}
             updateCharacter={updateCharacter}
           />
         )}
 
         {currentStep === 5 && (
-          <EquipmentSelectionStep 
+          <BackgroundSelectionStep 
             character={character}
             updateCharacter={updateCharacter}
           />
         )}
 
         {currentStep === 6 && (
-          <SpellSelectionStep 
+          <EquipmentSelectionStep 
             character={character}
             updateCharacter={updateCharacter}
           />
         )}
 
         {currentStep === 7 && (
-          <ReviewStep character={character} updateCharacter={updateCharacter} />
+          <SpellSelectionStep 
+            character={character}
+            updateCharacter={updateCharacter}
+          />
+        )}
+
+        {currentStep === 8 && (
+          <ReviewStep 
+            character={character} 
+            updateCharacter={updateCharacter} 
+            onRandomize={randomizeFromReview}
+            onUndo={undoRandomizeFromReview}
+            canUndo={!!lastRandomSnapshot}
+          />
         )}
       </div>
 
@@ -7697,7 +9120,7 @@ export default function AetherNames() {
       
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 pb-32">
         {/* Header */}
-        <header className={`text-center py-8 mb-8 transition-all duration-1000 ${animateHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
+        <header className={`relative z-50 text-center py-8 mb-8 transition-all duration-1000 ${animateHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
           {/* Navigation */}
           <div className="flex justify-center mb-6">
             <Navigation 
