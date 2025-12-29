@@ -5676,19 +5676,60 @@ const CharacterCreator = ({
   return (
     <div ref={containerRef} className="space-y-4 md:space-y-6 overflow-x-hidden">
       {/* Step Progress Bar */}
-      <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-3 md:p-4 border border-slate-800/50 overflow-x-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <User className="w-5 h-5 text-indigo-400" />
+      <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-4 border border-slate-800/50">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h2 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
+            <User className="w-4 h-4 md:w-5 md:h-5 text-indigo-400" />
             Character Creator
           </h2>
-          <span className="text-sm text-slate-400">
+          <span className="text-xs md:text-sm text-slate-400">
             Step {currentStep + 1} of {steps.length}
           </span>
         </div>
         
-        {/* Progress Steps */}
-        <div className="flex items-center gap-1 min-w-max pb-1">
+        {/* Mobile: Compact Progress Dots + Current Step Name */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              {steps.map((step, index) => {
+                const isActive = index === currentStep;
+                const isComplete = index < currentStep;
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => setCurrentStep(index)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${
+                      isActive
+                        ? 'bg-indigo-500 scale-125'
+                        : isComplete
+                          ? 'bg-green-500'
+                          : 'bg-slate-600'
+                    }`}
+                    aria-label={step.label}
+                  />
+                );
+              })}
+            </div>
+            <span className="text-xs text-indigo-300 font-medium">
+              {steps[currentStep]?.label}
+            </span>
+          </div>
+          {/* Mobile Step Selector Dropdown */}
+          <select
+            value={currentStep}
+            onChange={(e) => setCurrentStep(Number(e.target.value))}
+            className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50"
+          >
+            {steps.map((step, index) => (
+              <option key={step.id} value={index}>
+                {index + 1}. {step.label} {index < currentStep ? '✓' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Desktop: Full Progress Steps */}
+        <div className="hidden md:flex items-center gap-1">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isActive = index === currentStep;
@@ -5698,7 +5739,7 @@ const CharacterCreator = ({
               <React.Fragment key={step.id}>
                 <button
                   onClick={() => setCurrentStep(index)}
-                  className={`flex items-center gap-1 px-2 py-1.5 md:px-3 md:gap-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                     isActive
                       ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50'
                       : isComplete
@@ -5707,14 +5748,14 @@ const CharacterCreator = ({
                   }`}
                 >
                   {isComplete ? (
-                    <Check className="w-3 h-3 flex-shrink-0" />
+                    <Check className="w-3 h-3" />
                   ) : (
-                    <Icon className="w-3 h-3 flex-shrink-0" />
+                    <Icon className="w-3 h-3" />
                   )}
-                  <span className="hidden sm:inline">{step.label}</span>
+                  {step.label}
                 </button>
                 {index < steps.length - 1 && (
-                  <div className={`w-2 md:w-4 h-0.5 flex-shrink-0 ${isComplete ? 'bg-green-500/50' : 'bg-slate-700'}`} />
+                  <div className={`w-4 h-0.5 ${isComplete ? 'bg-green-500/50' : 'bg-slate-700'}`} />
                 )}
               </React.Fragment>
             );
@@ -5733,26 +5774,28 @@ const CharacterCreator = ({
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Character Name
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={character.name}
-                  onChange={(e) => updateCharacter('name', e.target.value)}
-                  placeholder="Enter character name..."
-                  className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
-                />
-                <button
-                  onClick={onGoToGenerator}
-                  className="px-4 py-3 bg-indigo-500/20 border border-indigo-500/50 rounded-lg text-indigo-300 hover:bg-indigo-500/30 transition-colors flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Generate
-                </button>
-              </div>
-              {importedName && (
+              <input
+                type="text"
+                value={character.name}
+                onChange={(e) => updateCharacter('name', e.target.value)}
+                placeholder="Enter character name..."
+                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+              />
+              {importedName ? (
                 <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
                   <Check className="w-3 h-3" />
                   Imported from Name Generator
+                </p>
+              ) : (
+                <p className="text-xs text-slate-500 mt-2">
+                  Need a name? Use the{' '}
+                  <button 
+                    onClick={onGoToGenerator} 
+                    className="text-indigo-400 hover:text-indigo-300 underline"
+                  >
+                    Name Generator
+                  </button>
+                  {' '}to create one!
                 </p>
               )}
             </div>
@@ -6621,6 +6664,8 @@ export default function AetherNames() {
             />
           </div>
 
+          {currentPage === 'generator' && (
+          <>
           <div className="inline-flex items-center gap-4 mb-4">
             <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0">
               {/* Soft glow effect */}
@@ -6752,6 +6797,8 @@ export default function AetherNames() {
               </div>
             </details>
           </div>
+          </>
+          )}
         </header>
 
         {currentPage === 'generator' ? (
@@ -7164,13 +7211,15 @@ export default function AetherNames() {
         )}
       </div>
 
-      {/* Floating Generate Button - Mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 z-50">
-        <GlowButton onClick={generate} disabled={isGenerating} className="w-full" theme={config.genre}>
-          <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
-          {isGenerating ? 'Forging...' : 'Generate Names'}
-        </GlowButton>
-      </div>
+      {/* Floating Generate Button - Mobile (Only on Generator Page) */}
+      {currentPage === 'generator' && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 z-50">
+          <GlowButton onClick={generate} disabled={isGenerating} className="w-full" theme={config.genre}>
+            <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+            {isGenerating ? 'Forging...' : 'Generate Names'}
+          </GlowButton>
+        </div>
+      )}
     </div>
   );
 }
