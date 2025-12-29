@@ -3,6 +3,73 @@ import { createPortal } from 'react-dom';
 import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword } from 'lucide-react';
 
 // ============================================================================
+// LOCAL STORAGE UTILITIES
+// ============================================================================
+
+const LocalStorageUtil = {
+  /**
+   * Safely get item from localStorage with error handling
+   */
+  getItem(key, defaultValue = null) {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return defaultValue;
+      }
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+      // Handle quota exceeded, private browsing, or JSON parse errors
+      console.warn(`localStorage.getItem error for key "${key}":`, error);
+      return defaultValue;
+    }
+  },
+
+  /**
+   * Safely set item in localStorage with error handling
+   */
+  setItem(key, value) {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return false;
+      }
+      window.localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      // Handle quota exceeded, private browsing
+      console.warn(`localStorage.setItem error for key "${key}":`, error);
+      if (error.name === 'QuotaExceededError') {
+        // Try to clear old data to make room
+        try {
+          const oldKey = 'aethername_history';
+          window.localStorage.removeItem(oldKey);
+          window.localStorage.setItem(key, JSON.stringify(value));
+          return true;
+        } catch (retryError) {
+          console.error('Failed to save to localStorage even after cleanup:', retryError);
+        }
+      }
+      return false;
+    }
+  },
+
+  /**
+   * Remove item from localStorage
+   */
+  removeItem(key) {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return false;
+      }
+      window.localStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.warn(`localStorage.removeItem error for key "${key}":`, error);
+      return false;
+    }
+  }
+};
+
+// ============================================================================
 // LINGUISTICALLY AUTHENTIC PHONOTACTIC DATA
 // Each language family follows real-world constraints
 // ============================================================================
@@ -6775,6 +6842,43 @@ export default function AetherNames() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [animateHeader, setAnimateHeader] = useState(false);
 
+  // Load favorites and history from localStorage on mount
+  useEffect(() => {
+    const savedFavorites = LocalStorageUtil.getItem('aethername_favorites', []);
+    const savedHistory = LocalStorageUtil.getItem('aethername_history', []);
+    
+    if (savedFavorites && Array.isArray(savedFavorites)) {
+      setFavorites(savedFavorites);
+    }
+    
+    if (savedHistory && Array.isArray(savedHistory) && savedHistory.length > 0) {
+      setNameHistory(savedHistory);
+      setHistoryIndex(savedHistory.length - 1);
+      // Optionally restore the last generation
+      const lastGeneration = savedHistory[savedHistory.length - 1];
+      if (lastGeneration && Array.isArray(lastGeneration)) {
+        setGeneratedNames(lastGeneration);
+      }
+    }
+  }, []);
+
+  // Save favorites to localStorage whenever they change
+  useEffect(() => {
+    if (favorites.length > 0 || LocalStorageUtil.getItem('aethername_favorites')) {
+      LocalStorageUtil.setItem('aethername_favorites', favorites);
+    }
+  }, [favorites]);
+
+  // Save history to localStorage whenever it changes (debounced)
+  useEffect(() => {
+    if (nameHistory.length > 0) {
+      const timeoutId = setTimeout(() => {
+        LocalStorageUtil.setItem('aethername_history', nameHistory);
+      }, 500); // Debounce to avoid excessive writes
+      return () => clearTimeout(timeoutId);
+    }
+  }, [nameHistory]);
+
   useEffect(() => { setAnimateHeader(true); }, []);
 
   const updateConfig = (key, value) => setConfig(prev => ({ ...prev, [key]: value }));
@@ -6881,7 +6985,10 @@ export default function AetherNames() {
     });
   };
 
-  const clearFavorites = () => setFavorites([]);
+  const clearFavorites = () => {
+    setFavorites([]);
+    LocalStorageUtil.removeItem('aethername_favorites');
+  };
 
   const isFavorite = (name) => favorites.some(f => f.name === name);
 
