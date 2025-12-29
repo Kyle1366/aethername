@@ -5890,6 +5890,43 @@ const CharacterCreator = ({
         )}
       </div>
 
+      {/* Character Creator Quick Guide */}
+      <details className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-lg md:rounded-xl mb-4">
+        <summary className="flex items-center justify-between p-2.5 md:p-4 cursor-pointer list-none">
+          <span className="font-semibold text-indigo-400 flex items-center gap-2 text-sm md:text-base">
+            <HelpCircle className="w-4 h-4 md:w-5 md:h-5" /> Character Creator Guide
+          </span>
+          <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-indigo-400 group-open:rotate-180 transition-transform" />
+        </summary>
+        <div className="px-4 pb-4 text-sm text-slate-400 space-y-3">
+          <div>
+            <h4 className="font-semibold text-slate-200 mb-1">Building Your Character</h4>
+            <p>Work through each step to create a complete D&D 5th Edition character. You can jump between steps using the progress bar above.</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-200 mb-1">Steps Overview</h4>
+            <ul className="space-y-1 ml-4 text-xs">
+              <li><span className="text-indigo-400">Basics</span> — Name, player name, starting level</li>
+              <li><span className="text-purple-400">Race</span> — Choose race and subrace for ability bonuses and traits</li>
+              <li><span className="text-pink-400">Class</span> — Your character's profession and abilities</li>
+              <li><span className="text-amber-400">Abilities</span> — Set your six ability scores (STR, DEX, CON, INT, WIS, CHA)</li>
+              <li><span className="text-emerald-400">Background</span> — Your character's history and additional skills</li>
+              <li><span className="text-cyan-400">Equipment</span> — Starting gear or roll for gold to buy items</li>
+              <li><span className="text-violet-400">Spells</span> — Choose cantrips and spells (if your class casts magic)</li>
+              <li><span className="text-green-400">Review</span> — Finalize choices and export your character</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-200 mb-1">Tips</h4>
+            <ul className="space-y-1 ml-4 text-xs">
+              <li>Use the <span className="text-indigo-400">Name Generator</span> to create authentic fantasy names</li>
+              <li>Check the <span className="text-amber-400">Review</span> step for any incomplete choices like languages or skills</li>
+              <li>Export your finished character as text or JSON</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+
       {/* Navigation Buttons */}
       <div className="flex justify-between gap-3 pb-20 md:pb-0">
         <button
@@ -6666,8 +6703,8 @@ export default function AetherNames() {
 
           {currentPage === 'generator' && (
           <>
-          <div className="inline-flex items-center gap-4 mb-4">
-            <div className="relative w-20 h-20 md:w-28 md:h-28 flex-shrink-0">
+          <div className="inline-flex items-center gap-3 md:gap-4 mb-2 md:mb-4">
+            <div className="relative w-14 h-14 md:w-28 md:h-28 flex-shrink-0">
               {/* Soft glow effect */}
               <div className="absolute inset-0 blur-2xl bg-purple-500/30 rounded-full scale-150 pointer-events-none" />
               
@@ -6707,56 +6744,59 @@ export default function AetherNames() {
                 className="absolute inset-0 w-full h-full drop-shadow-[0_0_20px_rgba(168,85,247,0.4)]"
               />
             </div>
-            <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
+            <h1 className="text-2xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
               AetherNames
             </h1>
           </div>
           
-          <p className="text-slate-400 text-lg font-light mb-4">Linguistically Authentic Fantasy & Sci-Fi Name Forge</p>
+          <p className="text-slate-400 text-sm md:text-lg font-light mb-2 md:mb-4">Linguistically Authentic Fantasy & Sci-Fi Name Forge</p>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 mb-4 backdrop-blur-md">
-            <Cpu className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs md:text-sm font-medium text-slate-300">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-slate-900/80 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 mb-2 md:mb-4 backdrop-blur-md">
+            <Cpu className="w-3 h-3 md:w-4 md:h-4 text-indigo-400" />
+            <span className="text-[10px] md:text-sm font-medium text-slate-300">
               <span className="text-indigo-400 font-bold">No AI / LLMs.</span> 100% algorithmic phonotactics.
             </span>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <div className="flex flex-wrap justify-center gap-1.5 md:gap-2 mb-3 md:mb-6">
             {['Phonotactically Accurate', 'Cross-Linguistic', 'Customizable'].map((tag, i) => (
-              <span key={i} className="px-3 py-1 text-xs font-medium bg-slate-800/50 border border-slate-700/50 rounded-full text-slate-400">
+              <span key={i} className="px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium bg-slate-800/50 border border-slate-700/50 rounded-full text-slate-400">
                 {tag}
               </span>
             ))}
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3">
-            <GlowButton onClick={generate} disabled={isGenerating} className="px-8" theme={config.genre}>
-              <div className="flex flex-col items-center">
-                <span className="flex items-center gap-2">
-                  <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
-                  {isGenerating ? 'Forging...' : 'Generate Names'}
-                </span>
-                <span className="text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
-              </div>
+          {/* Main Action Buttons - Side by Side on Mobile */}
+          <div className="flex gap-2 md:gap-3 justify-center mb-3 md:mb-4">
+            <GlowButton onClick={generate} disabled={isGenerating} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-8" theme={config.genre}>
+              <Sparkles className={`w-4 h-4 md:w-5 md:h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isGenerating ? 'Forging...' : 'Generate Names'}</span>
+              <span className="sm:hidden">{isGenerating ? 'Forging...' : 'Generate'}</span>
             </GlowButton>
-            <GlowButton variant="secondary" onClick={surpriseMe} className="px-6" theme={config.genre}>
-              <Zap className="w-5 h-5" />
-              Surprise Me
+            <GlowButton variant="secondary" onClick={surpriseMe} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-6" theme={config.genre}>
+              <Zap className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Surprise Me</span>
+              <span className="sm:hidden">Surprise</span>
             </GlowButton>
-            <GlowButton variant="donate" onClick={openDonation} className="px-8" theme={config.genre}>
-              <Heart className="w-5 h-5" />
-              Support the Creator
+          </div>
+          
+          {/* Support Button - Smaller on Mobile */}
+          <div className="flex justify-center mb-2">
+            <GlowButton variant="donate" onClick={openDonation} className="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base" theme={config.genre}>
+              <Heart className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Support the Creator</span>
+              <span className="sm:hidden">Support</span>
             </GlowButton>
           </div>
 
           {/* Quick Guide Dropdown */}
-          <div className="mt-6 max-w-2xl mx-auto">
-            <details className="group bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-xl">
-              <summary className="flex items-center justify-between p-4 cursor-pointer list-none">
-                <span className="font-semibold text-indigo-400 flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5" /> Quick Guide
+          <div className="mt-3 md:mt-6 max-w-2xl mx-auto">
+            <details className="group bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-lg md:rounded-xl">
+              <summary className="flex items-center justify-between p-2.5 md:p-4 cursor-pointer list-none">
+                <span className="font-semibold text-indigo-400 flex items-center gap-2 text-sm md:text-base">
+                  <HelpCircle className="w-4 h-4 md:w-5 md:h-5" /> Quick Guide
                 </span>
-                <ChevronDown className="w-5 h-5 text-indigo-400 group-open:rotate-180 transition-transform" />
+                <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-indigo-400 group-open:rotate-180 transition-transform" />
               </summary>
               <div className="px-4 pb-4 text-sm text-slate-400 space-y-4">
                 <div>
