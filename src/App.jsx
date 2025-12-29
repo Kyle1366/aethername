@@ -5195,37 +5195,39 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+          <div className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
             completionCount === totalRequired 
               ? 'bg-green-500/20 text-green-300 border border-green-500/30'
               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
           }`}>
             {completionCount}/{totalRequired} Complete
           </div>
-          {/* Randomize Again */}
-          <button
-            onClick={onRandomize}
-            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap"
-            title="Generate a new random character"
-          >
-            <Sparkles className="w-3 h-3" />
-            <span className="hidden md:inline">Randomize Again</span>
-            <span className="md:hidden">Random</span>
-          </button>
-          {/* Undo */}
-          <button
-            onClick={onUndo}
-            disabled={!canUndo}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              canUndo 
-                ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
-                : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
-            }`}
-            title="Undo last randomize"
-          >
-            Undo
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Randomize Again */}
+            <button
+              onClick={onRandomize}
+              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap"
+              title="Generate a new random character"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span className="hidden sm:inline">Randomize</span>
+              <span className="sm:hidden">Random</span>
+            </button>
+            {/* Undo */}
+            <button
+              onClick={onUndo}
+              disabled={!canUndo}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                canUndo 
+                  ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
+                  : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
+              }`}
+              title="Undo last randomize"
+            >
+              Undo
+            </button>
+          </div>
         </div>
       </div>
 
@@ -8081,7 +8083,8 @@ const CharacterCreator = ({
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h2 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
             <User className="w-4 h-4 md:w-5 md:h-5 text-indigo-400" />
-            D&D 5e Character Creator
+            <span className="md:hidden">D&D 5E CC</span>
+            <span className="hidden md:inline">D&D 5e Character Creator</span>
           </h2>
           <span className="text-xs md:text-sm text-slate-400">
             Step {currentStep + 1} of {steps.length}
