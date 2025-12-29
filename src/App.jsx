@@ -3453,6 +3453,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
 // ============================================================================
 
 const RaceSelectionStep = ({ character, updateCharacter }) => {
+  const [showAllRaces, setShowAllRaces] = useState(!character.race);
   const selectedRaceId = character.race;
   const selectedSubraceId = character.subrace;
 
@@ -3464,6 +3465,7 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
   const pickRace = (raceId) => {
     updateCharacter('race', raceId);
     updateCharacter('subrace', null);
+    setShowAllRaces(false);
   };
 
   const pickSubrace = (subId) => {
@@ -3508,7 +3510,32 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Race Grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+          {/* Mobile: Show selected race with change button when collapsed */}
+          {character.race && !showAllRaces && (
+            <div className="md:hidden mb-3">
+              <div className="p-3 rounded-xl bg-indigo-500/20 border border-indigo-500/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{RACE_ICONS[character.race]}</span>
+                    <div>
+                      <div className="font-medium text-indigo-300">{RACES[character.race]?.name}</div>
+                      {character.subrace && RACES[character.race]?.subraces?.[character.subrace] && (
+                        <div className="text-xs text-slate-400">{RACES[character.race].subraces[character.subrace].name}</div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAllRaces(true)}
+                    className="px-3 py-1.5 rounded-lg bg-slate-700/50 text-slate-300 text-sm hover:bg-slate-600/50 transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 ${character.race && !showAllRaces ? 'hidden md:grid' : ''}`}>
             {Object.entries(RACES).map(([id, race]) => {
               const isSelected = selectedRaceId === id;
               return (
@@ -5153,11 +5180,13 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
 // ============================================================================
 
 const BackgroundSelectionStep = ({ character, updateCharacter }) => {
+  const [showAllBackgrounds, setShowAllBackgrounds] = useState(!character.background);
   const selectedBackgroundId = character.background;
   const selectedBackground = selectedBackgroundId ? BACKGROUNDS[selectedBackgroundId] : null;
 
   const pickBackground = (bgId) => {
     updateCharacter('background', bgId);
+    setShowAllBackgrounds(false);
   };
 
   return (
@@ -5172,7 +5201,30 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Background Grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+          {/* Mobile: Show selected background with change button when collapsed */}
+          {character.background && !showAllBackgrounds && (
+            <div className="md:hidden mb-3">
+              <div className="p-3 rounded-xl bg-indigo-500/20 border border-indigo-500/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{BACKGROUND_ICONS[character.background]}</span>
+                    <div>
+                      <div className="font-medium text-indigo-300">{BACKGROUNDS[character.background]?.name}</div>
+                      <div className="text-xs text-slate-400">{BACKGROUNDS[character.background]?.skillProficiencies?.join(', ')}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAllBackgrounds(true)}
+                    className="px-3 py-1.5 rounded-lg bg-slate-700/50 text-slate-300 text-sm hover:bg-slate-600/50 transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 ${character.background && !showAllBackgrounds ? 'hidden md:grid' : ''}`}>
             {Object.entries(BACKGROUNDS).map(([id, bg]) => {
               const isSelected = selectedBackgroundId === id;
               
@@ -5322,11 +5374,13 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
 // ============================================================================
 
 const ClassSelectionStep = ({ character, updateCharacter }) => {
+  const [showAllClasses, setShowAllClasses] = useState(!character.class);
   const selectedClassId = character.class;
   const selectedClass = selectedClassId ? CLASSES[selectedClassId] : null;
 
   const pickClass = (classId) => {
     updateCharacter('class', classId);
+    setShowAllClasses(false);
   };
 
   const getHitPointsAtLevel1 = () => {
@@ -5361,7 +5415,30 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Class Grid */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+          {/* Mobile: Show selected class with change button when collapsed */}
+          {character.class && !showAllClasses && (
+            <div className="md:hidden mb-3">
+              <div className="p-3 rounded-xl bg-indigo-500/20 border border-indigo-500/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{CLASS_ICONS[character.class]}</span>
+                    <div>
+                      <div className="font-medium text-indigo-300">{CLASSES[character.class]?.name}</div>
+                      <div className="text-xs text-slate-400">d{CLASSES[character.class]?.hitDie} Hit Die</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAllClasses(true)}
+                    className="px-3 py-1.5 rounded-lg bg-slate-700/50 text-slate-300 text-sm hover:bg-slate-600/50 transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 ${character.class && !showAllClasses ? 'hidden md:grid' : ''}`}>
             {Object.entries(CLASSES).map(([id, cls]) => {
               const isSelected = selectedClassId === id;
               const primaryAbs = cls.primaryAbility.map(a => ABILITY_LABELS[a]?.short).join('/');
