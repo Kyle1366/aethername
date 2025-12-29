@@ -3465,10 +3465,9 @@ const FEATURE_INFO = {
   'Sneak Attack': 'Deal extra damage once per turn with finesse or ranged weapon when you have advantage or an ally adjacent.',
   'Thieves\' Cant': 'Secret mix of dialect, jargon, and code allows you to convey messages to other rogues.',
   'Sorcerous Origin': 'Choose a bloodline granting features at certain levels.',
-  'Arcane Recovery': 'Regain some spell slots during a short rest once per day.',
   'Otherworldly Patron': 'Choose a patron granting features and invocations.',
   'Pact Magic': 'Warlocks use pact magic with limited spell slots that recover on short rests.',
-  'Arcane Recovery': 'Regain spell slots on a short rest (Wizard feature).'
+  'Arcane Recovery': 'Regain some spell slots during a short rest once per day.'
 };
 
 // Helper to find language ID by display name
@@ -7920,7 +7919,6 @@ const generateRandomCharacter = (importedName = '') => {
     variantHumanChoices: variantHumanChoices,
     variantHumanFeat: variantHumanFeat,
     asiChoices: asiChoices,
-    replacementSkills: replacementSkills,
     proficiencies: {
       armor: [],
       weapons: [],
