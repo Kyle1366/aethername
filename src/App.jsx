@@ -2735,7 +2735,183 @@ const SPELLS = {
   tashasHideousLaughter: { name: 'Tasha\'s Hideous Laughter', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Creature falls prone laughing. Incapacitated, can\'t stand. Wis save each turn.', classes: ['bard', 'wizard'] },
   thunderwave: { name: 'Thunderwave', level: 1, school: 'evocation', castTime: '1 action', range: 'Self (15-ft cube)', duration: 'Instantaneous', description: '2d8 thunder damage in 15-ft cube. Con save or pushed 10 ft.', classes: ['bard', 'druid', 'sorcerer', 'wizard'] },
   witchBolt: { name: 'Witch Bolt', level: 1, school: 'evocation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: '1d12 lightning damage. Use action each turn to auto-deal 1d12 more.', classes: ['sorcerer', 'warlock', 'wizard'] },
-  wrathfulSmite: { name: 'Wrathful Smite', level: 1, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +1d6 psychic. Wis save or frightened.', classes: ['paladin'] }
+  wrathfulSmite: { name: 'Wrathful Smite', level: 1, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +1d6 psychic. Wis save or frightened.', classes: ['paladin'] },
+
+  // 2ND LEVEL SPELLS
+  aid: { name: 'Aid', level: 2, school: 'abjuration', castTime: '1 action', range: '30 ft', duration: '8 hours', description: 'Up to 3 creatures gain 5 extra max HP and current HP for duration.', classes: ['cleric', 'paladin'] },
+  alterSelf: { name: 'Alter Self', level: 2, school: 'transmutation', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Transform your body: aquatic adaptation, change appearance, or natural weapons.', classes: ['sorcerer', 'wizard'] },
+  barkskin: { name: 'Barkskin', level: 2, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target\'s AC can\'t be less than 16, regardless of armor.', classes: ['druid', 'ranger'] },
+  blindnessDeafness: { name: 'Blindness/Deafness', level: 2, school: 'necromancy', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Con save or creature is blinded or deafened for duration.', classes: ['bard', 'cleric', 'sorcerer', 'wizard'] },
+  blur: { name: 'Blur', level: 2, school: 'illusion', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Attackers have disadvantage on attack rolls against you.', classes: ['sorcerer', 'wizard'] },
+  brandingSmite: { name: 'Branding Smite', level: 2, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +2d6 radiant and target sheds light, can\'t become invisible.', classes: ['paladin'] },
+  calmEmotions: { name: 'Calm Emotions', level: 2, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Suppress strong emotions in 20-ft sphere. End charm/frighten or make indifferent.', classes: ['bard', 'cleric'] },
+  cloudOfDaggers: { name: 'Cloud of Daggers', level: 2, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Spinning daggers in 5-ft cube deal 4d4 slashing to creatures entering.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  crownOfMadness: { name: 'Crown of Madness', level: 2, school: 'enchantment', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Wis save or charmed and must attack nearest creature on its turn.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  darkness: { name: 'Darkness', level: 2, school: 'evocation', castTime: '1 action', range: '60 ft', duration: '10 minutes', description: 'Magical darkness fills 15-ft sphere. Darkvision can\'t see through it.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  darkvision: { name: 'Darkvision', level: 2, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '8 hours', description: 'Target gains darkvision out to 60 ft.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'] },
+  detectThoughts: { name: 'Detect Thoughts', level: 2, school: 'divination', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Read surface thoughts of creatures within 30 ft. Wis save to probe deeper.', classes: ['bard', 'sorcerer', 'wizard'] },
+  enhanceAbility: { name: 'Enhance Ability', level: 2, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Grant advantage on checks with one ability. Some options grant extra benefits.', classes: ['bard', 'cleric', 'druid', 'sorcerer'] },
+  enlargeReduce: { name: 'Enlarge/Reduce', level: 2, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Double or halve target\'s size. Affects damage and Str checks.', classes: ['sorcerer', 'wizard'] },
+  enthrall: { name: 'Enthrall', level: 2, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Wis save or creatures have disadvantage on Perception checks.', classes: ['bard', 'warlock'] },
+  findSteed: { name: 'Find Steed', level: 2, school: 'conjuration', castTime: '10 minutes', range: '30 ft', duration: 'Instantaneous', description: 'Summon a loyal warhorse, pony, camel, elk, or mastiff.', classes: ['paladin'] },
+  flameBlade: { name: 'Flame Blade', level: 2, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '10 minutes', description: 'Create flaming blade. Melee spell attack deals 3d6 fire damage.', classes: ['druid'] },
+  flamingSphere: { name: 'Flaming Sphere', level: 2, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Create 5-ft sphere of fire. 2d6 fire damage to nearby creatures.', classes: ['druid', 'wizard'] },
+  gentleRepose: { name: 'Gentle Repose', level: 2, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: '10 days', description: 'Protect corpse from decay and becoming undead.', classes: ['cleric', 'wizard'], ritual: true },
+  gustOfWind: { name: 'Gust of Wind', level: 2, school: 'evocation', castTime: '1 action', range: 'Self (60-ft line)', duration: '1 minute', description: 'Strong wind in 60-ft line. Str save or pushed 15 ft. Difficult terrain.', classes: ['druid', 'sorcerer', 'wizard'] },
+  heat_metal: { name: 'Heat Metal', level: 2, school: 'transmutation', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Heat metal object. 2d8 fire damage to holder. Con save or drop it.', classes: ['bard', 'druid'] },
+  holdPerson: { name: 'Hold Person', level: 2, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Wis save or humanoid is paralyzed. Save each turn to end.', classes: ['bard', 'cleric', 'druid', 'sorcerer', 'warlock', 'wizard'] },
+  invisibility: { name: 'Invisibility', level: 2, school: 'illusion', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target becomes invisible until it attacks or casts a spell.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  knock: { name: 'Knock', level: 2, school: 'transmutation', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Unlock one lock, bar, or seal. Magically locked items are suppressed.', classes: ['bard', 'sorcerer', 'wizard'] },
+  lesserRestoration: { name: 'Lesser Restoration', level: 2, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'End one disease or condition: blinded, deafened, paralyzed, or poisoned.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger'] },
+  levitate: { name: 'Levitate', level: 2, school: 'transmutation', castTime: '1 action', range: '60 ft', duration: '10 minutes', description: 'Target rises up to 20 ft and floats. Can move by pushing/pulling.', classes: ['sorcerer', 'wizard'] },
+  locateObject: { name: 'Locate Object', level: 2, school: 'divination', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Sense direction of specific or general object within 1000 ft.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger', 'wizard'] },
+  magicWeapon: { name: 'Magic Weapon', level: 2, school: 'transmutation', castTime: '1 bonus action', range: 'Touch', duration: '1 hour', description: 'Weapon becomes +1 magic weapon.', classes: ['paladin', 'wizard'] },
+  mirrorImage: { name: 'Mirror Image', level: 2, school: 'illusion', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Create 3 illusory duplicates. Attacks may hit duplicates instead.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  mistyStep: { name: 'Misty Step', level: 2, school: 'conjuration', castTime: '1 bonus action', range: 'Self', duration: 'Instantaneous', description: 'Teleport up to 30 ft to unoccupied space you can see.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  moonbeam: { name: 'Moonbeam', level: 2, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Silvery beam in 5-ft cylinder. 2d10 radiant damage. Con save for half.', classes: ['druid'] },
+  passWithoutTrace: { name: 'Pass without Trace', level: 2, school: 'abjuration', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'You and nearby allies gain +10 to Stealth and can\'t be tracked.', classes: ['druid', 'ranger'] },
+  phantasmalForce: { name: 'Phantasmal Force', level: 2, school: 'illusion', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Int save or creature perceives illusory object. 1d6 psychic per turn.', classes: ['bard', 'sorcerer', 'wizard'] },
+  prayerOfHealing: { name: 'Prayer of Healing', level: 2, school: 'evocation', castTime: '10 minutes', range: '30 ft', duration: 'Instantaneous', description: 'Up to 6 creatures heal 2d8 + spellcasting modifier HP.', classes: ['cleric'] },
+  protectionFromPoison: { name: 'Protection from Poison', level: 2, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Neutralize one poison. Advantage on saves vs poison, resistance to poison damage.', classes: ['cleric', 'druid', 'paladin', 'ranger'] },
+  rayOfEnfeeblement: { name: 'Ray of Enfeeblement', level: 2, school: 'necromancy', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Ranged spell attack. Target deals half damage with Str weapons.', classes: ['warlock', 'wizard'] },
+  scorchingRay: { name: 'Scorching Ray', level: 2, school: 'evocation', castTime: '1 action', range: '120 ft', duration: 'Instantaneous', description: 'Create 3 rays. Each ray deals 2d6 fire damage on hit.', classes: ['sorcerer', 'wizard'] },
+  seeInvisibility: { name: 'See Invisibility', level: 2, school: 'divination', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'See invisible creatures and objects, and into the Ethereal Plane.', classes: ['bard', 'sorcerer', 'wizard'] },
+  shatter: { name: 'Shatter', level: 2, school: 'evocation', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Loud noise in 10-ft sphere. 3d8 thunder damage. Con save for half.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  silence: { name: 'Silence', level: 2, school: 'illusion', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'No sound in 20-ft sphere. Creatures immune to thunder, can\'t cast verbal spells.', classes: ['bard', 'cleric', 'ranger'], ritual: true },
+  spiderClimb: { name: 'Spider Climb', level: 2, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target can climb walls and ceilings, hands free.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  spikeGrowth: { name: 'Spike Growth', level: 2, school: 'transmutation', castTime: '1 action', range: '150 ft', duration: '10 minutes', description: 'Ground sprouts spikes. 2d4 piercing per 5 ft moved. Difficult terrain.', classes: ['druid', 'ranger'] },
+  spiritualWeapon: { name: 'Spiritual Weapon', level: 2, school: 'evocation', castTime: '1 bonus action', range: '60 ft', duration: '1 minute', description: 'Create floating weapon. 1d8 + modifier force damage. Bonus action to attack.', classes: ['cleric'] },
+  suggestion: { name: 'Suggestion', level: 2, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '8 hours', description: 'Wis save or creature follows reasonable suggestion.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  wardingBond: { name: 'Warding Bond', level: 2, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target gains +1 AC, +1 saves, resistance. You take same damage they take.', classes: ['cleric'] },
+  web: { name: 'Web', level: 2, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 hour', description: 'Fill 20-ft cube with webs. Dex save or restrained. Difficult terrain.', classes: ['sorcerer', 'wizard'] },
+  zoneOfTruth: { name: 'Zone of Truth', level: 2, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '10 minutes', description: 'Creatures in 15-ft sphere can\'t deliberately lie. Cha save to avoid.', classes: ['bard', 'cleric', 'paladin'] },
+
+  // 3RD LEVEL SPELLS
+  animateDead: { name: 'Animate Dead', level: 3, school: 'necromancy', castTime: '1 minute', range: '10 ft', duration: 'Instantaneous', description: 'Create skeleton or zombie servant from bones or corpse.', classes: ['cleric', 'wizard'] },
+  auraOfVitality: { name: 'Aura of Vitality', level: 3, school: 'evocation', castTime: '1 action', range: 'Self (30-ft radius)', duration: '1 minute', description: 'Bonus action to heal one creature in aura for 2d6 HP.', classes: ['paladin'] },
+  beaconOfHope: { name: 'Beacon of Hope', level: 3, school: 'abjuration', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Creatures have advantage on Wis saves and death saves. Max healing.', classes: ['cleric'] },
+  bestowCurse: { name: 'Bestow Curse', level: 3, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Wis save or cursed with various debilitating effects.', classes: ['bard', 'cleric', 'wizard'] },
+  blinkSpell: { name: 'Blink', level: 3, school: 'transmutation', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Roll d20 each turn. 11+ you vanish to Ethereal Plane until next turn.', classes: ['sorcerer', 'wizard'] },
+  callLightning: { name: 'Call Lightning', level: 3, school: 'conjuration', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'Storm cloud. Action to call 3d10 lightning bolt. Dex save for half.', classes: ['druid'] },
+  clairvoyance: { name: 'Clairvoyance', level: 3, school: 'divination', castTime: '10 minutes', range: '1 mile', duration: '10 minutes', description: 'Create invisible sensor to see or hear at a familiar location.', classes: ['bard', 'cleric', 'sorcerer', 'wizard'] },
+  conjureAnimals: { name: 'Conjure Animals', level: 3, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 hour', description: 'Summon fey spirits as beasts. CR depends on number summoned.', classes: ['druid', 'ranger'] },
+  counterspell: { name: 'Counterspell', level: 3, school: 'abjuration', castTime: '1 reaction', range: '60 ft', duration: 'Instantaneous', description: 'Interrupt spell being cast. Auto-success if same level or lower.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  createFoodAndWater: { name: 'Create Food and Water', level: 3, school: 'conjuration', castTime: '1 action', range: '30 ft', duration: 'Instantaneous', description: 'Create 45 pounds of food and 30 gallons of water.', classes: ['cleric', 'paladin'] },
+  crusadersMantle: { name: 'Crusader\'s Mantle', level: 3, school: 'evocation', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Allies within 30 ft deal extra 1d4 radiant on weapon hits.', classes: ['paladin'] },
+  daylight: { name: 'Daylight', level: 3, school: 'evocation', castTime: '1 action', range: '60 ft', duration: '1 hour', description: '60-ft sphere of bright light. Dispels darkness spells of 3rd or lower.', classes: ['cleric', 'druid', 'paladin', 'ranger', 'sorcerer'] },
+  dispelMagic: { name: 'Dispel Magic', level: 3, school: 'abjuration', castTime: '1 action', range: '120 ft', duration: 'Instantaneous', description: 'End spells of 3rd level or lower. Check required for higher levels.', classes: ['bard', 'cleric', 'druid', 'paladin', 'sorcerer', 'warlock', 'wizard'] },
+  elementalWeapon: { name: 'Elemental Weapon', level: 3, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Weapon becomes +1 magic and deals extra 1d4 elemental damage.', classes: ['paladin'] },
+  fear: { name: 'Fear', level: 3, school: 'illusion', castTime: '1 action', range: 'Self (30-ft cone)', duration: '1 minute', description: 'Wis save or creatures drop held items and become frightened.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  feign_death: { name: 'Feign Death', level: 3, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Willing creature appears dead. Blinded, incapacitated, resistant to all but psychic.', classes: ['bard', 'cleric', 'druid', 'wizard'], ritual: true },
+  fireball: { name: 'Fireball', level: 3, school: 'evocation', castTime: '1 action', range: '150 ft', duration: 'Instantaneous', description: '20-ft radius explosion. 8d6 fire damage. Dex save for half.', classes: ['sorcerer', 'wizard'] },
+  fly: { name: 'Fly', level: 3, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '10 minutes', description: 'Target gains 60 ft flying speed.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  gaseousForm: { name: 'Gaseous Form', level: 3, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target becomes misty cloud. 10 ft fly, can pass through tiny openings.', classes: ['sorcerer', 'warlock', 'wizard'] },
+  glyph_of_warding: { name: 'Glyph of Warding', level: 3, school: 'abjuration', castTime: '1 hour', range: 'Touch', duration: 'Until dispelled', description: 'Inscribe glyph that triggers spell or explosion when conditions met.', classes: ['bard', 'cleric', 'wizard'] },
+  haste: { name: 'Haste', level: 3, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Double speed, +2 AC, advantage on Dex saves, extra action.', classes: ['sorcerer', 'wizard'] },
+  hungerOfHadar: { name: 'Hunger of Hadar', level: 3, school: 'conjuration', castTime: '1 action', range: '150 ft', duration: '1 minute', description: 'Void sphere. Cold damage start of turn, acid damage end of turn.', classes: ['warlock'] },
+  hypnoticPattern: { name: 'Hypnotic Pattern', level: 3, school: 'illusion', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Wis save or charmed, incapacitated, speed 0 in 30-ft cube.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  leomundsTinyHut: { name: 'Leomund\'s Tiny Hut', level: 3, school: 'evocation', castTime: '1 minute', range: 'Self (10-ft hemisphere)', duration: '8 hours', description: 'Create dome shelter for up to 9 creatures. Blocks spells.', classes: ['bard', 'wizard'], ritual: true },
+  lightningBolt: { name: 'Lightning Bolt', level: 3, school: 'evocation', castTime: '1 action', range: 'Self (100-ft line)', duration: 'Instantaneous', description: '100-ft line. 8d6 lightning damage. Dex save for half.', classes: ['sorcerer', 'wizard'] },
+  magicCircle: { name: 'Magic Circle', level: 3, school: 'abjuration', castTime: '1 minute', range: '10 ft', duration: '1 hour', description: 'Cylinder protects against celestials, elementals, fey, fiends, or undead.', classes: ['cleric', 'paladin', 'warlock', 'wizard'] },
+  majorImage: { name: 'Major Image', level: 3, school: 'illusion', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'Create illusory image with sound, smell, temperature. Int check to see through.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  massHealingWord: { name: 'Mass Healing Word', level: 3, school: 'evocation', castTime: '1 bonus action', range: '60 ft', duration: 'Instantaneous', description: 'Up to 6 creatures heal 1d4 + spellcasting modifier HP.', classes: ['cleric'] },
+  meldIntoStone: { name: 'Meld into Stone', level: 3, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '8 hours', description: 'Step into stone surface large enough to contain you.', classes: ['cleric', 'druid'], ritual: true },
+  nondetection: { name: 'Nondetection', level: 3, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '8 hours', description: 'Target hidden from divination magic.', classes: ['bard', 'ranger', 'wizard'] },
+  phantomSteed: { name: 'Phantom Steed', level: 3, school: 'illusion', castTime: '1 minute', range: '30 ft', duration: '1 hour', description: 'Create quasi-real horse with 100 ft speed.', classes: ['wizard'], ritual: true },
+  plantGrowth: { name: 'Plant Growth', level: 3, school: 'transmutation', castTime: '1 action or 8 hours', range: '150 ft', duration: 'Instantaneous', description: 'Enrich land or cause overgrowth making difficult terrain.', classes: ['bard', 'druid', 'ranger'] },
+  protectionFromEnergy: { name: 'Protection from Energy', level: 3, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target has resistance to acid, cold, fire, lightning, or thunder.', classes: ['cleric', 'druid', 'ranger', 'sorcerer', 'wizard'] },
+  removeCurse: { name: 'Remove Curse', level: 3, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'End all curses affecting one creature or object.', classes: ['cleric', 'paladin', 'warlock', 'wizard'] },
+  revivify: { name: 'Revivify', level: 3, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Return creature dead less than 1 minute to life with 1 HP.', classes: ['cleric', 'paladin'] },
+  sendingSpell: { name: 'Sending', level: 3, school: 'evocation', castTime: '1 action', range: 'Unlimited', duration: '1 round', description: 'Send 25-word message to creature you know. It can reply.', classes: ['bard', 'cleric', 'wizard'] },
+  slow: { name: 'Slow', level: 3, school: 'transmutation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Wis save or speed halved, -2 AC, -2 Dex saves, no reactions, limited actions.', classes: ['sorcerer', 'wizard'] },
+  speakWithDead: { name: 'Speak with Dead', level: 3, school: 'necromancy', castTime: '1 action', range: '10 ft', duration: '10 minutes', description: 'Ask corpse up to 5 questions.', classes: ['bard', 'cleric'] },
+  speakWithPlants: { name: 'Speak with Plants', level: 3, school: 'transmutation', castTime: '1 action', range: 'Self (30-ft radius)', duration: '10 minutes', description: 'Communicate with plants. Can make difficult terrain passable.', classes: ['bard', 'druid', 'ranger'] },
+  spiritGuardians: { name: 'Spirit Guardians', level: 3, school: 'conjuration', castTime: '1 action', range: 'Self (15-ft radius)', duration: '10 minutes', description: 'Spirits protect you. Enemies take 3d8 radiant/necrotic damage. Wis save half.', classes: ['cleric'] },
+  stinkingCloud: { name: 'Stinking Cloud', level: 3, school: 'conjuration', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Nauseating gas in 20-ft sphere. Con save or waste action retching.', classes: ['bard', 'sorcerer', 'wizard'] },
+  tongues: { name: 'Tongues', level: 3, school: 'divination', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target understands any spoken language and can be understood.', classes: ['bard', 'cleric', 'sorcerer', 'warlock', 'wizard'] },
+  vampiricTouch: { name: 'Vampiric Touch', level: 3, school: 'necromancy', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Melee spell attack deals 3d6 necrotic. You heal half damage dealt.', classes: ['warlock', 'wizard'] },
+  waterBreathing: { name: 'Water Breathing', level: 3, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '24 hours', description: 'Up to 10 creatures can breathe underwater.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'], ritual: true },
+  waterWalk: { name: 'Water Walk', level: 3, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '1 hour', description: 'Up to 10 creatures can walk on liquid surfaces.', classes: ['cleric', 'druid', 'ranger', 'sorcerer'], ritual: true },
+
+  // 4TH LEVEL SPELLS
+  arcaneEye: { name: 'Arcane Eye', level: 4, school: 'divination', castTime: '1 action', range: '30 ft', duration: '1 hour', description: 'Create invisible floating eye you can see through. 30 ft fly speed.', classes: ['wizard'] },
+  auraOfLife: { name: 'Aura of Life', level: 4, school: 'abjuration', castTime: '1 action', range: 'Self (30-ft radius)', duration: '10 minutes', description: 'Allies resistant to necrotic, can\'t have max HP reduced. 1 HP creatures regain 1 HP.', classes: ['paladin'] },
+  auraOfPurity: { name: 'Aura of Purity', level: 4, school: 'abjuration', castTime: '1 action', range: 'Self (30-ft radius)', duration: '10 minutes', description: 'Allies can\'t be diseased, resistant to poison, advantage vs conditions.', classes: ['paladin'] },
+  banishment: { name: 'Banishment', level: 4, school: 'abjuration', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Cha save or creature banished to another plane. Gone permanently if native.', classes: ['cleric', 'paladin', 'sorcerer', 'warlock', 'wizard'] },
+  blight: { name: 'Blight', level: 4, school: 'necromancy', castTime: '1 action', range: '30 ft', duration: 'Instantaneous', description: 'Necromantic energy deals 8d8 necrotic damage. Con save for half.', classes: ['druid', 'sorcerer', 'warlock', 'wizard'] },
+  compulsion: { name: 'Compulsion', level: 4, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Wis save or creatures move in direction you choose.', classes: ['bard'] },
+  confusion: { name: 'Confusion', level: 4, school: 'enchantment', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Wis save or creatures act randomly in 10-ft sphere.', classes: ['bard', 'druid', 'sorcerer', 'wizard'] },
+  conjureMinorElementals: { name: 'Conjure Minor Elementals', level: 4, school: 'conjuration', castTime: '1 minute', range: '90 ft', duration: '1 hour', description: 'Summon elementals of CR 2 or lower.', classes: ['druid', 'wizard'] },
+  conjureWoodlandBeings: { name: 'Conjure Woodland Beings', level: 4, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 hour', description: 'Summon fey creatures of CR 2 or lower.', classes: ['druid', 'ranger'] },
+  controlWater: { name: 'Control Water', level: 4, school: 'transmutation', castTime: '1 action', range: '300 ft', duration: '10 minutes', description: 'Control water in 100-ft cube: flood, part, redirect, or whirlpool.', classes: ['cleric', 'druid', 'wizard'] },
+  deathWard: { name: 'Death Ward', level: 4, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '8 hours', description: 'First time target drops to 0 HP, it drops to 1 HP instead.', classes: ['cleric', 'paladin'] },
+  dimensionDoor: { name: 'Dimension Door', level: 4, school: 'conjuration', castTime: '1 action', range: '500 ft', duration: 'Instantaneous', description: 'Teleport yourself and one willing creature up to 500 ft.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  divination: { name: 'Divination', level: 4, school: 'divination', castTime: '1 action', range: 'Self', duration: 'Instantaneous', description: 'Contact deity for truthful reply about goal or event within 7 days.', classes: ['cleric'], ritual: true },
+  dominateBeast: { name: 'Dominate Beast', level: 4, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Wis save or beast is charmed and you control it telepathically.', classes: ['druid', 'sorcerer'] },
+  evardBlackTentacles: { name: 'Evard\'s Black Tentacles', level: 4, school: 'conjuration', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Tentacles fill 20-ft square. Dex save or restrained, 3d6 bludgeoning.', classes: ['wizard'] },
+  fabricate: { name: 'Fabricate', level: 4, school: 'transmutation', castTime: '10 minutes', range: '120 ft', duration: 'Instantaneous', description: 'Convert raw materials into finished products.', classes: ['wizard'] },
+  fireShield: { name: 'Fire Shield', level: 4, school: 'evocation', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Choose warm (fire resist) or chill (cold resist). Attackers take 2d8 damage.', classes: ['wizard'] },
+  freedomOfMovement: { name: 'Freedom of Movement', level: 4, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target unaffected by difficult terrain, can\'t be paralyzed or restrained.', classes: ['bard', 'cleric', 'druid', 'ranger'] },
+  giantInsect: { name: 'Giant Insect', level: 4, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '10 minutes', description: 'Transform insects into giant versions that obey you.', classes: ['druid'] },
+  greaterInvisibility: { name: 'Greater Invisibility', level: 4, school: 'illusion', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Target invisible even while attacking or casting spells.', classes: ['bard', 'sorcerer', 'wizard'] },
+  guardianOfFaith: { name: 'Guardian of Faith', level: 4, school: 'conjuration', castTime: '1 action', range: '30 ft', duration: '8 hours', description: 'Spectral guardian. Creatures within 10 ft take 20 radiant damage. Dex half.', classes: ['cleric'] },
+  hallucinatoryTerrain: { name: 'Hallucinatory Terrain', level: 4, school: 'illusion', castTime: '10 minutes', range: '300 ft', duration: '24 hours', description: 'Make terrain look, sound, smell like different terrain.', classes: ['bard', 'druid', 'warlock', 'wizard'] },
+  iceStorm: { name: 'Ice Storm', level: 4, school: 'evocation', castTime: '1 action', range: '300 ft', duration: 'Instantaneous', description: '20-ft cylinder. 2d8 bludgeoning + 4d6 cold. Dex save for half. Difficult terrain.', classes: ['druid', 'sorcerer', 'wizard'] },
+  locateCreature: { name: 'Locate Creature', level: 4, school: 'divination', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Sense direction to specific creature within 1000 ft.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger', 'wizard'] },
+  otilukeResilientSphere: { name: 'Otiluke\'s Resilient Sphere', level: 4, school: 'evocation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Dex save or creature enclosed in indestructible force sphere.', classes: ['wizard'] },
+  phantasmalKiller: { name: 'Phantasmal Killer', level: 4, school: 'illusion', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Wis save or creature frightened of nightmarish illusion. 4d10 psychic per turn.', classes: ['wizard'] },
+  polymorph: { name: 'Polymorph', level: 4, school: 'transmutation', castTime: '1 action', range: '60 ft', duration: '1 hour', description: 'Wis save or transform creature into beast of equal or lower CR.', classes: ['bard', 'druid', 'sorcerer', 'wizard'] },
+  privateS: { name: 'Private Sanctum', level: 4, school: 'abjuration', castTime: '10 minutes', range: '120 ft', duration: '24 hours', description: 'Area secure from scrying, teleportation, and planar travel.', classes: ['wizard'] },
+  staggeringSmite: { name: 'Staggering Smite', level: 4, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +4d6 psychic. Wis save or disadvantage and no reactions.', classes: ['paladin'] },
+  stoneskin: { name: 'Stoneskin', level: 4, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target has resistance to nonmagical bludgeoning, piercing, and slashing.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'] },
+  stormSphere: { name: 'Storm Sphere', level: 4, school: 'evocation', castTime: '1 action', range: '150 ft', duration: '1 minute', description: '20-ft sphere of wind. 2d6 bludgeoning. Bonus action for 4d6 lightning bolt.', classes: ['sorcerer', 'wizard'] },
+  summonGreaterDemon: { name: 'Summon Greater Demon', level: 4, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 hour', description: 'Summon demon of CR 5 or lower. Requires blood.', classes: ['warlock', 'wizard'] },
+  wallOfFire: { name: 'Wall of Fire', level: 4, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Create wall of fire. 5d8 fire damage to creatures within 10 ft.', classes: ['druid', 'sorcerer', 'wizard'] },
+
+  // 5TH LEVEL SPELLS
+  animateObjects: { name: 'Animate Objects', level: 5, school: 'transmutation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Animate up to 10 nonmagical objects. They attack on your command.', classes: ['bard', 'sorcerer', 'wizard'] },
+  antilife_shell: { name: 'Antilife Shell', level: 5, school: 'abjuration', castTime: '1 action', range: 'Self (10-ft radius)', duration: '1 hour', description: 'Barrier prevents creatures from entering or passing through.', classes: ['druid'] },
+  awaken: { name: 'Awaken', level: 5, school: 'transmutation', castTime: '8 hours', range: 'Touch', duration: 'Instantaneous', description: 'Give beast or plant Intelligence of 10 and ability to speak.', classes: ['bard', 'druid'] },
+  banishingSmite: { name: 'Banishing Smite', level: 5, school: 'abjuration', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +5d10 force. If under 50 HP, banished.', classes: ['paladin'] },
+  bigbysHand: { name: 'Bigby\'s Hand', level: 5, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Create Large hand of force. Can punch, push, grasp, or block.', classes: ['wizard'] },
+  circleOfPower: { name: 'Circle of Power', level: 5, school: 'abjuration', castTime: '1 action', range: 'Self (30-ft radius)', duration: '10 minutes', description: 'Allies have advantage on saves vs magic. Successful saves take no damage.', classes: ['paladin'] },
+  cloudkill: { name: 'Cloudkill', level: 5, school: 'conjuration', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'Poisonous fog in 20-ft sphere. 5d8 poison damage. Con save for half.', classes: ['sorcerer', 'wizard'] },
+  commune: { name: 'Commune', level: 5, school: 'divination', castTime: '1 minute', range: 'Self', duration: '1 minute', description: 'Contact deity and ask up to 3 yes/no questions.', classes: ['cleric'], ritual: true },
+  communeWithNature: { name: 'Commune with Nature', level: 5, school: 'divination', castTime: '1 minute', range: 'Self', duration: 'Instantaneous', description: 'Gain knowledge of surrounding territory within 3 miles.', classes: ['druid', 'ranger'], ritual: true },
+  coneOfCold: { name: 'Cone of Cold', level: 5, school: 'evocation', castTime: '1 action', range: 'Self (60-ft cone)', duration: 'Instantaneous', description: '60-ft cone. 8d8 cold damage. Con save for half.', classes: ['sorcerer', 'wizard'] },
+  conjureElemental: { name: 'Conjure Elemental', level: 5, school: 'conjuration', castTime: '1 minute', range: '90 ft', duration: '1 hour', description: 'Summon elemental of CR 5 or lower.', classes: ['druid', 'wizard'] },
+  contactOtherPlane: { name: 'Contact Other Plane', level: 5, school: 'divination', castTime: '1 minute', range: 'Self', duration: '1 minute', description: 'Contact extraplanar entity for information. Risk of insanity.', classes: ['warlock', 'wizard'], ritual: true },
+  contagion: { name: 'Contagion', level: 5, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: '7 days', description: 'Melee spell attack. Target diseased with blinding sickness, filth fever, etc.', classes: ['cleric', 'druid'] },
+  creation: { name: 'Creation', level: 5, school: 'illusion', castTime: '1 minute', range: '30 ft', duration: 'Special', description: 'Create nonliving object of vegetable or mineral matter.', classes: ['sorcerer', 'wizard'] },
+  destructiveWave: { name: 'Destructive Wave', level: 5, school: 'evocation', castTime: '1 action', range: 'Self (30-ft radius)', duration: 'Instantaneous', description: 'Thunder and radiant/necrotic. 5d6 thunder + 5d6 radiant/necrotic. Con save half.', classes: ['paladin'] },
+  dispelEvilAndGood: { name: 'Dispel Evil and Good', level: 5, school: 'abjuration', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Protection from aberrations, celestials, elementals, fey, fiends, undead.', classes: ['cleric', 'paladin'] },
+  dominatePerson: { name: 'Dominate Person', level: 5, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Wis save or humanoid is charmed and you control it telepathically.', classes: ['bard', 'sorcerer', 'wizard'] },
+  dream: { name: 'Dream', level: 5, school: 'illusion', castTime: '1 minute', range: 'Special', duration: '8 hours', description: 'Enter target\'s dreams. Can converse or cause nightmares.', classes: ['bard', 'warlock', 'wizard'] },
+  flameStrike: { name: 'Flame Strike', level: 5, school: 'evocation', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: '10-ft cylinder. 4d6 fire + 4d6 radiant damage. Dex save for half.', classes: ['cleric'] },
+  geas: { name: 'Geas', level: 5, school: 'enchantment', castTime: '1 minute', range: '60 ft', duration: '30 days', description: 'Command creature. 5d10 psychic damage when it acts against command.', classes: ['bard', 'cleric', 'druid', 'paladin', 'wizard'] },
+  greaterRestoration: { name: 'Greater Restoration', level: 5, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'End charm, petrification, curse, ability reduction, or max HP reduction.', classes: ['bard', 'cleric', 'druid'] },
+  hallow: { name: 'Hallow', level: 5, school: 'evocation', castTime: '24 hours', range: 'Touch', duration: 'Until dispelled', description: 'Imbue area with holy or unholy power. Various effects.', classes: ['cleric'] },
+  holdMonster: { name: 'Hold Monster', level: 5, school: 'enchantment', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Wis save or creature paralyzed. Works on any creature.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
+  holyWeapon: { name: 'Holy Weapon', level: 5, school: 'evocation', castTime: '1 bonus action', range: 'Touch', duration: '1 hour', description: 'Weapon deals extra 2d8 radiant. Can dismiss for 4d8 radiant burst.', classes: ['cleric', 'paladin'] },
+  insectPlague: { name: 'Insect Plague', level: 5, school: 'conjuration', castTime: '1 action', range: '300 ft', duration: '10 minutes', description: 'Swarming locusts in 20-ft sphere. 4d10 piercing. Con save for half.', classes: ['cleric', 'druid', 'sorcerer'] },
+  legendLore: { name: 'Legend Lore', level: 5, school: 'divination', castTime: '10 minutes', range: 'Self', duration: 'Instantaneous', description: 'Learn legendary information about person, place, or object.', classes: ['bard', 'cleric', 'wizard'] },
+  massC: { name: 'Mass Cure Wounds', level: 5, school: 'evocation', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Up to 6 creatures heal 3d8 + spellcasting modifier HP.', classes: ['bard', 'cleric', 'druid'] },
+  mislead: { name: 'Mislead', level: 5, school: 'illusion', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Become invisible and create illusory double.', classes: ['bard', 'wizard'] },
+  modifyMemory: { name: 'Modify Memory', level: 5, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Wis save or reshape target\'s memories of last 24 hours.', classes: ['bard', 'wizard'] },
+  passwall: { name: 'Passwall', level: 5, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '1 hour', description: 'Create passage through wood, plaster, or stone wall.', classes: ['wizard'] },
+  planarBinding: { name: 'Planar Binding', level: 5, school: 'abjuration', castTime: '1 hour', range: '60 ft', duration: '24 hours', description: 'Bind celestial, elemental, fey, or fiend to your service.', classes: ['bard', 'cleric', 'druid', 'wizard'] },
+  raiseDead: { name: 'Raise Dead', level: 5, school: 'necromancy', castTime: '1 hour', range: 'Touch', duration: 'Instantaneous', description: 'Return creature dead up to 10 days to life. -4 penalty to rolls.', classes: ['bard', 'cleric', 'paladin'] },
+  rarysTelepathicBond: { name: 'Rary\'s Telepathic Bond', level: 5, school: 'divination', castTime: '1 action', range: '30 ft', duration: '1 hour', description: 'Up to 8 creatures can communicate telepathically.', classes: ['wizard'], ritual: true },
+  reincarnate: { name: 'Reincarnate', level: 5, school: 'transmutation', castTime: '1 hour', range: 'Touch', duration: 'Instantaneous', description: 'Return dead creature to life in new randomly determined body.', classes: ['druid'] },
+  scrying: { name: 'Scrying', level: 5, school: 'divination', castTime: '10 minutes', range: 'Self', duration: '10 minutes', description: 'Wis save or see and hear target creature.', classes: ['bard', 'cleric', 'druid', 'warlock', 'wizard'] },
+  seeming: { name: 'Seeming', level: 5, school: 'illusion', castTime: '1 action', range: '30 ft', duration: '8 hours', description: 'Change appearance of any number of creatures. Cha save to resist.', classes: ['bard', 'sorcerer', 'wizard'] },
+  swiftQuiver: { name: 'Swift Quiver', level: 5, school: 'transmutation', castTime: '1 bonus action', range: 'Touch', duration: '1 minute', description: 'Quiver produces endless ammunition. Bonus action for 2 attacks.', classes: ['ranger'] },
+  telekinesis: { name: 'Telekinesis', level: 5, school: 'transmutation', castTime: '1 action', range: '60 ft', duration: '10 minutes', description: 'Move creature or object up to 1000 lbs with your mind.', classes: ['sorcerer', 'wizard'] },
+  teleportationCircle: { name: 'Teleportation Circle', level: 5, school: 'conjuration', castTime: '1 minute', range: '10 ft', duration: '1 round', description: 'Create circle linking to permanent teleportation circle.', classes: ['bard', 'sorcerer', 'wizard'] },
+  treeStride: { name: 'Tree Stride', level: 5, school: 'conjuration', castTime: '1 action', range: 'Self', duration: '1 minute', description: 'Enter tree and teleport to another tree within 500 ft.', classes: ['druid', 'ranger'] },
+  wallOfForce: { name: 'Wall of Force', level: 5, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'Create invisible wall. Immune to all damage. Nothing passes through.', classes: ['wizard'] },
+  wallOfStone: { name: 'Wall of Stone', level: 5, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'Create stone wall. 6 inches thick. Can be permanent if lasts duration.', classes: ['druid', 'sorcerer', 'wizard'] },
+  wrathOfNature: { name: 'Wrath of Nature', level: 5, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Animate trees, rocks, and grass to attack enemies in 60-ft cube.', classes: ['druid', 'ranger'] }
 };
 
 // Get spells available to a class at a given level
@@ -3028,15 +3204,39 @@ const AbilityRollResult = ({ roll, index, onAssign, assignedTo }) => {
 // Main Ability Score Step
 const AbilityScoreStep = ({ character, updateCharacter }) => {
   const [method, setMethod] = useState(character.abilityMethod || null);
-  const [rolls, setRolls] = useState([]);
+  const [rolls, setRolls] = useState(character.abilityRolls || []);
   const [isRolling, setIsRolling] = useState(false);
-  const [assignments, setAssignments] = useState({}); // Maps ability -> scoreIndex (not value!)
-  const [unassignedIndices, setUnassignedIndices] = useState([]); // Array of indices into rolls/standardArray
+  const [assignments, setAssignments] = useState(character.abilityAssignments || {}); // Maps ability -> scoreIndex (not value!)
   const [selectedIndex, setSelectedIndex] = useState(null); // Index of selected score, not value
-  const [pointBuyScores, setPointBuyScores] = useState({
-    strength: 8, dexterity: 8, constitution: 8,
-    intelligence: 8, wisdom: 8, charisma: 8
+  const [pointBuyScores, setPointBuyScores] = useState(() => {
+    // Initialize from character abilities if using point buy
+    if (character.abilityMethod === 'pointbuy') {
+      return character.abilities;
+    }
+    return {
+      strength: 8, dexterity: 8, constitution: 8,
+      intelligence: 8, wisdom: 8, charisma: 8
+    };
   });
+  
+  // Calculate unassigned indices from assignments
+  const getUnassignedIndices = () => {
+    if (method === 'standard') {
+      const assignedIndices = new Set(Object.values(assignments));
+      return [0, 1, 2, 3, 4, 5].filter(i => !assignedIndices.has(i));
+    }
+    if (method === 'roll' && rolls.length > 0) {
+      const assignedIndices = new Set(Object.values(assignments));
+      return [0, 1, 2, 3, 4, 5].filter(i => !assignedIndices.has(i));
+    }
+    return [];
+  };
+  const [unassignedIndices, setUnassignedIndices] = useState(getUnassignedIndices);
+  
+  // Recalculate unassigned when assignments or rolls change
+  useEffect(() => {
+    setUnassignedIndices(getUnassignedIndices());
+  }, [assignments, rolls, method]);
   
   // Get the actual scores array based on method
   const getScoresArray = () => {
@@ -3068,7 +3268,6 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     setIsRolling(true);
     setAssignments({});
     setSelectedIndex(null);
-    setUnassignedIndices([]);
     
     // Generate rolls immediately
     const newRolls = Array(6).fill(null).map(() => rollAbilityScore());
@@ -3076,8 +3275,10 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     // Show results after animation
     setTimeout(() => {
       setRolls(newRolls);
-      setUnassignedIndices([0, 1, 2, 3, 4, 5]);
       setIsRolling(false);
+      // Persist rolls to character state
+      updateCharacter('abilityRolls', newRolls);
+      updateCharacter('abilityAssignments', {});
       updateCharacter('abilities', {
         strength: 10, dexterity: 10, constitution: 10,
         intelligence: 10, wisdom: 10, charisma: 10
@@ -3106,17 +3307,18 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     updateCharacter('abilityMethod', newMethod);
     setAssignments({});
     setSelectedIndex(null);
+    updateCharacter('abilityAssignments', {});
     
     if (newMethod === 'standard') {
-      setUnassignedIndices([0, 1, 2, 3, 4, 5]); // All 6 indices available
       // Reset abilities to 10 until assigned
       updateCharacter('abilities', {
         strength: 10, dexterity: 10, constitution: 10,
         intelligence: 10, wisdom: 10, charisma: 10
       });
+      updateCharacter('abilityRolls', []);
     } else if (newMethod === 'roll') {
       setRolls([]);
-      setUnassignedIndices([]);
+      updateCharacter('abilityRolls', []);
       updateCharacter('abilities', {
         strength: 10, dexterity: 10, constitution: 10,
         intelligence: 10, wisdom: 10, charisma: 10
@@ -3128,12 +3330,14 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
       };
       setPointBuyScores(startScores);
       updateCharacter('abilities', startScores);
+      updateCharacter('abilityRolls', []);
     } else if (newMethod === 'manual') {
       // Keep current abilities or reset to 10
       updateCharacter('abilities', {
         strength: 10, dexterity: 10, constitution: 10,
         intelligence: 10, wisdom: 10, charisma: 10
       });
+      updateCharacter('abilityRolls', []);
     }
   };
 
@@ -3150,18 +3354,14 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
       newAssignments[ability] = selectedIndex;
       setAssignments(newAssignments);
       
+      // Persist assignments to character state
+      updateCharacter('abilityAssignments', newAssignments);
+      
       // Update character abilities
       const newAbilities = { ...character.abilities };
       newAbilities[ability] = scoreValue;
       updateCharacter('abilities', newAbilities);
       
-      // Update unassigned indices
-      let newUnassigned = unassignedIndices.filter(i => i !== selectedIndex);
-      if (oldIndex !== undefined) {
-        newUnassigned.push(oldIndex);
-        newUnassigned.sort((a, b) => a - b);
-      }
-      setUnassignedIndices(newUnassigned);
       setSelectedIndex(null);
     }
   };
@@ -3192,7 +3392,24 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-white mb-4">Ability Scores</h3>
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Ability Scores</h3>
+        {character.class && CLASSES[character.class] && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-slate-500">
+              {CLASSES[character.class].name} saves:
+            </span>
+            {CLASSES[character.class].savingThrows.map(st => (
+              <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
+                {ABILITY_LABELS[st]?.short}
+              </span>
+            ))}
+            <span className="text-slate-600 text-xs ml-2">
+              Primary: {CLASSES[character.class].primaryAbility.map(a => ABILITY_LABELS[a]?.short).join('/')}
+            </span>
+          </div>
+        )}
+      </div>
       
       {/* Method Selection */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -3362,7 +3579,14 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
               >
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <div className="text-lg font-bold text-white">{info.short}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-lg font-bold text-white">{info.short}</div>
+                      {character.class && CLASSES[character.class]?.savingThrows?.includes(ability) && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30" title="Saving Throw Proficiency">
+                          SAVE
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-slate-500">{info.name}</div>
                   </div>
                   <div className="text-right">
@@ -4520,6 +4744,21 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
 
   const availableCantrips = classId ? getSpellsForClass(classId, 0) : [];
   const availableLevel1Spells = classId ? getSpellsForClass(classId, 1) : [];
+  const availableLevel2Spells = classId ? getSpellsForClass(classId, 2) : [];
+  const availableLevel3Spells = classId ? getSpellsForClass(classId, 3) : [];
+  const availableLevel4Spells = classId ? getSpellsForClass(classId, 4) : [];
+  const availableLevel5Spells = classId ? getSpellsForClass(classId, 5) : [];
+  
+  // Get max spell level based on character level (simplified - full casters)
+  const getMaxSpellLevel = () => {
+    const level = character.level || 1;
+    if (level >= 9) return 5;
+    if (level >= 7) return 4;
+    if (level >= 5) return 3;
+    if (level >= 3) return 2;
+    return 1;
+  };
+  const maxSpellLevel = getMaxSpellLevel();
 
   const maxCantrips = spellcastingInfo?.cantrips || 0;
   const maxSpellsKnown = spellcastingInfo?.spellsKnown || 0;
@@ -4672,10 +4911,10 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-700/50">
+      <div className="flex flex-wrap gap-1 md:gap-2 border-b border-slate-700/50 pb-1">
         <button
           onClick={() => setActiveTab('cantrips')}
-          className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+          className={`px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all border-b-2 -mb-px ${
             activeTab === 'cantrips'
               ? 'text-purple-400 border-purple-400'
               : 'text-slate-400 border-transparent hover:text-slate-200'
@@ -4685,24 +4924,72 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
         </button>
         <button
           onClick={() => setActiveTab('level1')}
-          className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+          className={`px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all border-b-2 -mb-px ${
             activeTab === 'level1'
               ? 'text-indigo-400 border-indigo-400'
               : 'text-slate-400 border-transparent hover:text-slate-200'
           }`}
         >
-          1st Level ({availableLevel1Spells.length})
+          1st ({availableLevel1Spells.length})
         </button>
+        {maxSpellLevel >= 2 && availableLevel2Spells.length > 0 && (
+          <button
+            onClick={() => setActiveTab('level2')}
+            className={`px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all border-b-2 -mb-px ${
+              activeTab === 'level2'
+                ? 'text-blue-400 border-blue-400'
+                : 'text-slate-400 border-transparent hover:text-slate-200'
+            }`}
+          >
+            2nd ({availableLevel2Spells.length})
+          </button>
+        )}
+        {maxSpellLevel >= 3 && availableLevel3Spells.length > 0 && (
+          <button
+            onClick={() => setActiveTab('level3')}
+            className={`px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all border-b-2 -mb-px ${
+              activeTab === 'level3'
+                ? 'text-cyan-400 border-cyan-400'
+                : 'text-slate-400 border-transparent hover:text-slate-200'
+            }`}
+          >
+            3rd ({availableLevel3Spells.length})
+          </button>
+        )}
+        {maxSpellLevel >= 4 && availableLevel4Spells.length > 0 && (
+          <button
+            onClick={() => setActiveTab('level4')}
+            className={`px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all border-b-2 -mb-px ${
+              activeTab === 'level4'
+                ? 'text-teal-400 border-teal-400'
+                : 'text-slate-400 border-transparent hover:text-slate-200'
+            }`}
+          >
+            4th ({availableLevel4Spells.length})
+          </button>
+        )}
+        {maxSpellLevel >= 5 && availableLevel5Spells.length > 0 && (
+          <button
+            onClick={() => setActiveTab('level5')}
+            className={`px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all border-b-2 -mb-px ${
+              activeTab === 'level5'
+                ? 'text-emerald-400 border-emerald-400'
+                : 'text-slate-400 border-transparent hover:text-slate-200'
+            }`}
+          >
+            5th ({availableLevel5Spells.length})
+          </button>
+        )}
         {selectedCantrips.length + selectedSpells.length > 0 && (
           <button
             onClick={() => setActiveTab('selected')}
-            className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+            className={`px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-all border-b-2 -mb-px ${
               activeTab === 'selected'
                 ? 'text-green-400 border-green-400'
                 : 'text-slate-400 border-transparent hover:text-slate-200'
             }`}
           >
-            Selected ({selectedCantrips.length + selectedSpells.length})
+            ✓ ({selectedCantrips.length + selectedSpells.length})
           </button>
         )}
       </div>
@@ -4783,6 +5070,65 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                 </div>
               </div>
             );
+          })}
+
+          {/* Level 2-5 Spells - using same pattern */}
+          {['level2', 'level3', 'level4', 'level5'].map(levelTab => {
+            if (activeTab !== levelTab) return null;
+            const levelNum = parseInt(levelTab.replace('level', ''));
+            const spellList = levelNum === 2 ? availableLevel2Spells 
+              : levelNum === 3 ? availableLevel3Spells 
+              : levelNum === 4 ? availableLevel4Spells 
+              : availableLevel5Spells;
+            const colors = {
+              2: { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-300', check: 'text-blue-400' },
+              3: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', text: 'text-cyan-300', check: 'text-cyan-400' },
+              4: { bg: 'bg-teal-500/20', border: 'border-teal-500/50', text: 'text-teal-300', check: 'text-teal-400' },
+              5: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', text: 'text-emerald-300', check: 'text-emerald-400' }
+            };
+            const color = colors[levelNum];
+            
+            return spellList.map(spell => {
+              const isSelected = selectedSpells.includes(spell.id);
+              const isDisabledKnown = (spellcastingType === 'known' || spellcastingType === 'pact') && selectedSpells.length >= maxSpellsKnown;
+              const isDisabledPrepared = spellcastingType === 'prepared' && maxPreparedSpells !== null && selectedSpells.length >= maxPreparedSpells;
+              const isDisabled = !isSelected && (isDisabledKnown || isDisabledPrepared);
+              
+              return (
+                <div
+                  key={spell.id}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                    isSelected
+                      ? `${color.bg} ${color.border}`
+                      : isDisabled
+                        ? 'bg-slate-900/30 border-slate-800/50 opacity-50 cursor-not-allowed'
+                        : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                  }`}
+                  onClick={() => !isDisabled && toggleSpell(spell.id)}
+                  onMouseEnter={() => setViewingSpell(spell)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{SPELL_SCHOOLS[spell.school]?.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-medium ${isSelected ? color.text : 'text-slate-200'}`}>
+                            {spell.name}
+                          </span>
+                          {spell.ritual && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                              Ritual
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500">{spell.castTime} • {spell.range}</div>
+                      </div>
+                    </div>
+                    {isSelected && <Check className={`w-5 h-5 ${color.check}`} />}
+                  </div>
+                </div>
+              );
+            });
           })}
 
           {activeTab === 'selected' && (
