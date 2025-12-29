@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ============================================================================
 // LOCAL STORAGE UTILITIES
@@ -5273,9 +5273,14 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             </div>
           </div>
 
-          {/* Proficiencies */}
-          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-            <h4 className="text-sm font-semibold text-slate-300 mb-3">Proficiencies</h4>
+          {/* Proficiencies - Mobile Collapsible */}
+          <details className="md:contents" open>
+            <summary className="md:hidden p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold text-slate-300">Proficiencies</h4>
+              <ChevronDown className="w-4 h-4 text-slate-400 transition-transform [[open]>&]:rotate-180" />
+            </summary>
+            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 md:mb-0 mb-4">
+              <h4 className="hidden md:block text-sm font-semibold text-slate-300 mb-3">Proficiencies</h4>
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-slate-500">Saving Throws: </span>
@@ -5326,13 +5331,18 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
               </div>
             </div>
           </div>
-        </div>
+          </details>
 
         {/* Right Column */}
         <div className="space-y-4">
-          {/* Features */}
-          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-            <h4 className="text-sm font-semibold text-slate-300 mb-3">Features & Traits</h4>
+          {/* Features - Mobile Collapsible */}
+          <details className="md:contents" open>
+            <summary className="md:hidden p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold text-slate-300">Features & Traits</h4>
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            </summary>
+            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 md:mb-0 mb-4">
+              <h4 className="hidden md:block text-sm font-semibold text-slate-300 mb-3">Features & Traits</h4>
             <div className="space-y-3">
               {race?.traits && race.traits.length > 0 && (
                 <div>
@@ -5395,6 +5405,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
               )}
             </div>
           </div>
+          </details>
 
           {/* Level Advancements (ASI/Feats) */}
           {character.asiChoices && Object.keys(character.asiChoices).length > 0 && (
@@ -5756,7 +5767,8 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           </div>
         );
       })()}
-
+        </div>
+        
       {/* Export Options */}
       <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
         <h4 className="text-sm font-semibold text-slate-300 mb-3">Export Character</h4>
@@ -8023,8 +8035,8 @@ const CharacterCreator = ({
         
         {/* Mobile: Compact Progress Dots + Current Step Name */}
         <div className="md:hidden relative z-20">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
               {steps.map((step, index) => {
                 const isActive = index === currentStep;
                 const isComplete = index < currentStep;
@@ -8032,9 +8044,9 @@ const CharacterCreator = ({
                   <button
                     key={step.id}
                     onClick={() => setCurrentStep(index)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all ${
+                    className={`w-3 h-3 rounded-full transition-all ${
                       isActive
-                        ? 'bg-indigo-500 scale-125'
+                        ? 'bg-indigo-500 scale-125 ring-2 ring-indigo-400/50'
                         : isComplete
                           ? 'bg-green-500'
                           : 'bg-slate-600'
@@ -8044,9 +8056,29 @@ const CharacterCreator = ({
                 );
               })}
             </div>
-            <span className="text-xs text-indigo-300 font-medium">
+            <span className="text-sm text-indigo-300 font-medium">
               {steps[currentStep]?.label}
             </span>
+          </div>
+          
+          {/* Prev/Next Navigation Buttons */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+              disabled={currentStep === 0}
+              className="flex-1 px-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm font-medium text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700/50 transition-all flex items-center justify-center gap-2"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
+              disabled={currentStep === steps.length - 1}
+              className="flex-1 px-4 py-2.5 bg-indigo-500/20 border border-indigo-500/50 rounded-lg text-sm font-medium text-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-indigo-500/30 transition-all flex items-center justify-center gap-2"
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
           {/* Mobile Step Selector Dropdown */}
           <select
@@ -8111,10 +8143,11 @@ const CharacterCreator = ({
                                   // Jump to review step (last step)
                                   setCurrentStep(8);
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm"
+                className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
               >
                 <Sparkles className="w-4 h-4" />
-                Random Character
+                <span className="hidden sm:inline">Random Character</span>
+                <span className="sm:hidden">Random</span>
               </button>
             </div>
             
@@ -8128,7 +8161,7 @@ const CharacterCreator = ({
                 value={character.name}
                 onChange={(e) => updateCharacter('name', e.target.value)}
                 placeholder="Enter character name..."
-                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3.5 md:py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-base"
               />
               {importedName ? (
                 <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
@@ -8159,7 +8192,7 @@ const CharacterCreator = ({
                 value={character.playerName}
                 onChange={(e) => updateCharacter('playerName', e.target.value)}
                 placeholder="Your name..."
-                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3.5 md:py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-base"
               />
             </div>
 
@@ -8168,15 +8201,15 @@ const CharacterCreator = ({
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Starting Level
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
                   <button
                     key={level}
                     onClick={() => updateCharacter('level', level)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    className={`py-2.5 md:py-2 rounded-lg text-sm md:text-base font-medium transition-all border ${
                       character.level === level
-                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 border'
-                        : 'bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:border-slate-600'
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
+                        : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-slate-600'
                     }`}
                   >
                     {level}
@@ -9182,14 +9215,14 @@ export default function AetherNames() {
 
           <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-slate-900/80 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 mb-2 md:mb-4 backdrop-blur-md">
             <Cpu className="w-3 h-3 md:w-4 md:h-4 text-indigo-400" />
-            <span className="text-[10px] md:text-sm font-medium text-slate-300">
+            <span className="text-xs md:text-sm font-medium text-slate-300">
               <span className="text-indigo-400 font-bold">No AI / LLMs.</span> 100% algorithmic phonotactics.
             </span>
           </div>
 
           <div className="flex flex-wrap justify-center gap-1.5 md:gap-2 mb-3 md:mb-6">
             {['Phonotactically Accurate', 'Cross-Linguistic', 'Customizable'].map((tag, i) => (
-              <span key={i} className="px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-medium bg-slate-800/50 border border-slate-700/50 rounded-full text-slate-400">
+              <span key={i} className="px-2 py-0.5 md:px-3 md:py-1 text-xs md:text-sm font-medium bg-slate-800/50 border border-slate-700/50 rounded-full text-slate-400">
                 {tag}
               </span>
             ))}
