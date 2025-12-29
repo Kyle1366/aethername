@@ -6,6 +6,11 @@ import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Dow
 // LOCAL STORAGE UTILITIES
 // ============================================================================
 
+const STORAGE_KEYS = {
+  FAVORITES: 'aethername_favorites',
+  HISTORY: 'aethername_history'
+};
+
 const LocalStorageUtil = {
   /**
    * Safely get item from localStorage with error handling
@@ -40,7 +45,7 @@ const LocalStorageUtil = {
       if (error.name === 'QuotaExceededError') {
         // Try to clear old data to make room
         try {
-          const oldKey = 'aethername_history';
+          const oldKey = STORAGE_KEYS.HISTORY;
           window.localStorage.removeItem(oldKey);
           window.localStorage.setItem(key, JSON.stringify(value));
           return true;
@@ -6972,8 +6977,8 @@ export default function AetherNames() {
 
   // Load favorites and history from localStorage on mount
   useEffect(() => {
-    const savedFavorites = LocalStorageUtil.getItem('aethername_favorites', []);
-    const savedHistory = LocalStorageUtil.getItem('aethername_history', []);
+    const savedFavorites = LocalStorageUtil.getItem(STORAGE_KEYS.FAVORITES, []);
+    const savedHistory = LocalStorageUtil.getItem(STORAGE_KEYS.HISTORY, []);
     
     if (savedFavorites && Array.isArray(savedFavorites)) {
       setFavorites(savedFavorites);
@@ -6992,8 +6997,8 @@ export default function AetherNames() {
 
   // Save favorites to localStorage whenever they change
   useEffect(() => {
-    if (favorites.length > 0 || LocalStorageUtil.getItem('aethername_favorites')) {
-      LocalStorageUtil.setItem('aethername_favorites', favorites);
+    if (favorites.length > 0 || LocalStorageUtil.getItem(STORAGE_KEYS.FAVORITES)) {
+      LocalStorageUtil.setItem(STORAGE_KEYS.FAVORITES, favorites);
     }
   }, [favorites]);
 
@@ -7001,7 +7006,7 @@ export default function AetherNames() {
   useEffect(() => {
     if (nameHistory.length > 0) {
       const timeoutId = setTimeout(() => {
-        LocalStorageUtil.setItem('aethername_history', nameHistory);
+        LocalStorageUtil.setItem(STORAGE_KEYS.HISTORY, nameHistory);
       }, 500); // Debounce to avoid excessive writes
       return () => clearTimeout(timeoutId);
     }
@@ -7115,7 +7120,7 @@ export default function AetherNames() {
 
   const clearFavorites = () => {
     setFavorites([]);
-    LocalStorageUtil.removeItem('aethername_favorites');
+    LocalStorageUtil.removeItem(STORAGE_KEYS.FAVORITES);
   };
 
   const isFavorite = (name) => favorites.some(f => f.name === name);
