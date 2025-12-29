@@ -2318,6 +2318,158 @@ const CLASSES = {
 };
 
 // ============================================================================
+// D&D 5E SUBCLASSES (PHB)
+// ============================================================================
+
+const SUBCLASSES = {
+  barbarian: {
+    berserker: { name: 'Path of the Berserker', description: 'A path of untrammeled fury, fighting with primal ferocity.' },
+    totemWarrior: { name: 'Path of the Totem Warrior', description: 'A spiritual journey, accepting a spirit animal as guide and protector.' }
+  },
+  bard: {
+    lore: { name: 'College of Lore', description: 'Collectors of knowledge from scholarly tomes and peasant tales alike.' },
+    valor: { name: 'College of Valor', description: 'Daring skalds whose tales keep alive the memory of great heroes.' }
+  },
+  cleric: {
+    knowledge: { name: 'Knowledge Domain', description: 'Gods of knowledge value learning and understanding above all.' },
+    life: { name: 'Life Domain', description: 'Focus on the vibrant positive energy that sustains all life.' },
+    light: { name: 'Light Domain', description: 'Gods of light promote rebirth, truth, vigilance, and beauty.' },
+    nature: { name: 'Nature Domain', description: 'Gods of nature are as varied as the natural world itself.' },
+    tempest: { name: 'Tempest Domain', description: 'Gods of the tempest govern storms, sea, and sky.' },
+    trickery: { name: 'Trickery Domain', description: 'Gods of trickery are mischief-makers and instigators.' },
+    war: { name: 'War Domain', description: 'War has many manifestations, making heroes of ordinary people.' }
+  },
+  druid: {
+    land: { name: 'Circle of the Land', description: 'Mystics and sages who safeguard ancient knowledge and rites.' },
+    moon: { name: 'Circle of the Moon', description: 'Fierce guardians who can assume powerful beast forms.' }
+  },
+  fighter: {
+    champion: { name: 'Champion', description: 'Focus on raw physical power honed to deadly perfection.' },
+    battleMaster: { name: 'Battle Master', description: 'Employ martial techniques passed down through generations.' },
+    eldritchKnight: { name: 'Eldritch Knight', description: 'Combine martial mastery with careful study of magic.' }
+  },
+  monk: {
+    openHand: { name: 'Way of the Open Hand', description: 'Ultimate masters of martial arts combat.' },
+    shadow: { name: 'Way of Shadow', description: 'Follow a tradition that values stealth and subterfuge.' },
+    fourElements: { name: 'Way of the Four Elements', description: 'Harness the power of the four elements.' }
+  },
+  paladin: {
+    devotion: { name: 'Oath of Devotion', description: 'Bound to the loftiest ideals of justice, virtue, and order.' },
+    ancients: { name: 'Oath of the Ancients', description: 'As old as elves and the rituals of the druids.' },
+    vengeance: { name: 'Oath of Vengeance', description: 'A solemn commitment to punish those who have sinned.' }
+  },
+  ranger: {
+    hunter: { name: 'Hunter', description: 'Accept your place as a bulwark between civilization and wilderness.' },
+    beastMaster: { name: 'Beast Master', description: 'Embody friendship between civilized races and beasts.' }
+  },
+  rogue: {
+    thief: { name: 'Thief', description: 'Hone skills in the larcenous arts of burglars and cutpurses.' },
+    assassin: { name: 'Assassin', description: 'Focus on the grim art of death, eliminating foes swiftly.' },
+    arcaneTrickster: { name: 'Arcane Trickster', description: 'Enhance stealth and agility with magic.' }
+  },
+  sorcerer: {
+    draconicBloodline: { name: 'Draconic Bloodline', description: 'Innate magic from draconic ancestry.' },
+    wildMagic: { name: 'Wild Magic', description: 'Innate magic from wild forces of chaos.' }
+  },
+  warlock: {
+    archfey: { name: 'The Archfey', description: 'Patron is a lord or lady of the fey.' },
+    fiend: { name: 'The Fiend', description: 'Pact with a fiend from the lower planes.' },
+    greatOldOne: { name: 'The Great Old One', description: 'Patron is a mysterious entity beyond reality.' }
+  },
+  wizard: {
+    abjuration: { name: 'School of Abjuration', description: 'Magic that blocks, banishes, or protects.' },
+    conjuration: { name: 'School of Conjuration', description: 'Produce objects and creatures out of thin air.' },
+    divination: { name: 'School of Divination', description: 'Sought by royalty and commoners alike for counsel.' },
+    enchantment: { name: 'School of Enchantment', description: 'Magically entrance and beguile others.' },
+    evocation: { name: 'School of Evocation', description: 'Create powerful elemental effects.' },
+    illusion: { name: 'School of Illusion', description: 'Dazzle senses, befuddle minds, trick the wisest.' },
+    necromancy: { name: 'School of Necromancy', description: 'Explore cosmic forces of life, death, and undeath.' },
+    transmutation: { name: 'School of Transmutation', description: 'Spells that modify energy and matter.' }
+  }
+};
+
+const SUBCLASS_ICONS = {
+  // Barbarian
+  berserker: '😤', totemWarrior: '🐺',
+  // Bard
+  lore: '📚', valor: '⚔️',
+  // Cleric
+  knowledge: '📖', life: '❤️', light: '☀️', nature: '🌿', tempest: '⛈️', trickery: '🎭', war: '⚔️',
+  // Druid
+  land: '🌍', moon: '🌙',
+  // Fighter
+  champion: '🏆', battleMaster: '📋', eldritchKnight: '🔮',
+  // Monk
+  openHand: '✋', shadow: '🌑', fourElements: '🌀',
+  // Paladin
+  devotion: '🛡️', ancients: '🌳', vengeance: '⚡',
+  // Ranger
+  hunter: '🎯', beastMaster: '🐾',
+  // Rogue
+  thief: '💰', assassin: '🗡️', arcaneTrickster: '✨',
+  // Sorcerer
+  draconicBloodline: '🐉', wildMagic: '🎲',
+  // Warlock
+  archfey: '🧚', fiend: '😈', greatOldOne: '👁️',
+  // Wizard
+  abjuration: '🛡️', conjuration: '🌀', divination: '🔮', enchantment: '💫',
+  evocation: '🔥', illusion: '👻', necromancy: '💀', transmutation: '⚗️'
+};
+
+// ============================================================================
+// SPELL SLOTS BY CLASS AND LEVEL
+// ============================================================================
+
+const SPELL_SLOTS = {
+  full: {
+    1: { 1: 2 }, 2: { 1: 3 }, 3: { 1: 4, 2: 2 }, 4: { 1: 4, 2: 3 }, 5: { 1: 4, 2: 3, 3: 2 },
+    6: { 1: 4, 2: 3, 3: 3 }, 7: { 1: 4, 2: 3, 3: 3, 4: 1 }, 8: { 1: 4, 2: 3, 3: 3, 4: 2 },
+    9: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 }, 10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 }
+  },
+  half: {
+    1: {}, 2: { 1: 2 }, 3: { 1: 3 }, 4: { 1: 3 }, 5: { 1: 4, 2: 2 },
+    6: { 1: 4, 2: 2 }, 7: { 1: 4, 2: 3 }, 8: { 1: 4, 2: 3 }, 9: { 1: 4, 2: 3, 3: 2 }, 10: { 1: 4, 2: 3, 3: 2 }
+  },
+  warlock: {
+    1: { slots: 1, level: 1 }, 2: { slots: 2, level: 1 }, 3: { slots: 2, level: 2 }, 4: { slots: 2, level: 2 },
+    5: { slots: 2, level: 3 }, 6: { slots: 2, level: 3 }, 7: { slots: 2, level: 4 }, 8: { slots: 2, level: 4 },
+    9: { slots: 2, level: 5 }, 10: { slots: 2, level: 5 }
+  }
+};
+
+const getSpellSlots = (classId, level) => {
+  const fullCasters = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard'];
+  const halfCasters = ['paladin', 'ranger'];
+  const cappedLevel = Math.min(level, 10); // We only have data up to 10 for now
+  
+  if (classId === 'warlock') return SPELL_SLOTS.warlock[cappedLevel];
+  if (fullCasters.includes(classId)) return SPELL_SLOTS.full[cappedLevel];
+  if (halfCasters.includes(classId)) return SPELL_SLOTS.half[cappedLevel];
+  return null;
+};
+
+// ============================================================================
+// HP CALCULATION HELPER
+// ============================================================================
+
+const calculateHP = (classId, level, constitutionMod, hpMethod = 'average') => {
+  const classData = CLASSES[classId];
+  if (!classData) return 0;
+  const hitDie = classData.hitDie;
+  
+  // Level 1: max hit die + CON
+  let hp = hitDie + constitutionMod;
+  
+  // Levels 2+: average (rounded up) or max
+  for (let i = 2; i <= level; i++) {
+    const perLevel = hpMethod === 'average' ? Math.floor(hitDie / 2) + 1 : hitDie;
+    hp += perLevel + constitutionMod;
+  }
+  
+  return Math.max(hp, level);
+};
+
+// ============================================================================
 // D&D 5E BACKGROUNDS
 // ============================================================================
 
@@ -3981,10 +4133,10 @@ const ReviewStep = ({ character, updateCharacter }) => {
   // AC calculation (base 10 + dex, or with armor)
   const baseAC = 10 + getModifier(finalAbilities.dexterity);
   
-  // HP calculation
+  // HP calculation - uses calculateHP helper for multi-level support
   const hitDie = classData?.hitDie || 8;
   const conMod = getModifier(finalAbilities.constitution);
-  const maxHP = hitDie + conMod;
+  const maxHP = character.class ? calculateHP(character.class, character.level, conMod, 'average') : hitDie + conMod;
 
   // Passive Perception
   const passivePerception = 10 + getModifier(finalAbilities.wisdom);
@@ -4061,7 +4213,7 @@ const ReviewStep = ({ character, updateCharacter }) => {
       '═══════════════════════════════════════════════════════════',
       '',
       `Race: ${race?.name || 'None'}${subrace ? ` (${subrace.name})` : ''}`,
-      `Class: ${classData?.name || 'None'} ${character.level}`,
+      `Class: ${classData?.name || 'None'} ${character.level}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`,
       `Background: ${background?.name || 'None'}`,
       '',
       '─── ABILITY SCORES ───────────────────────────────────────',
@@ -4118,6 +4270,21 @@ const ReviewStep = ({ character, updateCharacter }) => {
       lines.push(`Spellcasting Ability: ${ABILITY_LABELS[spellcastingInfo.ability]?.name}`);
       lines.push(`Spell Save DC: ${8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability])}`);
       lines.push(`Spell Attack: +${proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability])}`);
+      
+      // Add spell slots to export
+      const slots = getSpellSlots(character.class, character.level);
+      if (slots) {
+        if (character.class === 'warlock') {
+          lines.push(`Pact Magic: ${slots.slots} slots (Level ${slots.level})`);
+        } else {
+          const slotStr = Object.entries(slots)
+            .filter(([_, count]) => count > 0)
+            .map(([lvl, count]) => `${lvl === '1' ? '1st' : lvl === '2' ? '2nd' : lvl === '3' ? '3rd' : `${lvl}th`}: ${count}`)
+            .join(', ');
+          if (slotStr) lines.push(`Spell Slots: ${slotStr}`);
+        }
+      }
+      
       lines.push('');
       if (spellList.cantrips.length > 0) {
         lines.push(`Cantrips: ${spellList.cantrips.join(', ')}`);
@@ -4218,10 +4385,15 @@ const ReviewStep = ({ character, updateCharacter }) => {
   const skillOverlap = getSkillOverlap(character.class, character.background);
   const skillsComplete = skillOverlap.length === 0 || (character.replacementSkills || []).length >= skillOverlap.length;
 
+  // Check if subclass is required and selected
+  const subclassRequired = classData && character.level >= classData.subclassLevel;
+  const subclassComplete = !subclassRequired || !!character.subclass;
+
   const isComplete = {
     name: !!character.name,
     race: !!character.race,
     class: !!character.class,
+    subclass: subclassComplete,
     abilities: Object.values(character.abilities).some(v => v !== 10),
     background: !!character.background,
     languages: languagesComplete,
@@ -4229,7 +4401,7 @@ const ReviewStep = ({ character, updateCharacter }) => {
   };
 
   const completionCount = Object.values(isComplete).filter(Boolean).length;
-  const totalRequired = 7;
+  const totalRequired = 8;
 
   return (
     <div className="space-y-6">
@@ -4262,6 +4434,9 @@ const ReviewStep = ({ character, updateCharacter }) => {
             <p className="text-slate-300">
               {race?.name || 'Unknown Race'}
               {subrace ? ` (${subrace.name})` : ''} {classData?.name || 'Unknown Class'} {character.level}
+              {character.subclass && SUBCLASSES[character.class]?.[character.subclass] && (
+                <span className="text-amber-300"> • {SUBCLASSES[character.class][character.subclass].name}</span>
+              )}
             </p>
             {background && (
               <p className="text-slate-400 text-sm mt-1">{background.name} Background</p>
@@ -4417,7 +4592,7 @@ const ReviewStep = ({ character, updateCharacter }) => {
           )}
 
           {/* Spells */}
-          {spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0) && (
+          {spellcastingInfo?.available && (
             <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
               <h4 className="text-sm font-semibold text-purple-300 mb-3">Spellcasting</h4>
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
@@ -4434,6 +4609,52 @@ const ReviewStep = ({ character, updateCharacter }) => {
                   </span>
                 </div>
               </div>
+              
+              {/* Spell Slots */}
+              {(() => {
+                const slots = getSpellSlots(character.class, character.level);
+                if (!slots) return null;
+                
+                if (character.class === 'warlock') {
+                  return (
+                    <div className="mb-3 p-2 rounded-lg bg-slate-900/50">
+                      <div className="text-xs text-slate-400 mb-1">Pact Magic Slots</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          {Array(slots.slots).fill(0).map((_, i) => (
+                            <div key={i} className="w-4 h-4 rounded-full bg-purple-500/50 border border-purple-400"></div>
+                          ))}
+                        </div>
+                        <span className="text-xs text-purple-300">Level {slots.level}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                const slotLevels = Object.entries(slots).filter(([_, count]) => count > 0);
+                if (slotLevels.length === 0) return null;
+                
+                return (
+                  <div className="mb-3 p-2 rounded-lg bg-slate-900/50">
+                    <div className="text-xs text-slate-400 mb-2">Spell Slots</div>
+                    <div className="flex flex-wrap gap-2">
+                      {slotLevels.map(([level, count]) => (
+                        <div key={level} className="flex items-center gap-1">
+                          <span className="text-xs text-slate-500">
+                            {level === '1' ? '1st' : level === '2' ? '2nd' : level === '3' ? '3rd' : `${level}th`}:
+                          </span>
+                          <div className="flex gap-0.5">
+                            {Array(count).fill(0).map((_, i) => (
+                              <div key={i} className="w-3 h-3 rounded-full bg-indigo-500/50 border border-indigo-400"></div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              
               {spellList.cantrips.length > 0 && (
                 <div className="mb-2">
                   <div className="text-xs text-purple-400 mb-1">Cantrips</div>
@@ -4448,7 +4669,7 @@ const ReviewStep = ({ character, updateCharacter }) => {
               )}
               {spellList.spells.length > 0 && (
                 <div>
-                  <div className="text-xs text-indigo-400 mb-1">1st Level</div>
+                  <div className="text-xs text-indigo-400 mb-1">Prepared/Known Spells</div>
                   <div className="flex flex-wrap gap-1">
                     {spellList.spells.map((s, i) => (
                       <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
@@ -4909,6 +5130,70 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
           </div>
         </div>
       </div>
+
+      {/* Spell Slots Display */}
+      {(() => {
+        const slots = getSpellSlots(classId, character.level);
+        if (!slots) return null;
+        
+        // Warlock has different display
+        if (classId === 'warlock') {
+          return (
+            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span className="text-sm font-semibold text-slate-200">Pact Magic Slots</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-sm">Slots:</span>
+                  <div className="flex gap-1">
+                    {Array(slots.slots).fill(0).map((_, i) => (
+                      <div key={i} className="w-6 h-6 rounded-full bg-purple-500/30 border-2 border-purple-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-purple-400"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-sm text-slate-300">
+                  All slots are <span className="text-purple-400 font-semibold">Level {slots.level}</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">Warlock slots recharge on a short rest.</p>
+            </div>
+          );
+        }
+        
+        // Regular casters
+        const slotLevels = Object.entries(slots).filter(([_, count]) => count > 0);
+        if (slotLevels.length === 0) return null;
+        
+        return (
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span className="text-sm font-semibold text-slate-200">Spell Slots Per Day</span>
+              <span className="text-xs text-slate-500">(Recharge on long rest)</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {slotLevels.map(([level, count]) => (
+                <div key={level} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50">
+                  <span className="text-xs text-slate-400 w-12">
+                    {level === '1' ? '1st' : level === '2' ? '2nd' : level === '3' ? '3rd' : `${level}th`}
+                  </span>
+                  <div className="flex gap-1">
+                    {Array(count).fill(0).map((_, i) => (
+                      <div key={i} className="w-5 h-5 rounded-full bg-indigo-500/30 border-2 border-indigo-500 flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-400"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-1 md:gap-2 border-b border-slate-700/50 pb-1">
@@ -5726,6 +6011,7 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
 
   const pickClass = (classId) => {
     updateCharacter('class', classId);
+    updateCharacter('subclass', null); // Clear subclass when class changes
     setShowAllClasses(false);
   };
 
@@ -5770,7 +6056,11 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
                     <span className="text-2xl">{CLASS_ICONS[character.class]}</span>
                     <div>
                       <div className="font-medium text-indigo-300">{CLASSES[character.class]?.name}</div>
-                      <div className="text-xs text-slate-400">d{CLASSES[character.class]?.hitDie} Hit Die</div>
+                      {character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? (
+                        <div className="text-xs text-amber-300">{SUBCLASSES[character.class][character.subclass].name}</div>
+                      ) : (
+                        <div className="text-xs text-slate-400">d{CLASSES[character.class]?.hitDie} Hit Die</div>
+                      )}
                     </div>
                   </div>
                   <button
@@ -5937,6 +6227,59 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
                         <div className="text-amber-400">
                           Spellcasting begins at level {selectedClass.spellcasting.startsAtLevel}
                         </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Subclass Selection */}
+                {character.level >= selectedClass.subclassLevel && SUBCLASSES[selectedClassId] && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star className="w-4 h-4 text-amber-400" />
+                      <div className="text-xs text-amber-300 font-semibold">
+                        Choose Your {selectedClass.subclassName}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {Object.entries(SUBCLASSES[selectedClassId]).map(([subId, sub]) => {
+                        const isSubSelected = character.subclass === subId;
+                        return (
+                          <button
+                            key={subId}
+                            onClick={() => updateCharacter('subclass', subId)}
+                            className={`w-full p-3 rounded-lg border text-left transition-all ${
+                              isSubSelected
+                                ? 'bg-amber-500/20 border-amber-500/50'
+                                : 'bg-slate-800/50 border-slate-700/50 hover:border-amber-500/30'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{SUBCLASS_ICONS[subId] || '⭐'}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className={`font-medium text-sm ${isSubSelected ? 'text-amber-300' : 'text-slate-200'}`}>
+                                  {sub.name}
+                                </div>
+                                <div className="text-xs text-slate-500 line-clamp-1">{sub.description}</div>
+                              </div>
+                              {isSubSelected && <Check className="w-4 h-4 text-amber-400 shrink-0" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Subclass Note - if not high enough level */}
+                {character.level < selectedClass.subclassLevel && (
+                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <div className="text-xs text-slate-400">
+                      <span className="text-amber-400">📋 {selectedClass.subclassName}</span> will be available at level {selectedClass.subclassLevel}.
+                      {character.level === 1 && selectedClass.subclassLevel <= 3 && (
+                        <span className="block mt-1 text-slate-500">
+                          Increase your level in Basics to choose now.
+                        </span>
                       )}
                     </div>
                   </div>
