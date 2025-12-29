@@ -5327,15 +5327,9 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             </div>
           </div>
 
-          {/* Proficiencies - Mobile Collapsible */}
-          <details className="md:hidden" open>
-            <summary className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
-              <h4 className="text-sm font-semibold text-slate-300">Proficiencies</h4>
-              <ChevronDown className="w-4 h-4 text-slate-400 transition-transform [[open]>&]:rotate-180" />
-            </summary>
-          </details>
+          {/* Proficiencies */}
           <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="hidden md:block text-sm font-semibold text-slate-300 mb-3">Proficiencies</h4>
+            <h4 className="text-sm font-semibold text-slate-300 mb-3">Proficiencies</h4>
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-slate-500">Saving Throws: </span>
@@ -5386,7 +5380,6 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
               </div>
             </div>
           </div>
-          </details>
 
         </div>
         {/* Right Column */}
@@ -5462,7 +5455,6 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
               )}
             </div>
           </div>
-          </details>
 
           {/* Level Advancements (ASI/Feats) */}
           {character.asiChoices && Object.keys(character.asiChoices).length > 0 && (
@@ -5824,8 +5816,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           </div>
         );
       })()}
-        </div>
-        
+
       {/* Export Options */}
       <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
         <h4 className="text-sm font-semibold text-slate-300 mb-3">Export Character</h4>
