@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter } from 'lucide-react';
 
 // ============================================================================
 // LOCAL STORAGE UTILITIES
@@ -2911,34 +2911,34 @@ const SPELLS = {
   // 1ST LEVEL SPELLS
   alarm: { name: 'Alarm', level: 1, school: 'abjuration', castTime: '1 minute', range: '30 ft', duration: '8 hours', description: 'Set a ward that alerts you when a creature enters a 20-ft cube area.', classes: ['ranger', 'wizard'], ritual: true },
   armorOfAgathys: { name: 'Armor of Agathys', level: 1, school: 'abjuration', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Gain 5 temp HP. While active, creatures hitting you in melee take 5 cold damage.', classes: ['warlock'] },
-  bane: { name: 'Bane', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Up to 3 creatures subtract 1d4 from attack rolls and saving throws.', classes: ['bard', 'cleric'] },
-  bless: { name: 'Bless', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Up to 3 creatures add 1d4 to attack rolls and saving throws.', classes: ['cleric', 'paladin'] },
+  bane: { name: 'Bane', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Up to 3 creatures subtract 1d4 from attack rolls and saving throws.', classes: ['bard', 'cleric'], concentration: true },
+  bless: { name: 'Bless', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Up to 3 creatures add 1d4 to attack rolls and saving throws.', classes: ['cleric', 'paladin'], concentration: true },
   burningHands: { name: 'Burning Hands', level: 1, school: 'evocation', castTime: '1 action', range: 'Self (15-ft cone)', duration: 'Instantaneous', description: 'Each creature in 15-ft cone takes 3d6 fire damage (Dex half).', classes: ['sorcerer', 'wizard'] },
-  charmPerson: { name: 'Charm Person', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 hour', description: 'Humanoid regards you as friendly. Wis save. Advantage if you\'re fighting it.', classes: ['bard', 'druid', 'sorcerer', 'warlock', 'wizard'] },
+  charmPerson: { name: 'Charm Person', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 hour', description: 'Humanoid regards you as friendly. Wis save. Advantage if you\'re fighting it.', classes: ['bard', 'druid', 'sorcerer', 'warlock', 'wizard'], concentration: true },
   chromaticOrb: { name: 'Chromatic Orb', level: 1, school: 'evocation', castTime: '1 action', range: '90 ft', duration: 'Instantaneous', description: 'Hurl orb of acid, cold, fire, lightning, poison, or thunder for 3d8 damage.', classes: ['sorcerer', 'wizard'] },
   colorSpray: { name: 'Color Spray', level: 1, school: 'illusion', castTime: '1 action', range: 'Self (15-ft cone)', duration: '1 round', description: 'Blind creatures in cone with total HP up to 6d10 (starting from lowest HP).', classes: ['sorcerer', 'wizard'] },
   command: { name: 'Command', level: 1, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 round', description: 'Speak one-word command. Wis save or target follows command on its turn.', classes: ['cleric', 'paladin'] },
-  compelledDuel: { name: 'Compelled Duel', level: 1, school: 'enchantment', castTime: '1 bonus action', range: '30 ft', duration: '1 minute', description: 'Force creature to fight you. Wis save or disadvantage on attacks against others.', classes: ['paladin'] },
+  compelledDuel: { name: 'Compelled Duel', level: 1, school: 'enchantment', castTime: '1 bonus action', range: '30 ft', duration: '1 minute', description: 'Force creature to fight you. Wis save or disadvantage on attacks against others.', classes: ['paladin'], concentration: true },
   cureWounds: { name: 'Cure Wounds', level: 1, school: 'evocation', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Heal 1d8 + spellcasting modifier HP.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger'] },
-  detectMagic: { name: 'Detect Magic', level: 1, school: 'divination', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Sense magic within 30 ft and see its aura. See through most barriers.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger', 'sorcerer', 'wizard'], ritual: true },
+  detectMagic: { name: 'Detect Magic', level: 1, school: 'divination', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Sense magic within 30 ft and see its aura. See through most barriers.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger', 'sorcerer', 'wizard'], ritual: true, concentration: true },
   disguiseSelf: { name: 'Disguise Self', level: 1, school: 'illusion', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Change your appearance including clothing, armor, weapons, and other belongings.', classes: ['bard', 'sorcerer', 'wizard'] },
   dissonantWhispers: { name: 'Dissonant Whispers', level: 1, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: 'Instantaneous', description: 'Whisper discordant melody. 3d6 psychic damage, Wis save or flee.', classes: ['bard'] },
   divineFavor: { name: 'Divine Favor', level: 1, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Your weapon attacks deal extra 1d4 radiant damage.', classes: ['paladin'] },
-  entangle: { name: 'Entangle', level: 1, school: 'conjuration', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Grasping weeds in 20-ft square. Str save or restrained. Difficult terrain.', classes: ['druid'] },
-  expeditiousRetreat: { name: 'Expeditious Retreat', level: 1, school: 'transmutation', castTime: '1 bonus action', range: 'Self', duration: '10 minutes', description: 'Dash as bonus action for duration.', classes: ['sorcerer', 'warlock', 'wizard'] },
-  faerieFire: { name: 'Faerie Fire', level: 1, school: 'evocation', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Objects and creatures in 20-ft cube outlined in light. Attacks have advantage.', classes: ['bard', 'druid'] },
+  entangle: { name: 'Entangle', level: 1, school: 'conjuration', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Grasping weeds in 20-ft square. Str save or restrained. Difficult terrain.', classes: ['druid'], concentration: true },
+  expeditiousRetreat: { name: 'Expeditious Retreat', level: 1, school: 'transmutation', castTime: '1 bonus action', range: 'Self', duration: '10 minutes', description: 'Dash as bonus action for duration.', classes: ['sorcerer', 'warlock', 'wizard'], concentration: true },
+  faerieFire: { name: 'Faerie Fire', level: 1, school: 'evocation', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Objects and creatures in 20-ft cube outlined in light. Attacks have advantage.', classes: ['bard', 'druid'], concentration: true },
   falseLife: { name: 'False Life', level: 1, school: 'necromancy', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Gain 1d4 + 4 temporary HP.', classes: ['sorcerer', 'wizard'] },
   featherFall: { name: 'Feather Fall', level: 1, school: 'transmutation', castTime: '1 reaction', range: '60 ft', duration: '1 minute', description: 'Up to 5 falling creatures slow to 60 ft/round and take no falling damage.', classes: ['bard', 'sorcerer', 'wizard'] },
   findFamiliar: { name: 'Find Familiar', level: 1, school: 'conjuration', castTime: '1 hour', range: '10 ft', duration: 'Instantaneous', description: 'Summon a spirit as bat, cat, owl, etc. Telepathic link, can see through its senses.', classes: ['wizard'], ritual: true },
-  fogCloud: { name: 'Fog Cloud', level: 1, school: 'conjuration', castTime: '1 action', range: '120 ft', duration: '1 hour', description: 'Create 20-ft radius sphere of fog. Area is heavily obscured.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'] },
+  fogCloud: { name: 'Fog Cloud', level: 1, school: 'conjuration', castTime: '1 action', range: '120 ft', duration: '1 hour', description: 'Create 20-ft radius sphere of fog. Area is heavily obscured.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'], concentration: true },
   goodberry: { name: 'Goodberry', level: 1, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Create 10 berries. Each heals 1 HP and provides nourishment for a day.', classes: ['druid', 'ranger'] },
-  grease: { name: 'Grease', level: 1, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 minute', description: '10-ft square becomes difficult terrain. Dex save or fall prone.', classes: ['wizard'] },
+  grease: { name: 'Grease', level: 1, school: 'conjuration', castTime: '1 action', range: '60 ft', duration: '1 minute', description: '10-ft square becomes difficult terrain. Dex save or fall prone.', classes: ['wizard'], concentration: true },
   guidingBolt: { name: 'Guiding Bolt', level: 1, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 round', description: '4d6 radiant damage. Next attack against target has advantage.', classes: ['cleric'] },
   healingWord: { name: 'Healing Word', level: 1, school: 'evocation', castTime: '1 bonus action', range: '60 ft', duration: 'Instantaneous', description: 'Heal 1d4 + spellcasting modifier HP at range.', classes: ['bard', 'cleric', 'druid'] },
   hellishRebuke: { name: 'Hellish Rebuke', level: 1, school: 'evocation', castTime: '1 reaction', range: '60 ft', duration: 'Instantaneous', description: 'When damaged, creature takes 2d10 fire damage (Dex half).', classes: ['warlock'] },
-  heroism: { name: 'Heroism', level: 1, school: 'enchantment', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Target immune to frightened, gains temp HP equal to spellcasting mod each turn.', classes: ['bard', 'paladin'] },
-  hex: { name: 'Hex', level: 1, school: 'enchantment', castTime: '1 bonus action', range: '90 ft', duration: '1 hour', description: 'Curse target. Deal extra 1d6 necrotic on hits. Disadvantage on one ability checks.', classes: ['warlock'] },
-  huntersMark: { name: 'Hunter\'s Mark', level: 1, school: 'divination', castTime: '1 bonus action', range: '90 ft', duration: '1 hour', description: 'Mark prey. Deal extra 1d6 damage on hits. Advantage on tracking.', classes: ['ranger'] },
+  heroism: { name: 'Heroism', level: 1, school: 'enchantment', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Target immune to frightened, gains temp HP equal to spellcasting mod each turn.', classes: ['bard', 'paladin'], concentration: true },
+  hex: { name: 'Hex', level: 1, school: 'enchantment', castTime: '1 bonus action', range: '90 ft', duration: '1 hour', description: 'Curse target. Deal extra 1d6 necrotic on hits. Disadvantage on one ability checks.', classes: ['warlock'], concentration: true },
+  huntersMark: { name: 'Hunter\'s Mark', level: 1, school: 'divination', castTime: '1 bonus action', range: '90 ft', duration: '1 hour', description: 'Mark prey. Deal extra 1d6 damage on hits. Advantage on tracking.', classes: ['ranger'], concentration: true },
   identify: { name: 'Identify', level: 1, school: 'divination', castTime: '1 minute', range: 'Touch', duration: 'Instantaneous', description: 'Learn properties of magic item or if creature is affected by spell.', classes: ['bard', 'wizard'], ritual: true },
   inflictWounds: { name: 'Inflict Wounds', level: 1, school: 'necromancy', castTime: '1 action', range: 'Touch', duration: 'Instantaneous', description: 'Melee spell attack deals 3d10 necrotic damage.', classes: ['cleric'] },
   jump: { name: 'Jump', level: 1, school: 'transmutation', castTime: '1 action', range: 'Touch', duration: '1 minute', description: 'Triple target\'s jump distance.', classes: ['druid', 'ranger', 'sorcerer', 'wizard'] },
@@ -5029,6 +5029,11 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const [selectedSpells, setSelectedSpells] = useState(character.spells || []);
   const [viewingSpell, setViewingSpell] = useState(null);
   const [activeTab, setActiveTab] = useState('cantrips');
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showRitualOnly, setShowRitualOnly] = useState(false);
+  const [showConcentrationOnly, setShowConcentrationOnly] = useState(false);
 
   const availableCantrips = classId ? getSpellsForClass(classId, 0) : [];
   const availableLevel1Spells = classId ? getSpellsForClass(classId, 1) : [];
@@ -5036,6 +5041,43 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const availableLevel3Spells = classId ? getSpellsForClass(classId, 3) : [];
   const availableLevel4Spells = classId ? getSpellsForClass(classId, 4) : [];
   const availableLevel5Spells = classId ? getSpellsForClass(classId, 5) : [];
+  
+  // Filter spells based on search query and filters
+  const filterSpells = (spellIds) => {
+    if (!searchQuery && !showRitualOnly && !showConcentrationOnly) {
+      return spellIds;
+    }
+    
+    return spellIds.filter(spellId => {
+      const spell = SPELLS[spellId];
+      if (!spell) return false;
+      
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const nameMatch = spell.name.toLowerCase().includes(query);
+        const descMatch = spell.description?.toLowerCase().includes(query);
+        const schoolMatch = spell.school?.toLowerCase().includes(query);
+        if (!nameMatch && !descMatch && !schoolMatch) return false;
+      }
+      
+      // Ritual filter
+      if (showRitualOnly && !spell.ritual) return false;
+      
+      // Concentration filter
+      if (showConcentrationOnly && !spell.concentration) return false;
+      
+      return true;
+    });
+  };
+  
+  // Apply filtering to all spell lists
+  const filteredCantrips = filterSpells(availableCantrips);
+  const filteredLevel1Spells = filterSpells(availableLevel1Spells);
+  const filteredLevel2Spells = filterSpells(availableLevel2Spells);
+  const filteredLevel3Spells = filterSpells(availableLevel3Spells);
+  const filteredLevel4Spells = filterSpells(availableLevel4Spells);
+  const filteredLevel5Spells = filterSpells(availableLevel5Spells);
   
   // Get max spell level based on character level (simplified - full casters)
   const getMaxSpellLevel = () => {
@@ -5262,6 +5304,68 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
         );
       })()}
 
+      {/* Search and Filters */}
+      <div className="space-y-3">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search spells by name, description, or school..."
+            className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Filter Toggles */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowRitualOnly(!showRitualOnly)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              showRitualOnly
+                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 border'
+                : 'bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:border-slate-600'
+            }`}
+          >
+            <Scroll className="w-3.5 h-3.5" />
+            Ritual Only
+          </button>
+          <button
+            onClick={() => setShowConcentrationOnly(!showConcentrationOnly)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              showConcentrationOnly
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 border'
+                : 'bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:border-slate-600'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Concentration
+          </button>
+          {(searchQuery || showRitualOnly || showConcentrationOnly) && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setShowRitualOnly(false);
+                setShowConcentrationOnly(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:text-red-400 hover:border-red-500/50 transition-all"
+            >
+              <X className="w-3.5 h-3.5" />
+              Clear Filters
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex flex-wrap gap-1 md:gap-2 border-b border-slate-700/50 pb-1">
         <button
@@ -5272,7 +5376,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
               : 'text-slate-400 border-transparent hover:text-slate-200'
           }`}
         >
-          Cantrips ({availableCantrips.length})
+          Cantrips ({filteredCantrips.length})
         </button>
         <button
           onClick={() => setActiveTab('level1')}
@@ -5282,7 +5386,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
               : 'text-slate-400 border-transparent hover:text-slate-200'
           }`}
         >
-          1st ({availableLevel1Spells.length})
+          1st ({filteredLevel1Spells.length})
         </button>
         {maxSpellLevel >= 2 && availableLevel2Spells.length > 0 && (
           <button
@@ -5293,7 +5397,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                 : 'text-slate-400 border-transparent hover:text-slate-200'
             }`}
           >
-            2nd ({availableLevel2Spells.length})
+            2nd ({filteredLevel2Spells.length})
           </button>
         )}
         {maxSpellLevel >= 3 && availableLevel3Spells.length > 0 && (
@@ -5305,7 +5409,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                 : 'text-slate-400 border-transparent hover:text-slate-200'
             }`}
           >
-            3rd ({availableLevel3Spells.length})
+            3rd ({filteredLevel3Spells.length})
           </button>
         )}
         {maxSpellLevel >= 4 && availableLevel4Spells.length > 0 && (
@@ -5317,7 +5421,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                 : 'text-slate-400 border-transparent hover:text-slate-200'
             }`}
           >
-            4th ({availableLevel4Spells.length})
+            4th ({filteredLevel4Spells.length})
           </button>
         )}
         {maxSpellLevel >= 5 && availableLevel5Spells.length > 0 && (
@@ -5329,7 +5433,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                 : 'text-slate-400 border-transparent hover:text-slate-200'
             }`}
           >
-            5th ({availableLevel5Spells.length})
+            5th ({filteredLevel5Spells.length})
           </button>
         )}
         {selectedCantrips.length + selectedSpells.length > 0 && (
@@ -5349,7 +5453,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       {/* Spell Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-2 max-h-[400px] overflow-y-auto pr-2">
-          {activeTab === 'cantrips' && availableCantrips.map(spell => {
+          {activeTab === 'cantrips' && filteredCantrips.map(spell => {
             const isSelected = selectedCantrips.includes(spell.id);
             const isDisabled = !isSelected && selectedCantrips.length >= maxCantrips;
             
@@ -5382,7 +5486,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
             );
           })}
 
-          {activeTab === 'level1' && availableLevel1Spells.map(spell => {
+          {activeTab === 'level1' && filteredLevel1Spells.map(spell => {
             const isSelected = selectedSpells.includes(spell.id);
             const isDisabledKnown = (spellcastingType === 'known' || spellcastingType === 'pact') && selectedSpells.length >= maxSpellsKnown;
             const isDisabledPrepared = spellcastingType === 'prepared' && maxPreparedSpells !== null && selectedSpells.length >= maxPreparedSpells;
@@ -5414,6 +5518,11 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                             Ritual
                           </span>
                         )}
+                        {spell.concentration && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Conc
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-slate-500">{spell.castTime} • {spell.range}</div>
                     </div>
@@ -5428,10 +5537,10 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
           {['level2', 'level3', 'level4', 'level5'].map(levelTab => {
             if (activeTab !== levelTab) return null;
             const levelNum = parseInt(levelTab.replace('level', ''));
-            const spellList = levelNum === 2 ? availableLevel2Spells 
-              : levelNum === 3 ? availableLevel3Spells 
-              : levelNum === 4 ? availableLevel4Spells 
-              : availableLevel5Spells;
+            const spellList = levelNum === 2 ? filteredLevel2Spells 
+              : levelNum === 3 ? filteredLevel3Spells 
+              : levelNum === 4 ? filteredLevel4Spells 
+              : filteredLevel5Spells;
             const colors = {
               2: { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-300', check: 'text-blue-400' },
               3: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', text: 'text-cyan-300', check: 'text-cyan-400' },
@@ -5470,6 +5579,11 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                           {spell.ritual && (
                             <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                               Ritual
+                            </span>
+                          )}
+                          {spell.concentration && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              Conc
                             </span>
                           )}
                         </div>
