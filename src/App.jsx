@@ -3805,6 +3805,49 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     updateCharacter('abilities', newScores);
   };
 
+  const autoAssignOptimal = () => {
+    if (method === 'pointbuy' || method === 'manual') return;
+    if (!character.class) return;
+    
+    const classData = CLASSES[character.class];
+    const primaryAbilities = classData?.primaryAbility || [];
+    const savingThrows = classData?.savingThrows || [];
+    
+    // Sort scores descending
+    const sortedIndices = [...scoresArray.keys()].sort((a, b) => scoresArray[b] - scoresArray[a]);
+    
+    // Priority order: primary abilities first, then saving throws, then CON, then rest
+    const abilityPriority = ABILITY_NAMES.map(ability => {
+      let priority = 100;
+      
+      if (primaryAbilities.includes(ability)) {
+        priority = primaryAbilities.indexOf(ability); // 0 = highest priority
+      } else if (savingThrows.includes(ability)) {
+        priority = 10 + savingThrows.indexOf(ability);
+      } else if (ability === 'constitution') {
+        priority = 20; // CON is important for everyone
+      } else {
+        priority = 30 + ABILITY_NAMES.indexOf(ability);
+      }
+      
+      return { ability, priority };
+    }).sort((a, b) => a.priority - b.priority);
+    
+    // Assign scores
+    const newAssignments = {};
+    const newAbilities = {};
+    
+    abilityPriority.forEach((item, index) => {
+      const scoreIndex = sortedIndices[index];
+      newAssignments[item.ability] = scoreIndex;
+      newAbilities[item.ability] = scoresArray[scoreIndex];
+    });
+    
+    setAssignments(newAssignments);
+    updateCharacter('abilityAssignments', newAssignments);
+    updateCharacter('abilities', newAbilities);
+  };
+
   const setManualScore = (ability, value) => {
     const numValue = parseInt(value) || 8;
     const clamped = Math.max(3, Math.min(18, numValue));
@@ -3963,6 +4006,15 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
                 {scoresArray[scoreIndex]}
               </button>
             ))}
+            {character.class && Object.keys(assignments).length === 0 && (
+              <button
+                onClick={autoAssignOptimal}
+                className="ml-4 px-3 py-1.5 text-sm rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/30 transition-all flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Auto-Assign Optimally
+              </button>
+            )}
             {Object.keys(assignments).length > 0 && (
               <button
                 onClick={resetAbilities}
@@ -4010,16 +4062,18 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
               >
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <div className="text-lg font-bold text-white">{info.short}</div>
                       {isPrimaryAbility && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold" title="Primary Ability for this class">
-                          PRIMARY
+                        <span className="px-1 py-0.5 rounded text-[9px] md:text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold whitespace-nowrap" title="Primary Ability for this class">
+                          <span className="hidden md:inline">PRIMARY</span>
+                          <span className="md:hidden">1°</span>
                         </span>
                       )}
                       {character.class && CLASSES[character.class]?.savingThrows?.includes(ability) && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/20 text-green-300 border border-green-500/30" title="Saving Throw Proficiency">
-                          SAVE
+                        <span className="px-1 py-0.5 rounded text-[9px] md:text-[10px] bg-green-500/20 text-green-300 border border-green-500/30 whitespace-nowrap" title="Saving Throw Proficiency">
+                          <span className="hidden md:inline">SAVE</span>
+                          <span className="md:hidden">✓</span>
                         </span>
                       )}
                     </div>
@@ -5152,11 +5206,12 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Randomize Again */}
           <button
             onClick={onRandomize}
-            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap"
             title="Generate a new random character"
           >
+            <Sparkles className="w-3 h-3" />
             <span className="hidden md:inline">Randomize Again</span>
-            <span className="md:hidden">Randomize</span>
+            <span className="md:hidden">Random</span>
           </button>
           {/* Undo */}
           <button
@@ -8323,27 +8378,45 @@ const CharacterCreator = ({
         <div className="px-4 pb-4 text-sm text-slate-400 space-y-3">
           <div>
             <h4 className="font-semibold text-slate-200 mb-1">Building Your Character</h4>
-            <p>Work through each step to create a complete D&D 5th Edition character. You can jump between steps using the progress bar above.</p>
+            <p>Work through each step to create a complete D&D 5th Edition character. You can jump between steps using the progress bar or Previous/Next buttons above.</p>
           </div>
           <div>
             <h4 className="font-semibold text-slate-200 mb-1">Steps Overview</h4>
             <ul className="space-y-1 ml-4 text-xs">
-              <li><span className="text-indigo-400">Basics</span> — Name, player name, starting level</li>
-              <li><span className="text-purple-400">Race</span> — Choose race and subrace for ability bonuses and traits</li>
-              <li><span className="text-pink-400">Class</span> — Your character's profession and abilities</li>
-              <li><span className="text-amber-400">Abilities</span> — Set your six ability scores (STR, DEX, CON, INT, WIS, CHA)</li>
-              <li><span className="text-emerald-400">Background</span> — Your character's history and additional skills</li>
-              <li><span className="text-cyan-400">Equipment</span> — Starting gear or roll for gold to buy items</li>
-              <li><span className="text-violet-400">Spells</span> — Choose cantrips and spells (if your class casts magic)</li>
-              <li><span className="text-green-400">Review</span> — Finalize choices and export your character</li>
+              <li><span className="text-indigo-400">Basics</span> — Name, player name, starting level (1-20). Higher levels grant ASI/Feats.</li>
+              <li><span className="text-purple-400">Race</span> — Choose race and subrace for ability bonuses, languages, and traits</li>
+              <li><span className="text-pink-400">Class</span> — Your character's profession, hit dice, proficiencies, and starting equipment</li>
+              <li><span className="text-amber-400">Abilities</span> — Set your six ability scores using Standard Array, Point Buy, Roll 4d6, or Manual Entry</li>
+              <li><span className="text-emerald-400">Background</span> — Your character's history, skill proficiencies, and starting equipment</li>
+              <li><span className="text-cyan-400">Equipment</span> — Choose starting gear from your class and background, or roll for gold</li>
+              <li><span className="text-violet-400">Spells</span> — Select cantrips and prepared spells (if your class uses magic)</li>
+              <li><span className="text-green-400">Review</span> — See final stats, choose ASI/Feats (levels 4+), and export your character</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-200 mb-1">Ability Score Methods</h4>
+            <ul className="space-y-1 ml-4 text-xs">
+              <li><span className="text-amber-400">Standard Array</span> — Assign 15, 14, 13, 12, 10, 8 to abilities. Great for balanced builds.</li>
+              <li><span className="text-amber-400">Point Buy</span> — Spend 27 points to customize (8-15 range). Most flexible method.</li>
+              <li><span className="text-amber-400">Roll 4d6</span> — Roll 4 six-sided dice, drop lowest. Classic but random method.</li>
+              <li><span className="text-amber-400">Auto-Assign</span> — Click the sparkle button to optimally assign scores based on your class's primary abilities and saving throws!</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-200 mb-1">Ability Score Badges</h4>
+            <ul className="space-y-1 ml-4 text-xs">
+              <li><span className="text-amber-400">PRIMARY</span> (or <span className="text-amber-400">1°</span> on mobile) — Your class's most important ability for attacks/spells</li>
+              <li><span className="text-green-400">SAVE</span> (or <span className="text-green-400">✓</span> on mobile) — Proficient saving throw for your class</li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold text-slate-200 mb-1">Tips</h4>
             <ul className="space-y-1 ml-4 text-xs">
-              <li>Use the <span className="text-indigo-400">Name Generator</span> to create authentic fantasy names</li>
-              <li>Check the <span className="text-amber-400">Review</span> step for any incomplete choices like languages or skills</li>
-              <li>Export your finished character as text or JSON</li>
+              <li>Use the <span className="text-indigo-400">Name Generator</span> (top navigation) to create authentic fantasy names</li>
+              <li>At higher levels, choose <span className="text-purple-400">ASI</span> (+2 to one ability or +1 to two) or a <span className="text-purple-400">Feat</span> for special abilities</li>
+              <li>Final ability scores include racial bonuses, variant human bonuses, and ASI increases (capped at 20)</li>
+              <li>Check the <span className="text-green-400">Review</span> step to ensure you've selected all required skills, languages, and spells</li>
+              <li>Export as formatted text or JSON to import into virtual tabletops or character sheets</li>
             </ul>
           </div>
         </div>
@@ -9252,7 +9325,7 @@ export default function AetherNames() {
           </div>
 
           {/* Quick Guide Dropdown */}
-          <div className="mt-3 md:mt-6 max-w-2xl mx-auto">
+          <div className="mt-2 md:mt-4 max-w-2xl mx-auto">
             <details className="group bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-lg md:rounded-xl">
               <summary className="flex items-center justify-between p-2.5 md:p-4 cursor-pointer list-none">
                 <span className="font-semibold text-indigo-400 flex items-center gap-2 text-sm md:text-base">
@@ -9263,37 +9336,48 @@ export default function AetherNames() {
               <div className="px-4 pb-4 text-sm text-slate-400 space-y-4">
                 <div>
                   <h4 className="font-semibold text-slate-200 mb-1">Getting Started</h4>
-                  <p>Choose your settings on the left panel, then click "Generate Names". Each name is built using real linguistic rules from the regions you select.</p>
+                  <p>Choose your settings on the left panel, then click "Generate Names" (or press Ctrl+Enter). Each name is built using authentic linguistic rules from the regions you select.</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-200 mb-1">Key Settings</h4>
-                  <ul className="space-y-1 ml-4">
-                    <li><span className="text-teal-400">Linguistic Influence</span> — The language family that shapes how your names sound. Select up to 4 for blended results.</li>
-                    <li><span className="text-purple-400">Tone</span> — Adds emotional flavor. "Dark" uses harsh sounds, "Noble" uses elegant flowing sounds.</li>
-                    <li><span className="text-emerald-400">Time Period</span> — Adds era-appropriate prefixes/suffixes. Medieval adds titles like "Ser" and "Lord".</li>
-                    <li><span className="text-pink-400">Gender Lean</span> — Filters results by masculine/feminine sound patterns based on endings.</li>
+                  <ul className="space-y-1 ml-4 text-xs">
+                    <li><span className="text-purple-400">Name Type</span> — Character, location, faction, or item names. Each has unique generation patterns.</li>
+                    <li><span className="text-teal-400">Linguistic Influence</span> — The language family that shapes sound (Celtic, Norse, Arabic, etc.). Select up to 4 for blended results.</li>
+                    <li><span className="text-pink-400">Tone</span> — Emotional flavor. "Dark" uses harsh sounds, "Noble" uses elegant flows, "Mystical" adds arcane touches.</li>
+                    <li><span className="text-emerald-400">Time Period</span> — Era-appropriate styling. Medieval adds titles ("Ser", "Lord"), Futuristic adds tech elements ("Neo-", "-tech").</li>
+                    <li><span className="text-amber-400">Gender Lean</span> — Filters by masculine/feminine sound patterns based on linguistic endings.</li>
+                    <li><span className="text-cyan-400">Name Style</span> — Formatting control for non-character names (OneWord, Two Words, or The Article Prefix).</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-slate-200 mb-1">Name Card Icons (hover for tooltips)</h4>
-                  <ul className="space-y-1 ml-4">
-                    <li><Star className="w-4 h-4 inline text-yellow-400" /> <span className="text-yellow-400">Star</span> — Add to favorites. Favorites are saved at the bottom and can be exported.</li>
-                    <li><FlaskConical className="w-4 h-4 inline text-teal-400" /> <span className="text-teal-400">Flask</span> — Explode into variations. Instantly generates similar names by varying each part.</li>
-                    <li><Volume2 className="w-4 h-4 inline text-cyan-400" /> <span className="text-cyan-400">Speaker</span> — Hear an approximate pronunciation of the name.</li>
-                    <li><Glasses className="w-4 h-4 inline text-amber-400" /> <span className="text-amber-400">Glasses</span> — Stats for nerds! See how the name was generated.</li>
-                    <li><RefreshCw className="w-4 h-4 inline text-purple-400" /> <span className="text-purple-400">Refresh</span> — Tweak specific syllables while keeping others you like.</li>
-                    <li><User className="w-4 h-4 inline text-indigo-400" /> <span className="text-indigo-400">Person</span> — Send this name to the Character Creator.</li>
+                  <h4 className="font-semibold text-slate-200 mb-1">Name Card Actions</h4>
+                  <ul className="space-y-1 ml-4 text-xs">
+                    <li><Star className="w-3.5 h-3.5 inline text-yellow-400" /> <span className="text-yellow-400">Star</span> — Add to favorites. Saved at the bottom, can be exported in multiple formats.</li>
+                    <li><FlaskConical className="w-3.5 h-3.5 inline text-teal-400" /> <span className="text-teal-400">Flask</span> — Explode into variations. Generates 6 similar names by modifying patterns.</li>
+                    <li><Volume2 className="w-3.5 h-3.5 inline text-cyan-400" /> <span className="text-cyan-400">Speaker</span> — Text-to-speech pronunciation. Hear how the name sounds.</li>
+                    <li><Glasses className="w-3.5 h-3.5 inline text-amber-400" /> <span className="text-amber-400">Glasses</span> — View generation metadata (patterns, influences, syllable breakdown).</li>
+                    <li><RefreshCw className="w-3.5 h-3.5 inline text-purple-400" /> <span className="text-purple-400">Refresh</span> — Reroll specific syllables while keeping parts you like.</li>
+                    <li><User className="w-3.5 h-3.5 inline text-indigo-400" /> <span className="text-indigo-400">Person</span> — Send to Character Creator to build a full D&D character.</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-slate-200 mb-1">Tips</h4>
-                  <ul className="space-y-1 ml-4">
-                    <li>Use the "Refine" feature when you find names you almost like — it analyzes patterns and generates variations.</li>
-                    <li>Combine multiple tones for unique blends (e.g., "Noble" + "Dark" for morally gray characters).</li>
-                    <li>The copy format dropdown lets you export as plain text, bullets, numbered list, or comma-separated.</li>
-                    <li><span className="text-amber-400">Lock settings</span> (🔒 icon) to keep them fixed when using "Surprise Me".</li>
-                    <li>For locations/factions/items, use <span className="text-amber-400">Name Style</span> to control formatting (Ironhold vs Iron Hold vs The Iron Hold).</li>
-                    <li>Click the <RefreshCw className="w-3 h-3 inline text-purple-400" /> icon on any name to tweak specific syllables while keeping others.</li>
+                  <h4 className="font-semibold text-slate-200 mb-1">Advanced Features</h4>
+                  <ul className="space-y-1 ml-4 text-xs">
+                    <li><span className="text-purple-400">Randomize Button</span> — Instantly generates a random name with current settings. Great for quick inspiration!</li>
+                    <li><span className="text-pink-400">Surprise Me</span> — Randomizes ALL unlocked settings and generates new names. Pure chaos mode!</li>
+                    <li><span className="text-amber-400">Lock Icons (🔒)</span> — Lock any setting to keep it fixed when using "Surprise Me". Perfect for maintaining specific vibes.</li>
+                    <li><span className="text-teal-400">Refine Feature</span> — Found names you almost like? Click "Refine" to analyze patterns and generate intelligent variations.</li>
+                    <li><span className="text-emerald-400">Copy Format</span> — Export favorites as plain text, bullets, numbered list, or comma-separated for easy pasting.</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-200 mb-1">Pro Tips</h4>
+                  <ul className="space-y-1 ml-4 text-xs">
+                    <li>Combine multiple tones for unique blends ("Noble" + "Dark" = morally complex characters).</li>
+                    <li>Mix linguistic influences (Celtic + Arabic) for exotic, culturally-rich names.</li>
+                    <li>Use the tweak (🔄) feature to fine-tune names by rerolling individual syllables.</li>
+                    <li>Favorites persist in your browser — star anything you like for later!</li>
+                    <li>Press <span className="text-indigo-400">Ctrl+Enter</span> anywhere to quickly generate new names.</li>
                   </ul>
                 </div>
               </div>
@@ -9304,7 +9388,7 @@ export default function AetherNames() {
         </header>
 
         {currentPage === 'generator' ? (
-          <div className="grid lg:grid-cols-5 gap-6">
+          <div className="grid lg:grid-cols-5 gap-4 md:gap-6">
             <div className="lg:col-span-2 space-y-4">
             <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 shadow-xl">
               <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
@@ -9512,7 +9596,7 @@ export default function AetherNames() {
                       <Sparkles className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`} />
                       {isGenerating ? 'Forging...' : 'Generate Names'}
                     </span>
-                    <span className="text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
+                    <span className="hidden md:inline text-[10px] opacity-60 font-normal mt-0.5">Ctrl+Enter</span>
                   </div>
                 </GlowButton>
                 <GlowButton variant="secondary" onClick={() => setGeneratedNames([])} theme={config.genre}>
