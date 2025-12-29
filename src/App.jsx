@@ -5195,8 +5195,8 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3">
-          <div className={`px-4 py-2 rounded-full text-lg font-semibold whitespace-nowrap ${
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className={`px-3 sm:px-4 py-2 rounded-full text-sm sm:text-base font-semibold whitespace-nowrap ${
             completionCount === totalRequired 
               ? 'bg-green-500/20 text-green-300 border border-green-500/30'
               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
@@ -5206,17 +5206,18 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Randomize Again */}
           <button
             onClick={onRandomize}
-            className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 whitespace-nowrap"
+            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
             title="Generate a new random character"
           >
-            <Sparkles className="w-5 h-5" />
-            Randomize
+            <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
+            <span className="hidden xs:inline">Randomize</span>
+            <span className="xs:hidden">Random</span>
           </button>
           {/* Undo */}
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className={`px-5 py-2.5 rounded-lg text-base font-semibold transition-all ${
+            className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-semibold transition-all ${
               canUndo 
                 ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
                 : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
@@ -5646,7 +5647,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
         const isComplete = chosenLangs.length >= totalChoices;
         
         return (
-          <div className={`p-4 rounded-xl border ${
+          <div className={`mt-6 p-4 rounded-xl border ${
             isComplete 
               ? 'bg-green-500/10 border-green-500/30' 
               : 'bg-amber-500/10 border-amber-500/30'
@@ -5703,7 +5704,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             {!isComplete && (
               <div>
                 <div className="text-xs text-slate-500 mb-2">Choose {totalChoices - chosenLangs.length} more</div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 max-h-32 overflow-y-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-32 overflow-y-auto">
                   {availableLanguages.map(([id, lang]) => (
                     <button
                       key={id}
@@ -5746,7 +5747,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
         const isComplete = chosenReplacements.length >= overlap.length;
         
         return (
-          <div className={`p-4 rounded-xl border ${
+          <div className={`mt-6 p-4 rounded-xl border ${
             isComplete 
               ? 'bg-green-500/10 border-green-500/30' 
               : 'bg-amber-500/10 border-amber-500/30'
