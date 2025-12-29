@@ -5195,7 +5195,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             </div>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+        <div className="flex items-start gap-3">
           <div className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
             completionCount === totalRequired 
               ? 'bg-green-500/20 text-green-300 border border-green-500/30'
@@ -5203,11 +5203,11 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           }`}>
             {completionCount}/{totalRequired} Complete
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center gap-2">
             {/* Randomize Again */}
             <button
               onClick={onRandomize}
-              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap"
+              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 whitespace-nowrap w-full justify-center"
               title="Generate a new random character"
             >
               <Sparkles className="w-3 h-3" />
@@ -5218,7 +5218,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             <button
               onClick={onUndo}
               disabled={!canUndo}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all w-full ${
                 canUndo 
                   ? 'bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50' 
                   : 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
