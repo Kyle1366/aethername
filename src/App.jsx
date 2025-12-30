@@ -3857,6 +3857,19 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
       intelligence: 8, wisdom: 8, charisma: 8
     };
   });
+
+  const primaryClassData = character.class ? CLASSES[character.class] : null;
+  const multiclassData = (character.multiclass || []).map(mc => CLASSES[mc.classId]).filter(Boolean);
+  const addUnique = (list, value) => {
+    if (value && !list.includes(value)) list.push(value);
+  };
+  const primaryAbilityOrder = [];
+  (primaryClassData?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a));
+  multiclassData.forEach((cls) => (cls?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a)));
+
+  const savingThrowOrder = [];
+  (primaryClassData?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a));
+  multiclassData.forEach((cls) => (cls?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a)));
   
   // Calculate unassigned indices from assignments
   const getUnassignedIndices = () => {
@@ -4025,36 +4038,41 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
   const autoAssignOptimal = () => {
     if (method === 'pointbuy' || method === 'manual') return;
     if (!character.class) return;
-    
-    const classData = CLASSES[character.class];
-    const primaryAbilities = classData?.primaryAbility || [];
-    const savingThrows = classData?.savingThrows || [];
+    if (scoresArray.length === 0) return;
     
     // Sort scores descending
     const sortedIndices = [...scoresArray.keys()].sort((a, b) => scoresArray[b] - scoresArray[a]);
     
-    // Priority order: primary abilities first, then saving throws, then CON, then rest
-    const abilityPriority = ABILITY_NAMES.map(ability => {
-      let priority = 100;
-      
-      if (primaryAbilities.includes(ability)) {
-        priority = primaryAbilities.indexOf(ability); // 0 = highest priority
-      } else if (savingThrows.includes(ability)) {
-        priority = 10 + savingThrows.indexOf(ability);
-      } else if (ability === 'constitution') {
-        priority = 20; // CON is important for everyone
-      } else {
-        priority = 30 + ABILITY_NAMES.indexOf(ability);
+    // Priority order: primary abilities first (primary class, then multiclasses), then saving throws, then CON, then rest
+    const abilityPriority = [];
+
+    primaryAbilityOrder.forEach((ability, idx) => {
+      abilityPriority.push({ ability, priority: idx });
+    });
+
+    savingThrowOrder.forEach((ability, idx) => {
+      if (!abilityPriority.some(p => p.ability === ability)) {
+        abilityPriority.push({ ability, priority: primaryAbilityOrder.length + idx });
       }
-      
-      return { ability, priority };
-    }).sort((a, b) => a.priority - b.priority);
+    });
+
+    if (!abilityPriority.some(p => p.ability === 'constitution')) {
+      abilityPriority.push({ ability: 'constitution', priority: abilityPriority.length + 1 });
+    }
+
+    ABILITY_NAMES.forEach((ability) => {
+      if (!abilityPriority.some(p => p.ability === ability)) {
+        abilityPriority.push({ ability, priority: abilityPriority.length + 10 });
+      }
+    });
+    
+    abilityPriority.sort((a, b) => a.priority - b.priority);
     
     // Assign scores
     const newAssignments = {};
     const newAbilities = {};
     
-    abilityPriority.forEach((item, index) => {
+    abilityPriority.slice(0, sortedIndices.length).forEach((item, index) => {
       const scoreIndex = sortedIndices[index];
       newAssignments[item.ability] = scoreIndex;
       newAbilities[item.ability] = scoresArray[scoreIndex];
@@ -4076,19 +4094,24 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     <div className="space-y-6">
       <div>
         <h3 className="text-xl font-bold text-white mb-1">Ability Scores</h3>
-        {character.class && CLASSES[character.class] && (
+        {(primaryClassData || multiclassData.length > 0) && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-slate-500">
-              {CLASSES[character.class].name} saves:
-            </span>
-            {CLASSES[character.class].savingThrows.map(st => (
+            <span className="text-slate-500">Saving Throws:</span>
+            {savingThrowOrder.map((st) => (
               <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
                 {ABILITY_LABELS[st]?.short}
               </span>
             ))}
-            <span className="text-slate-600 text-xs ml-2">
-              Primary: {CLASSES[character.class].primaryAbility.map(a => ABILITY_LABELS[a]?.short).join('/')}
-            </span>
+            {primaryAbilityOrder.length > 0 && (
+              <span className="text-slate-600 text-xs ml-2">
+                Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
+              </span>
+            )}
+            {multiclassData.length > 0 && (
+              <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-full">
+                Multiclass active
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -4997,7 +5020,7 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
 // REVIEW & EXPORT STEP (PHASE 8)
 // ============================================================================
 
-const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo, randomWithMulticlass, setRandomWithMulticlass }) => {
+const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }) => {
   const [exportFormat, setExportFormat] = useState(null);
   const [copied, setCopied] = useState(false);
 
@@ -5548,28 +5571,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo, 
           }`}>
             {completionCount}/{totalRequired} Complete
           </div>
-          {/* Randomize with Multiclass Toggle */}
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all whitespace-nowrap">
-              <input
-                type="checkbox"
-                checked={randomWithMulticlass}
-                onChange={(e) => setRandomWithMulticlass(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-              />
-              <span className="hidden sm:inline">Enable Multiclass</span>
-              <span className="sm:hidden">MC</span>
-            </label>
-            <button
-              onClick={onRandomize}
-              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
-              title="Generate a new random character"
-            >
-              <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
-              <span className="hidden xs:inline">Randomize</span>
-              <span className="xs:hidden">Random</span>
-            </button>
-          </div>
+          <button
+            onClick={onRandomize}
+            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
+            title="Generate a new random character"
+          >
+            <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
+            <span className="hidden xs:inline">Randomize</span>
+            <span className="xs:hidden">Random</span>
+          </button>
           {/* Undo */}
           <button
             onClick={onUndo}
@@ -8080,10 +8090,18 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
 // CLASS SELECTION STEP (PHASE 4)
 // ============================================================================
 
-const ClassSelectionStep = ({ character, updateCharacter }) => {
+const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, setRandomWithMulticlass }) => {
   const [showAllClasses, setShowAllClasses] = useState(!character.class);
+  const [multiclassExpanded, setMulticlassExpanded] = useState(randomWithMulticlass || (character.multiclass?.length > 0));
   const selectedClassId = character.class;
   const selectedClass = selectedClassId ? CLASSES[selectedClassId] : null;
+
+  useEffect(() => {
+    if ((character.multiclass || []).length > 0 && !multiclassExpanded) {
+      setMulticlassExpanded(true);
+      setRandomWithMulticlass(true);
+    }
+  }, [character.multiclass, multiclassExpanded, setRandomWithMulticlass]);
 
   const pickClass = (classId) => {
     updateCharacter('class', classId);
@@ -8119,6 +8137,43 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
         <p className="text-sm text-slate-500">
           Your class determines your abilities, features, and role in the party.
         </p>
+      </div>
+
+      {/* Multiclass toggle inline with Class selection */}
+      <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <input
+                type="checkbox"
+                checked={multiclassExpanded}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setMulticlassExpanded(checked);
+                  setRandomWithMulticlass(checked);
+                  if (!checked) {
+                    updateCharacter('multiclass', []);
+                  }
+                }}
+                className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+              />
+              <span>Multi-class?</span>
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Enable to add secondary classes and see combined saves while assigning abilities.
+            </p>
+          </div>
+          {multiclassExpanded && (
+            <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full inline-flex items-center gap-1 self-start sm:self-auto">
+              <AlertCircle className="w-3 h-3" /> Optional — requires level 3+
+            </span>
+          )}
+        </div>
+        {multiclassExpanded && (
+          <div className="mt-4">
+            <MulticlassStep character={character} updateCharacter={updateCharacter} />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -9265,7 +9320,6 @@ const CharacterCreator = ({
     { id: 'asi', label: 'ASI/Feats', icon: Star },
     { id: 'background', label: 'Background', icon: Scroll },
     { id: 'equipment', label: 'Equipment', icon: Sword },
-    { id: 'multiclass', label: 'Multiclass', icon: Sword },
     { id: 'spells', label: 'Spells', icon: Sparkles },
     { id: 'review', label: 'Review', icon: Check }
   ];
@@ -9337,8 +9391,6 @@ const CharacterCreator = ({
         return !!character.background;
       case 'equipment':
         return true; // Equipment is optional for now
-      case 'multiclass':
-        return true; // Multiclass is optional
       case 'spells':
         return true; // Spells validated separately for spellcasters
       case 'review':
@@ -9469,30 +9521,19 @@ const CharacterCreator = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">Basic Information</h3>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
-                  <input
-                    type="checkbox"
-                    checked={randomWithMulticlass}
-                    onChange={(e) => setRandomWithMulticlass(e.target.checked)}
-                    className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-                  />
-                  <span>Enable Multiclass</span>
-                </label>
-                <button
-                  onClick={() => {
-                    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
-                    setCharacter(randomChar);
-                    // Jump to review step (last step)
-                    setCurrentStep(9);
-                  }}
-                  className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span className="hidden sm:inline">Random Character</span>
-                  <span className="sm:hidden">Random</span>
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
+                  setCharacter(randomChar);
+                  // Jump to review step (last step)
+                  setCurrentStep(steps.length - 1);
+                }}
+                className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">Random Character</span>
+                <span className="sm:hidden">Random</span>
+              </button>
             </div>
             
             {/* Character Name */}
@@ -9676,6 +9717,8 @@ const CharacterCreator = ({
           <ClassSelectionStep 
             character={character}
             updateCharacter={updateCharacter}
+            randomWithMulticlass={randomWithMulticlass}
+            setRandomWithMulticlass={setRandomWithMulticlass}
           />
         )}
 
@@ -9708,28 +9751,19 @@ const CharacterCreator = ({
         )}
 
         {currentStep === 7 && (
-          <MulticlassStep 
-            character={character}
-            updateCharacter={updateCharacter}
-          />
-        )}
-
-        {currentStep === 8 && (
           <SpellSelectionStep 
             character={character}
             updateCharacter={updateCharacter}
           />
         )}
 
-        {currentStep === 9 && (
+        {currentStep === 8 && (
           <ReviewStep 
             character={character} 
             updateCharacter={updateCharacter} 
             onRandomize={randomizeFromReview}
             onUndo={undoRandomizeFromReview}
             canUndo={!!lastRandomSnapshot}
-            randomWithMulticlass={randomWithMulticlass}
-            setRandomWithMulticlass={setRandomWithMulticlass}
           />
         )}
       </div>
