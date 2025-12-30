@@ -5716,16 +5716,22 @@ const ReviewStep = ({
     doc.text(charName, (pageWidth - nameWidth) / 2, margin + 11);
     
     // Class/Level line - multiclass support
+    // Primary class is in character.class + character.level
+    // Multiclass array contains ADDITIONAL classes only
     let classText = '';
+    const primarySubclassName = character.subclass && SUBCLASSES[character.class]?.[character.subclass]?.name;
+    const primaryClassText = `${classData?.name || 'Unknown'} ${character.level || totalLevel}${primarySubclassName ? ` (${primarySubclassName})` : ''}`;
+    
     if (character.multiclass && character.multiclass.length > 0) {
-      classText = character.multiclass.map(mc => {
+      // Show primary class + all additional multiclass entries
+      const multiclassText = character.multiclass.map(mc => {
         const mcClass = CLASSES[mc.classId];
         const mcSubclass = mc.subclass && SUBCLASSES[mc.classId]?.[mc.subclass];
         return `${mcClass?.name || 'Unknown'} ${mc.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
       }).join(' / ');
+      classText = `${primaryClassText} / ${multiclassText}`;
     } else {
-      const subclassName = character.subclass && SUBCLASSES[character.class]?.[character.subclass]?.name;
-      classText = `${classData?.name || 'Unknown'} ${totalLevel}${subclassName ? ` (${subclassName})` : ''}`;
+      classText = primaryClassText;
     }
     doc.setFontSize(14);
     doc.setFont('times', 'italic');
@@ -5910,7 +5916,12 @@ const ReviewStep = ({
     const features = [];
     if (race?.traits) features.push(...race.traits.map(t => ({ text: t, type: 'Racial' })));
     
-    // For multiclass, show features from all classes
+    // Always show primary class features
+    if (classData?.features) {
+      features.push(...classData.features.map(f => ({ text: f, type: classData.name })));
+    }
+    
+    // Also show features from additional multiclass entries
     if (character.multiclass && character.multiclass.length > 0) {
       character.multiclass.forEach(mc => {
         const mcClass = CLASSES[mc.classId];
@@ -5918,9 +5929,6 @@ const ReviewStep = ({
           features.push(...mcClass.features.map(f => ({ text: f, type: mcClass.name })));
         }
       });
-    } else {
-      // Single class
-      if (classData?.features) features.push(...classData.features.map(f => ({ text: f, type: 'Class' })));
     }
     
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
