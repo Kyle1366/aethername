@@ -4310,7 +4310,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
                           <span className="md:hidden">1°</span>
                         </span>
                       )}
-                      {character.class && CLASSES[character.class]?.savingThrows?.includes(ability) && (
+                      {savingThrowOrder.includes(ability) && (
                         <span className="px-1 py-0.5 rounded text-[9px] md:text-[10px] bg-green-500/20 text-green-300 border border-green-500/30 whitespace-nowrap" title="Saving Throw Proficiency">
                           <span className="hidden md:inline">SAVE</span>
                           <span className="md:hidden">✓</span>
@@ -6418,33 +6418,72 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
 
 const MulticlassStep = ({ character, updateCharacter }) => {
   const primaryClass = character.class ? CLASSES[character.class] : null;
-  const primaryLevel = character.level || 1;
-  const totalLevels = primaryLevel + (character.multiclass?.reduce((sum, mc) => sum + mc.level, 0) || 0);
+  const totalLevel = character.level || 1;
+  const multiclassEntries = character.multiclass || [];
+  const multiclassLevelSum = multiclassEntries.reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
+
+  // Enforce: total character level is the sum of all class levels.
+  // This step only tracks multiclass allocations; the primary class gets the remainder.
+  const minPrimaryLevel = 1;
+  const maxMulticlassTotal = Math.max(0, totalLevel - minPrimaryLevel);
+  const primaryLevel = Math.max(minPrimaryLevel, totalLevel - multiclassLevelSum);
+
+  const normalizeMulticlassLevels = (entries) => {
+    const normalized = (entries || []).map((mc) => ({
+      classId: mc?.classId,
+      level: Math.max(1, Number(mc?.level) || 1),
+      subclass: mc?.subclass ?? null
+    }));
+
+    let sum = normalized.reduce((s, mc) => s + mc.level, 0);
+    if (sum <= maxMulticlassTotal) return normalized;
+
+    // Reduce from the end until we fit, never dropping below 1.
+    for (let i = normalized.length - 1; i >= 0 && sum > maxMulticlassTotal; i--) {
+      const canReduce = Math.max(0, normalized[i].level - 1);
+      const needReduce = sum - maxMulticlassTotal;
+      const delta = Math.min(canReduce, needReduce);
+      normalized[i].level -= delta;
+      sum -= delta;
+    }
+
+    return normalized;
+  };
+
+  useEffect(() => {
+    const fixed = normalizeMulticlassLevels(multiclassEntries);
+    const fixedSum = fixed.reduce((s, mc) => s + mc.level, 0);
+    if (fixedSum !== multiclassLevelSum) {
+      updateCharacter('multiclass', fixed);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalLevel]);
   
   // Get all available classes except the primary class
   const availableClasses = Object.entries(CLASSES).filter(([id]) => id !== character.class);
   
-  // Multi-class rules: need to be at least level 3 to multi-class
-  if (primaryLevel < 3) {
+  // Multi-class rules: need to be at least level 2 to multi-class
+  if (totalLevel < 2) {
     return (
       <div className="space-y-4">
         <h3 className="text-xl font-bold text-white">Multi-classing</h3>
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
           <p className="text-amber-300">
-            Multi-classing is available starting at character level 3.
+            Multi-classing is available starting at character level 2.
           </p>
           <p className="text-sm text-slate-400 mt-2">
-            Your current level: {primaryLevel}
+            Your current level: {totalLevel}
           </p>
         </div>
       </div>
     );
   }
 
-  const multiclassEntries = character.multiclass || [];
-  const canAddClass = totalLevels < 20 && multiclassEntries.length < 2; // Max 20 levels, max 3 classes total (2 additional)
+  const availableMulticlassLevels = Math.max(0, maxMulticlassTotal - multiclassLevelSum);
+  const canAddClass = availableMulticlassLevels >= 1 && multiclassEntries.length < 2; // Max 3 classes total (2 additional)
   
   const addMulticlass = (classId) => {
+    if (availableMulticlassLevels < 1) return;
     const newMulticlass = [...multiclassEntries, { classId, level: 1, subclass: null }];
     updateCharacter('multiclass', newMulticlass);
   };
@@ -6455,8 +6494,11 @@ const MulticlassStep = ({ character, updateCharacter }) => {
   };
   
   const updateMulticlassLevel = (index, newLevel) => {
+    const safeLevel = Math.max(1, Number(newLevel) || 1);
+    const sumOther = multiclassEntries.reduce((sum, mc, i) => sum + (i === index ? 0 : (Number(mc?.level) || 0)), 0);
+    const maxForThis = Math.max(1, maxMulticlassTotal - sumOther);
     const newMulticlass = [...multiclassEntries];
-    newMulticlass[index] = { ...newMulticlass[index], level: newLevel };
+    newMulticlass[index] = { ...newMulticlass[index], level: Math.min(safeLevel, maxForThis) };
     updateCharacter('multiclass', newMulticlass);
   };
   
@@ -6471,7 +6513,7 @@ const MulticlassStep = ({ character, updateCharacter }) => {
       <div>
         <h3 className="text-xl font-bold text-white mb-1">Multi-classing (Optional)</h3>
         <p className="text-sm text-slate-500">
-          Gain abilities from another class. You can have up to 3 classes with a combined level of 20.
+          Split your total character level across multiple classes. Your primary class gets any unassigned levels.
         </p>
       </div>
 
@@ -6484,12 +6526,12 @@ const MulticlassStep = ({ character, updateCharacter }) => {
         <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
           <div className="text-xs text-purple-300">Multi-class Levels</div>
           <div className="text-2xl font-bold text-purple-400">
-            {multiclassEntries.reduce((sum, mc) => sum + mc.level, 0)}
+            {multiclassLevelSum}
           </div>
         </div>
         <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
           <div className="text-xs text-slate-400">Total Levels</div>
-          <div className="text-2xl font-bold text-slate-200">{totalLevels}/20</div>
+          <div className="text-2xl font-bold text-slate-200">{totalLevel}/20</div>
         </div>
         <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
           <div className="text-xs text-slate-400">Classes</div>
@@ -6557,30 +6599,28 @@ const MulticlassStep = ({ character, updateCharacter }) => {
                     <input
                       type="number"
                       min="1"
-                      max={Math.min(20, 20 - (totalLevels - multiclass.level))}
+                      max={Math.max(1, maxMulticlassTotal - multiclassEntries.reduce((sum, mc, i) => sum + (i === index ? 0 : (Number(mc?.level) || 0)), 0))}
                       value={multiclass.level}
                       onChange={(e) => {
                         const val = parseInt(e.target.value);
-                        if (!isNaN(val) && val >= 1 && val <= Math.min(20, 20 - (totalLevels - multiclass.level))) {
-                          updateMulticlassLevel(index, val);
-                        }
+                        if (!isNaN(val) && val >= 1) updateMulticlassLevel(index, val);
                       }}
                       className="w-20 px-3 py-2 text-center bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-200 focus:outline-none focus:border-purple-500/50"
                     />
                     <button
                       onClick={() => {
-                        const maxLevel = Math.min(20, 20 - (totalLevels - multiclass.level));
+                        const maxLevel = Math.max(1, maxMulticlassTotal - multiclassEntries.reduce((sum, mc, i) => sum + (i === index ? 0 : (Number(mc?.level) || 0)), 0));
                         if (multiclass.level < maxLevel) {
                           updateMulticlassLevel(index, multiclass.level + 1);
                         }
                       }}
-                      disabled={multiclass.level >= Math.min(20, 20 - (totalLevels - multiclass.level))}
+                      disabled={multiclass.level >= Math.max(1, maxMulticlassTotal - multiclassEntries.reduce((sum, mc, i) => sum + (i === index ? 0 : (Number(mc?.level) || 0)), 0))}
                       className="px-3 py-2 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     >
                       +
                     </button>
                     <div className="text-xs text-slate-500 ml-2">
-                      ({20 - totalLevels} remaining)
+                      ({availableMulticlassLevels} multiclass level{availableMulticlassLevels === 1 ? '' : 's'} available)
                     </div>
                   </div>
                 </div>
@@ -8139,43 +8179,6 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
         </p>
       </div>
 
-      {/* Multiclass toggle inline with Class selection */}
-      <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-              <input
-                type="checkbox"
-                checked={multiclassExpanded}
-                onChange={(e) => {
-                  const checked = e.target.checked;
-                  setMulticlassExpanded(checked);
-                  setRandomWithMulticlass(checked);
-                  if (!checked) {
-                    updateCharacter('multiclass', []);
-                  }
-                }}
-                className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-              />
-              <span>Multi-class?</span>
-            </label>
-            <p className="text-xs text-slate-500 mt-1">
-              Enable to add secondary classes and see combined saves while assigning abilities.
-            </p>
-          </div>
-          {multiclassExpanded && (
-            <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full inline-flex items-center gap-1 self-start sm:self-auto">
-              <AlertCircle className="w-3 h-3" /> Optional — requires level 3+
-            </span>
-          )}
-        </div>
-        {multiclassExpanded && (
-          <div className="mt-4">
-            <MulticlassStep character={character} updateCharacter={updateCharacter} />
-          </div>
-        )}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         {/* Class Grid */}
         <div className="lg:col-span-3">
@@ -8287,6 +8290,46 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                       Saves: <span className="text-white font-medium">{getSavingThrowDisplay()}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Multiclass toggle (below primary class) */}
+                <div className="p-4 rounded-xl bg-slate-900/30 border border-slate-700/40">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                        <input
+                          type="checkbox"
+                          checked={multiclassExpanded}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setMulticlassExpanded(checked);
+                            setRandomWithMulticlass(checked);
+                            if (checked && (character.level || 1) < 2) {
+                              updateCharacter('level', 2);
+                            }
+                            if (!checked) {
+                              updateCharacter('multiclass', []);
+                            }
+                          }}
+                          className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                        />
+                        <span>Multi-class?</span>
+                      </label>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Enable to allocate levels into secondary classes.
+                      </p>
+                    </div>
+                    {multiclassExpanded && (
+                      <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full inline-flex items-center gap-1 self-start sm:self-auto">
+                        <AlertCircle className="w-3 h-3" /> Requires level 2+
+                      </span>
+                    )}
+                  </div>
+                  {multiclassExpanded && (
+                    <div className="mt-4">
+                      <MulticlassStep character={character} updateCharacter={updateCharacter} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Features */}
@@ -8911,20 +8954,20 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
       weightedLevels.push(i + 1);
     }
   });
-  const level = pick(weightedLevels);
+  const levelPool = enableMulticlass ? weightedLevels.filter(l => l >= 2) : weightedLevels;
+  const level = pick(levelPool.length ? levelPool : weightedLevels);
   
   // Step 9.5: Multiclass generation (if enabled and level is high enough)
   let multiclassLevels = [];
-  let adjustedPrimaryLevel = level;
-  
-  if (enableMulticlass && level >= 5) {
-    // Decide if we should multiclass (50% chance at level 5+)
-    const shouldMulticlass = Math.random() < 0.5;
-    
+
+  if (enableMulticlass && level >= 2) {
+    // Decide if we should multiclass (increases with level)
+    const shouldMulticlass = Math.random() < (level >= 5 ? 0.5 : 0.35);
+
     if (shouldMulticlass) {
-      // Allocate 2-3 levels to a secondary class
-      const multiclassLevelCount = level >= 10 ? pick([2, 3, 4]) : pick([2, 3]);
-      adjustedPrimaryLevel = level - multiclassLevelCount;
+      // Allocate levels to a secondary class while keeping primary at least level 1.
+      const multiclassLevelCount = level >= 10 ? pick([2, 3, 4]) : level >= 5 ? pick([2, 3]) : 1;
+      const safeMulticlassCount = Math.min(multiclassLevelCount, Math.max(1, level - 1));
       
       // Pick a synergistic multiclass based on primary abilities
       const getCompatibleMulticlass = (primaryClass) => {
@@ -8953,7 +8996,7 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
       
       // Choose a subclass if the multiclass level is high enough
       let multiclassSubclass = null;
-      if (multiclassLevelCount >= multiclassData.subclassLevel) {
+      if (safeMulticlassCount >= multiclassData.subclassLevel) {
         const subclasses = SUBCLASSES[multiclassId];
         if (subclasses) {
           multiclassSubclass = pick(Object.keys(subclasses));
@@ -8961,8 +9004,8 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
       }
       
       multiclassLevels = [{
-        class: multiclassId,
-        level: multiclassLevelCount,
+        classId: multiclassId,
+        level: safeMulticlassCount,
         subclass: multiclassSubclass
       }];
     }
@@ -9171,7 +9214,7 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     subclass: null, // User can choose subclass manually
     background: backgroundId,
     alignment: alignment,
-    level: adjustedPrimaryLevel,
+    level: level,
     multiclass: multiclassLevels,
     abilities: abilities,
     abilityMethod: 'standard',
@@ -9521,19 +9564,36 @@ const CharacterCreator = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">Basic Information</h3>
-              <button
-                onClick={() => {
-                  const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
-                  setCharacter(randomChar);
-                  // Jump to review step (last step)
-                  setCurrentStep(steps.length - 1);
-                }}
-                className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">Random Character</span>
-                <span className="sm:hidden">Random</span>
-              </button>
+              <div className="flex flex-col items-end gap-2">
+                <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={randomWithMulticlass}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setRandomWithMulticlass(checked);
+                      if (checked && (character.level || 1) < 2) {
+                        updateCharacter('level', 2);
+                      }
+                    }}
+                    className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                  />
+                  <span>Multiclass (Random)</span>
+                </label>
+                <button
+                  onClick={() => {
+                    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
+                    setCharacter(randomChar);
+                    // Jump to review step (last step)
+                    setCurrentStep(steps.length - 1);
+                  }}
+                  className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">Random Character</span>
+                  <span className="sm:hidden">Random</span>
+                </button>
+              </div>
             </div>
             
             {/* Character Name */}
