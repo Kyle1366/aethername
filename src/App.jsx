@@ -5462,30 +5462,62 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo, 
   const subclassRequired = classData && character.level >= classData.subclassLevel;
   const subclassComplete = !subclassRequired || !!character.subclass;
 
+  // Core required fields (always required)
   const isComplete = {
     name: !!character.name,
     race: !!character.race,
     class: !!character.class,
-    subclass: subclassComplete,
     abilities: Object.values(character.abilities).some(v => v !== 10),
-    background: !!character.background,
-    languages: languagesComplete,
-    skills: skillsComplete
+    background: !!character.background
   };
 
-  const completionCount = Object.values(isComplete).filter(Boolean).length;
-  const totalRequired = 8;
+  // Conditionally required fields
+  const conditionalRequired = {};
+  
+  // Subclass is only required if level is high enough
+  if (subclassRequired) {
+    conditionalRequired.subclass = subclassComplete;
+  }
+  
+  // Languages only required if there are choices to make
+  if (totalLanguageChoices > 0) {
+    conditionalRequired.languages = languagesComplete;
+  }
+  
+  // Skills only required if there are overlaps to resolve
+  if (skillOverlap.length > 0) {
+    conditionalRequired.skills = skillsComplete;
+  }
+
+  // Combine all required fields
+  const allRequired = { ...isComplete, ...conditionalRequired };
+  const completionCount = Object.values(allRequired).filter(Boolean).length;
+  const totalRequired = Object.keys(allRequired).length;
 
   // Build detailed missing items list
   const missingItems = [];
   if (!isComplete.name) missingItems.push({ label: 'Character name', step: 0 });
   if (!isComplete.race) missingItems.push({ label: 'Race selection', step: 1 });
   if (!isComplete.class) missingItems.push({ label: 'Class selection', step: 2 });
-  if (!isComplete.subclass) missingItems.push({ label: `Subclass (required at level ${classData?.subclassLevel})`, step: 2 });
+  if (subclassRequired && !subclassComplete) {
+    missingItems.push({ label: `Subclass (required at level ${classData?.subclassLevel})`, step: 2 });
+  }
   if (!isComplete.abilities) missingItems.push({ label: 'Ability scores', step: 3 });
   if (!isComplete.background) missingItems.push({ label: 'Background selection', step: 5 });
-  if (!isComplete.languages) missingItems.push({ label: languageMissingText, step: 5 });
-  if (!isComplete.skills) missingItems.push({ label: skillMissingText, step: 5 });
+  if (totalLanguageChoices > 0 && !languagesComplete) {
+    const chosenCount = (character.chosenLanguages || []).length;
+    missingItems.push({ 
+      label: `Language selection (${chosenCount}/${totalLanguageChoices} chosen)`, 
+      step: 5 
+    });
+  }
+  if (skillOverlap.length > 0 && !skillsComplete) {
+    const chosenCount = (character.replacementSkills || []).length;
+    missingItems.push({ 
+      label: `Skill replacement (${chosenCount}/${skillOverlap.length} chosen)`, 
+      step: 5 
+    });
+  }
 
   return (
     <div className="space-y-6">
