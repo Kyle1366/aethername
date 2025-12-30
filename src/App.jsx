@@ -5212,14 +5212,32 @@ const ReviewStep = ({
       ...bgSkills.filter(s => !overlap.map(o => o.toLowerCase()).includes(s.toLowerCase())),
       ...replacementSkills
     ];
-    const allSkills = Array.from(new Set([ ...normalizedClassSkills, ...bgEffective ]));
+    const allSkillNames = Array.from(new Set([ ...normalizedClassSkills, ...bgEffective ]));
+    
+    // Calculate skill bonuses (ability mod + proficiency since these are proficient skills)
+    const allSkillsWithBonuses = allSkillNames.map(skillName => {
+      // Find the skill in SKILLS to get its ability
+      const skillEntry = Object.values(SKILLS).find(s => s.name.toLowerCase() === skillName.toLowerCase());
+      if (skillEntry) {
+        const abilityMod = getModifier(finalAbilities[skillEntry.ability]);
+        const totalBonus = abilityMod + proficiencyBonus;
+        const bonusStr = totalBonus >= 0 ? `+${totalBonus}` : `${totalBonus}`;
+        return `${skillName} ${bonusStr}`;
+      }
+      return skillName;
+    });
     
     const profs = {
       armor: classData?.armorProficiencies || [],
       weapons: classData?.weaponProficiencies || [],
       tools: background?.toolProficiencies || [],
-      skills: allSkills,
-      savingThrows: classData?.savingThrows?.map(s => ABILITY_LABELS[s]?.name) || [],
+      skills: allSkillsWithBonuses,
+      savingThrows: (classData?.savingThrows || []).map(s => {
+        const abilityMod = getModifier(finalAbilities[s]);
+        const totalBonus = abilityMod + proficiencyBonus;
+        const bonusStr = totalBonus >= 0 ? `+${totalBonus}` : `${totalBonus}`;
+        return `${ABILITY_LABELS[s]?.short || s} ${bonusStr}`;
+      }),
       languages: allLanguages.length > 0 ? allLanguages : ['Common']
     };
     return profs;
