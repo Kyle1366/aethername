@@ -5525,7 +5525,7 @@ const ReviewStep = ({
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 12;
+    const margin = 10;
     let y = margin;
 
     // Color palette - Fantasy RPG theme
@@ -5667,7 +5667,7 @@ const ReviewStep = ({
     };
 
     const drawSectionHeader = (text, yPos) => {
-      const headerHeight = 8;
+      const headerHeight = 6;
       
       // Gradient background (simulated)
       doc.setFillColor(...colors.headerBg);
@@ -5704,23 +5704,23 @@ const ReviewStep = ({
     // ============== HEADER ==============
     // Ornate header background
     doc.setFillColor(...colors.darkPurple);
-    doc.rect(margin, margin, pageWidth - 2 * margin, 30, 'F');
+    doc.rect(margin, margin, pageWidth - 2 * margin, 24, 'F');
     
     doc.setDrawColor(...colors.gold);
     doc.setLineWidth(2);
-    doc.rect(margin, margin, pageWidth - 2 * margin, 30);
+    doc.rect(margin, margin, pageWidth - 2 * margin, 24);
     
     // Inner gold accent
     doc.setLineWidth(0.5);
-    doc.rect(margin + 1, margin + 1, pageWidth - 2 * margin - 2, 28);
+    doc.rect(margin + 1, margin + 1, pageWidth - 2 * margin - 2, 22);
     
     // Character name (large, centered)
-    doc.setFontSize(28);
+    doc.setFontSize(22);
     doc.setFont('times', 'bold');
     doc.setTextColor(...colors.lightGold);
     const charName = character.name || 'Unnamed Character';
     const nameWidth = doc.getTextWidth(charName);
-    doc.text(charName, (pageWidth - nameWidth) / 2, margin + 10);
+    doc.text(charName, (pageWidth - nameWidth) / 2, margin + 8);
     
     // Class/Level line with multiclass support
     let classText = '';
@@ -5734,20 +5734,20 @@ const ReviewStep = ({
     } else {
       classText = `${classData?.name || 'Unknown'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`;
     }
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont('times', 'italic');
     doc.setTextColor(255, 255, 255);
     const classWidth = doc.getTextWidth(classText);
-    doc.text(classText, (pageWidth - classWidth) / 2, margin + 18);
+    doc.text(classText, (pageWidth - classWidth) / 2, margin + 15);
     
     // Race & Background
     const raceText = `${race?.name || 'Unknown'}${subrace ? ` (${subrace.name})` : ''}`;
     const bgText = background?.name || 'Unknown';
     const detailText = `${raceText} • ${bgText}`;
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...colors.silver);
     const detailWidth = doc.getTextWidth(detailText);
-    doc.text(detailText, (pageWidth - detailWidth) / 2, margin + 25);
+    doc.text(detailText, (pageWidth - detailWidth) / 2, margin + 20);
     
     // Player & Alignment (corners)
     if (character.playerName) {
@@ -5762,10 +5762,10 @@ const ReviewStep = ({
       doc.setTextColor(...colors.silver);
       const alignText = ALIGNMENTS[character.alignment].name;
       const alignWidth = doc.getTextWidth(alignText);
-      doc.text(alignText, pageWidth - margin - alignWidth - 3, margin + 6);
+      doc.text(alignText, pageWidth - margin - alignWidth - 3, margin + 5);
     }
 
-    y = margin + 35;
+    y = margin + 26;
 
     // ============== CORE STATS ==============
     y = drawSectionHeader('CORE STATS', y) + 3;
@@ -5792,7 +5792,7 @@ const ReviewStep = ({
     xPos += boxWidths[5] + gap;
     addStyledBox(xPos, y, boxWidths[6], 22, 'PERC', passivePerception, 9, 15);
 
-    y += 22;
+    y += 24;
 
     // ============== ABILITY SCORES ==============
     y = drawSectionHeader('ABILITY SCORES', y) + 3;
@@ -5808,10 +5808,10 @@ const ReviewStep = ({
       addAbilityBox(x, y, ability, final, mod, bonus);
     });
 
-    y += 36;
+    y += 32;
 
     // ============== PROFICIENCIES ==============
-    y = drawSectionHeader('PROFICIENCIES', y) + 3;
+    y = drawSectionHeader('PROFICIENCIES', y) + 1;
     
     // Two-column layout with decorative bullets
     const leftColX = margin + 2;
@@ -5835,7 +5835,7 @@ const ReviewStep = ({
     proficiencies.savingThrows.forEach((save, idx) => {
       // Gold diamond bullet
       doc.setFillColor(...colors.gold);
-      const bulletY = y + idx * 4.5;
+      const bulletY = y + idx * 4;
       doc.circle(leftColX + 1.5, bulletY + 0.5, 1, 'F');
       doc.text(save, leftColX + 5, bulletY + 1.5);
     });
@@ -5859,14 +5859,14 @@ const ReviewStep = ({
       const col = idx < skillsPerCol ? 0 : 1;
       const rowIdx = col === 0 ? idx : idx - skillsPerCol;
       const skillColX = col === 0 ? rightColX : rightColX + 50;
-      const bulletY = y + rowIdx * 4.5;
+      const bulletY = y + rowIdx * 4;
       
       doc.setFillColor(...colors.accentPurple);
       doc.circle(skillColX + 1.5, bulletY + 0.5, 1, 'F');
       doc.text(skill, skillColX + 5, bulletY + 1.5);
     });
     
-    y += Math.max(proficiencies.savingThrows.length * 4.5, skillsPerCol * 4.5) + 4;
+    y += Math.max(proficiencies.savingThrows.length * 4, skillsPerCol * 4) + 2;
     
     // Languages
     if (proficiencies.languages && proficiencies.languages.length > 0) {
@@ -5899,7 +5899,7 @@ const ReviewStep = ({
       y = margin + 10;
     }
     
-    y = drawSectionHeader('FEATURES & TRAITS', y) + 3;
+    y = drawSectionHeader('FEATURES & TRAITS', y) + 1;
     
     doc.setFontSize(10);
     doc.setFont('times', 'normal');
@@ -5933,10 +5933,10 @@ const ReviewStep = ({
       doc.setTextColor(...colors.textDark);
       doc.text(feat.text, margin + typeWidth + 2, y + 0.5);
       
-      y += 5;
+      y += 3.5;
     });
     
-    y += 4;
+    y += 2;
 
     // ============== LEVEL ADVANCEMENTS (ASI/FEATS) ==============
     const levelAdvancements = [];
@@ -5970,7 +5970,7 @@ const ReviewStep = ({
         y = margin + 10;
       }
       
-      y = drawSectionHeader('LEVEL ADVANCEMENTS', y) + 3;
+      y = drawSectionHeader('LEVEL ADVANCEMENTS', y) + 2;
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
@@ -6000,7 +6000,7 @@ const ReviewStep = ({
         y = margin + 10;
       }
       
-      y = drawSectionHeader('ELDRITCH INVOCATIONS', y) + 3;
+      y = drawSectionHeader('ELDRITCH INVOCATIONS', y) + 2;
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
@@ -6036,7 +6036,7 @@ const ReviewStep = ({
         y = margin + 10;
       }
       
-      y = drawSectionHeader('PHYSICAL CHARACTERISTICS', y) + 3;
+      y = drawSectionHeader('PHYSICAL CHARACTERISTICS', y) + 2;
       
       const physicalTraits = [
         { label: 'Age', value: character.age },
@@ -6082,7 +6082,7 @@ const ReviewStep = ({
         y = margin + 10;
       }
       
-      y = drawSectionHeader('EQUIPMENT', y) + 3;
+      y = drawSectionHeader('EQUIPMENT', y) + 2;
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
@@ -6098,7 +6098,7 @@ const ReviewStep = ({
         doc.setFillColor(...colors.gold);
         doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
         doc.text(item, margin + 5, y + 1.5);
-        y += 4.5;
+        y += 4;
       });
       
       if (character.gold > 0) {
@@ -6106,10 +6106,10 @@ const ReviewStep = ({
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.gold);
         doc.text(`💰 ${character.gold} gp`, margin, y + 2);
-        y += 6;
+        y += 5;
       }
       
-      y += 4;
+      y += 2;
     }
 
     // ============== SPELLCASTING ==============
@@ -6120,7 +6120,7 @@ const ReviewStep = ({
         y = margin + 10;
       }
       
-      y = drawSectionHeader('SPELLCASTING', y) + 3;
+      y = drawSectionHeader('SPELLCASTING', y) + 2;
       
       // Multiclass disclaimer
       if (character.multiclass && character.multiclass.length > 1) {
@@ -10221,13 +10221,23 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
   // Step 15: Smart Equipment Selection
   const equipment = [];
   
+  // Helper to make generic equipment specific
+  const makeSpecific = (item) => {
+    if (item === 'Any martial melee weapon') return pick(['Longsword', 'Battleaxe', 'Warhammer', 'Greatsword', 'Maul']);
+    if (item === 'Any martial weapon') return pick(['Longsword', 'Rapier', 'Battleaxe', 'Longbow']);
+    if (item === 'Any simple weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace', 'Javelin']);
+    if (item === 'Any simple melee weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace']);
+    if (item === 'Any musical instrument') return pick(['Lute', 'Flute', 'Drum', 'Harp']);
+    return item;
+  };
+  
   // Helper to decide random choices from equipment options
   const pickEquipment = (classEquipment) => {
     const items = [];
     
     if (classEquipment.choices) {
       classEquipment.choices.forEach(choice => {
-        const selectedOption = pick(choice.options);
+        const selectedOption = makeSpecific(pick(choice.options));
         items.push(selectedOption);
       });
     }
@@ -10256,7 +10266,7 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
         // Pick one random choice from secondary class
         if (secondaryClassEquipment.choices && secondaryClassEquipment.choices.length > 0) {
           const randomChoice = pick(secondaryClassEquipment.choices);
-          const selectedOption = pick(randomChoice.options);
+          const selectedOption = makeSpecific(pick(randomChoice.options));
           
           // Avoid duplicates
           if (!equipment.includes(selectedOption)) {
