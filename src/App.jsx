@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 
 // ============================================================================
 // LOCAL STORAGE UTILITIES
@@ -4997,7 +4997,7 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
 // REVIEW & EXPORT STEP (PHASE 8)
 // ============================================================================
 
-const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }) => {
+const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo, randomWithMulticlass, setRandomWithMulticlass }) => {
   const [exportFormat, setExportFormat] = useState(null);
   const [copied, setCopied] = useState(false);
 
@@ -5476,6 +5476,17 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
   const completionCount = Object.values(isComplete).filter(Boolean).length;
   const totalRequired = 8;
 
+  // Build detailed missing items list
+  const missingItems = [];
+  if (!isComplete.name) missingItems.push({ label: 'Character name', step: 0 });
+  if (!isComplete.race) missingItems.push({ label: 'Race selection', step: 1 });
+  if (!isComplete.class) missingItems.push({ label: 'Class selection', step: 2 });
+  if (!isComplete.subclass) missingItems.push({ label: `Subclass (required at level ${classData?.subclassLevel})`, step: 2 });
+  if (!isComplete.abilities) missingItems.push({ label: 'Ability scores', step: 3 });
+  if (!isComplete.background) missingItems.push({ label: 'Background selection', step: 5 });
+  if (!isComplete.languages) missingItems.push({ label: languageMissingText, step: 5 });
+  if (!isComplete.skills) missingItems.push({ label: skillMissingText, step: 5 });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
@@ -5505,16 +5516,28 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           }`}>
             {completionCount}/{totalRequired} Complete
           </div>
-          {/* Randomize Again */}
-          <button
-            onClick={onRandomize}
-            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
-            title="Generate a new random character"
-          >
-            <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
-            <span className="hidden xs:inline">Randomize</span>
-            <span className="xs:hidden">Random</span>
-          </button>
+          {/* Randomize with Multiclass Toggle */}
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={randomWithMulticlass}
+                onChange={(e) => setRandomWithMulticlass(e.target.checked)}
+                className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+              />
+              <span className="hidden sm:inline">Enable Multiclass</span>
+              <span className="sm:hidden">MC</span>
+            </label>
+            <button
+              onClick={onRandomize}
+              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
+              title="Generate a new random character"
+            >
+              <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
+              <span className="hidden xs:inline">Randomize</span>
+              <span className="xs:hidden">Random</span>
+            </button>
+          </div>
           {/* Undo */}
           <button
             onClick={onUndo}
@@ -6308,31 +6331,38 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
       </div>
 
       {/* Completion Checklist */}
-      {completionCount < totalRequired && (
+      {completionCount < totalRequired && missingItems.length > 0 && (
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-          <h4 className="text-sm font-semibold text-amber-300 mb-2">Incomplete Steps</h4>
-          <div className="space-y-1 text-sm">
-            {!isComplete.name && (
-              <div className="text-amber-200/70">• Character name is missing</div>
-            )}
-            {!isComplete.race && (
-              <div className="text-amber-200/70">• Race not selected</div>
-            )}
-            {!isComplete.class && (
-              <div className="text-amber-200/70">• Class not selected</div>
-            )}
-            {!isComplete.abilities && (
-              <div className="text-amber-200/70">• Ability scores not set</div>
-            )}
-            {!isComplete.background && (
-              <div className="text-amber-200/70">• Background not selected</div>
-            )}
-            {!isComplete.languages && (
-              <div className="text-amber-200/70">• Language choices not complete</div>
-            )}
-            {!isComplete.skills && (
-              <div className="text-amber-200/70">• Skill replacements not complete</div>
-            )}
+          <h4 className="text-sm font-semibold text-amber-300 mb-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Incomplete Steps ({missingItems.length} {missingItems.length === 1 ? 'item' : 'items'})
+          </h4>
+          <div className="space-y-2 text-sm">
+            {missingItems.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  // Jump to the step that needs completion
+                  if (typeof item.step === 'number') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(() => {
+                      const stepContentEl = document.querySelector('[ref="stepContentRef"]');
+                      if (stepContentEl) stepContentEl.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }
+                }}
+                className="w-full text-left flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 transition-all group"
+              >
+                <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="text-amber-200 font-medium">{item.label}</div>
+                  {typeof item.step === 'number' && (
+                    <div className="text-amber-400/70 text-xs mt-0.5">Go to: Step {item.step + 1}</div>
+                  )}
+                </div>
+                <ChevronRight className="w-4 h-4 text-amber-400/50 group-hover:text-amber-400 transition-colors mt-0.5" />
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -8627,7 +8657,7 @@ const ClassSelectionStep = ({ character, updateCharacter }) => {
 // ============================================================================
 
 // Generates a random character with synergistic choices
-const generateRandomCharacter = (importedName = '') => {
+const generateRandomCharacter = (importedName = '', enableMulticlass = false) => {
   // Helper to pick random from array
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   
@@ -8795,6 +8825,61 @@ const generateRandomCharacter = (importedName = '') => {
     }
   });
   const level = pick(weightedLevels);
+  
+  // Step 9.5: Multiclass generation (if enabled and level is high enough)
+  let multiclassLevels = [];
+  let adjustedPrimaryLevel = level;
+  
+  if (enableMulticlass && level >= 5) {
+    // Decide if we should multiclass (50% chance at level 5+)
+    const shouldMulticlass = Math.random() < 0.5;
+    
+    if (shouldMulticlass) {
+      // Allocate 2-3 levels to a secondary class
+      const multiclassLevelCount = level >= 10 ? pick([2, 3, 4]) : pick([2, 3]);
+      adjustedPrimaryLevel = level - multiclassLevelCount;
+      
+      // Pick a synergistic multiclass based on primary abilities
+      const getCompatibleMulticlass = (primaryClass) => {
+        const synergies = {
+          barbarian: ['fighter', 'ranger'],
+          bard: ['rogue', 'warlock', 'sorcerer'],
+          cleric: ['paladin', 'druid'],
+          druid: ['ranger', 'cleric'],
+          fighter: ['barbarian', 'paladin', 'ranger'],
+          monk: ['rogue', 'ranger'],
+          paladin: ['fighter', 'cleric', 'warlock'],
+          ranger: ['fighter', 'druid', 'rogue'],
+          rogue: ['bard', 'ranger', 'monk'],
+          sorcerer: ['warlock', 'bard', 'wizard'],
+          warlock: ['sorcerer', 'bard', 'paladin'],
+          wizard: ['sorcerer', 'cleric']
+        };
+        
+        const compatible = synergies[primaryClass.toLowerCase()] || [];
+        const available = compatible.filter(id => CLASSES[id]);
+        return available.length > 0 ? pick(available) : pick(Object.keys(CLASSES).filter(id => id !== classId));
+      };
+      
+      const multiclassId = getCompatibleMulticlass(selectedClass.name);
+      const multiclassData = CLASSES[multiclassId];
+      
+      // Choose a subclass if the multiclass level is high enough
+      let multiclassSubclass = null;
+      if (multiclassLevelCount >= multiclassData.subclassLevel) {
+        const subclasses = SUBCLASSES[multiclassId];
+        if (subclasses) {
+          multiclassSubclass = pick(Object.keys(subclasses));
+        }
+      }
+      
+      multiclassLevels = [{
+        class: multiclassId,
+        level: multiclassLevelCount,
+        subclass: multiclassSubclass
+      }];
+    }
+  }
   
   // Step 10: Personality traits (if background has them)
   let personalityTraits = [];
@@ -8999,7 +9084,8 @@ const generateRandomCharacter = (importedName = '') => {
     subclass: null, // User can choose subclass manually
     background: backgroundId,
     alignment: alignment,
-    level: level,
+    level: adjustedPrimaryLevel,
+    multiclass: multiclassLevels,
     abilities: abilities,
     abilityMethod: 'standard',
     chosenLanguages: [],
@@ -9184,10 +9270,11 @@ const CharacterCreator = ({
 
   // One-level undo snapshot for randomize on Review step
   const [lastRandomSnapshot, setLastRandomSnapshot] = useState(null);
+  const [randomWithMulticlass, setRandomWithMulticlass] = useState(false);
 
   const randomizeFromReview = () => {
     const prev = character;
-    const randomChar = generateRandomCharacter(importedName);
+    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
     setLastRandomSnapshot(prev);
     setCharacter(randomChar);
   };
@@ -9196,6 +9283,36 @@ const CharacterCreator = ({
     if (lastRandomSnapshot) {
       setCharacter(lastRandomSnapshot);
       setLastRandomSnapshot(null);
+    }
+  };
+
+  // Validate step completion
+  const validateStep = (stepId) => {
+    switch (stepId) {
+      case 'basics':
+        return !!character.name && character.level >= 1;
+      case 'race':
+        return !!character.race;
+      case 'class':
+        const classData = character.class ? CLASSES[character.class] : null;
+        const subclassRequired = classData && character.level >= classData.subclassLevel;
+        return !!character.class && (!subclassRequired || !!character.subclass);
+      case 'abilities':
+        return Object.values(character.abilities).some(v => v !== 10);
+      case 'asi':
+        return true; // ASI/Feats step is optional
+      case 'background':
+        return !!character.background;
+      case 'equipment':
+        return true; // Equipment is optional for now
+      case 'multiclass':
+        return true; // Multiclass is optional
+      case 'spells':
+        return true; // Spells validated separately for spellcasters
+      case 'review':
+        return true;
+      default:
+        return false;
     }
   };
 
@@ -9220,7 +9337,7 @@ const CharacterCreator = ({
             <div className="flex items-center gap-2">
               {steps.map((step, index) => {
                 const isActive = index === currentStep;
-                const isComplete = index < currentStep;
+                const isComplete = validateStep(step.id) && index < currentStep;
                 return (
                   <button
                     key={step.id}
@@ -9268,11 +9385,14 @@ const CharacterCreator = ({
             className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 relative z-50"
           >
             <option disabled>5e-Compatible Character Creator</option>
-            {steps.map((step, index) => (
-              <option key={step.id} value={index}>
-                {index + 1}. {step.label} {index < currentStep ? '✓' : ''}
-              </option>
-            ))}
+            {steps.map((step, index) => {
+              const isComplete = validateStep(step.id) && index < currentStep;
+              return (
+                <option key={step.id} value={index}>
+                  {index + 1}. {step.label} {isComplete ? '✓' : ''}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -9281,7 +9401,7 @@ const CharacterCreator = ({
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isActive = index === currentStep;
-            const isComplete = index < currentStep;
+            const isComplete = validateStep(step.id) && index < currentStep;
             
             return (
               <React.Fragment key={step.id}>
@@ -9317,19 +9437,30 @@ const CharacterCreator = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">Basic Information</h3>
-              <button
-                onClick={() => {
-                  const randomChar = generateRandomCharacter(importedName);
-                  setCharacter(randomChar);
-                                  // Jump to review step (last step)
-                                  setCurrentStep(9);
-                }}
-                className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">Random Character</span>
-                <span className="sm:hidden">Random</span>
-              </button>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={randomWithMulticlass}
+                    onChange={(e) => setRandomWithMulticlass(e.target.checked)}
+                    className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                  />
+                  <span>Enable Multiclass</span>
+                </label>
+                <button
+                  onClick={() => {
+                    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
+                    setCharacter(randomChar);
+                    // Jump to review step (last step)
+                    setCurrentStep(9);
+                  }}
+                  className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">Random Character</span>
+                  <span className="sm:hidden">Random</span>
+                </button>
+              </div>
             </div>
             
             {/* Character Name */}
@@ -9565,6 +9696,8 @@ const CharacterCreator = ({
             onRandomize={randomizeFromReview}
             onUndo={undoRandomizeFromReview}
             canUndo={!!lastRandomSnapshot}
+            randomWithMulticlass={randomWithMulticlass}
+            setRandomWithMulticlass={setRandomWithMulticlass}
           />
         )}
       </div>
