@@ -6250,36 +6250,41 @@ const ReviewStep = ({
   };
 
   const handleExport = (format) => {
-    setExportFormat(format);
-    
-    if (format === 'pdf') {
-      // Generate and download PDF
-      const doc = generatePDFExport();
-      doc.save(`${character.name || 'character'}.pdf`);
-      return;
-    }
-    
-    let content, filename, type;
-    
-    if (format === 'json') {
-      content = generateJSONExport();
-      filename = `${character.name || 'character'}.json`;
-      type = 'application/json';
-    } else {
-      content = generateTextExport();
-      filename = `${character.name || 'character'}.txt`;
-      type = 'text/plain';
-    }
+    try {
+      setExportFormat(format);
+      
+      if (format === 'pdf') {
+        // Generate and download PDF
+        const doc = generatePDFExport();
+        doc.save(`${character.name || 'character'}.pdf`);
+        return;
+      }
+      
+      let content, filename, type;
+      
+      if (format === 'json') {
+        content = generateJSONExport();
+        filename = `${character.name || 'character'}.json`;
+        type = 'application/json';
+      } else {
+        content = generateTextExport();
+        filename = `${character.name || 'character'}.txt`;
+        type = 'text/plain';
+      }
 
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert(`Failed to export: ${error.message}`);
+    }
   };
 
   const handleCopy = () => {
@@ -6366,6 +6371,16 @@ const ReviewStep = ({
           <p className="text-sm text-slate-500">
             Review your character and export when ready.
           </p>
+          {/* Player Name - More prominent */}
+          {character.playerName && (
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/30 text-indigo-200 text-sm">
+                <User className="w-3.5 h-3.5" />
+                <span className="font-medium">Player:</span>
+                <span className="font-semibold">{character.playerName}</span>
+              </span>
+            </div>
+          )}
           {/* Alignment */}
           {character.alignment && ALIGNMENTS[character.alignment] && (
             <div className="mt-2">
@@ -6463,9 +6478,6 @@ const ReviewStep = ({
             )}
             {background && (
               <p className="text-slate-400 text-sm mt-1">{background.name} Background</p>
-            )}
-            {character.playerName && (
-              <p className="text-slate-500 text-xs mt-2">Player: {character.playerName}</p>
             )}
           </div>
           <div className="text-right">
@@ -10196,6 +10208,70 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     musicalInstrument = pick(instruments);
   }
   
+  // Step 15: Smart Equipment Selection
+  const equipment = [];
+  
+  // Helper to decide random choices from equipment options
+  const pickEquipment = (classEquipment) => {
+    const items = [];
+    
+    if (classEquipment.choices) {
+      classEquipment.choices.forEach(choice => {
+        const selectedOption = pick(choice.options);
+        items.push(selectedOption);
+      });
+    }
+    
+    if (classEquipment.fixed) {
+      items.push(...classEquipment.fixed);
+    }
+    
+    return items;
+  };
+  
+  // Primary class equipment
+  const primaryClassEquipment = STARTING_EQUIPMENT[classId];
+  if (primaryClassEquipment) {
+    equipment.push(...pickEquipment(primaryClassEquipment));
+  }
+  
+  // If multiclassed, potentially add some equipment from secondary class
+  if (multiclassLevels.length > 0) {
+    const secondaryClassId = multiclassLevels[0].classId;
+    const secondaryClassEquipment = STARTING_EQUIPMENT[secondaryClassId];
+    
+    if (secondaryClassEquipment) {
+      // 50% chance to add weapon/armor from secondary class (to represent versatility)
+      if (Math.random() < 0.5) {
+        // Pick one random choice from secondary class
+        if (secondaryClassEquipment.choices && secondaryClassEquipment.choices.length > 0) {
+          const randomChoice = pick(secondaryClassEquipment.choices);
+          const selectedOption = pick(randomChoice.options);
+          
+          // Avoid duplicates
+          if (!equipment.includes(selectedOption)) {
+            equipment.push(selectedOption);
+          }
+        }
+      }
+    }
+  }
+  
+  // Add background equipment
+  if (selectedBackground.equipment) {
+    equipment.push(...selectedBackground.equipment);
+  }
+  
+  // Roll starting gold
+  const goldDice = STARTING_GOLD[classId];
+  let startingGold = 0;
+  if (goldDice) {
+    for (let i = 0; i < goldDice.dice; i++) {
+      startingGold += Math.floor(Math.random() * goldDice.sides) + 1;
+    }
+    startingGold *= goldDice.multiplier;
+  }
+  
   // Random Physical Characteristics
   const ages = ['18', '25', '30', '45', '60', '120', '200'];
   const heights = ['4\'10"', '5\'2"', '5\'6"', '5\'10"', '6\'0"', '6\'4"'];
@@ -10241,7 +10317,8 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     musicalInstrument: musicalInstrument,
     physicalCharacteristics: physicalCharacteristics,
     skills: [],
-    equipment: [],
+    equipment: equipment,
+    gold: startingGold,
     spells: spells,
     cantrips: cantrips,
     traits: [],
