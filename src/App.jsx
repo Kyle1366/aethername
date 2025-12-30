@@ -6290,7 +6290,7 @@ const ReviewStep = ({
       character.warlockInvocations.forEach((invKey) => {
         const invocation = WARLOCK_INVOCATIONS[invKey];
         if (invocation) {
-          doc.setFillColor(...colors.darkPurple);
+          doc.setFillColor(...colors.accentPurple);
           doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
           doc.text(invocation.name, bottomRightX + 8, rightY + 2);
           rightY += 4.5;
