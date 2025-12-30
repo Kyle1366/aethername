@@ -5749,15 +5749,15 @@ const ReviewStep = ({
     doc.setLineWidth(0.5);
     doc.rect(margin + 1.5, margin + 1.5, pageWidth - 2 * margin - 3, headerHeight - 3);
     
-    // Character name - larger and properly positioned with drop shadow
+    // Character name - larger and properly positioned with subtle drop shadow
     doc.setFontSize(28);
     doc.setFont('times', 'bold');
     const charName = character.name || 'Unnamed Character';
     const nameWidth = doc.getTextWidth(charName);
     const nameX = (pageWidth - nameWidth) / 2;
-    // Shadow
-    doc.setTextColor(15, 12, 25);
-    doc.text(charName, nameX + 1, margin + 12);
+    // Subtle shadow
+    doc.setTextColor(25, 22, 35);
+    doc.text(charName, nameX + 0.5, margin + 11.5);
     // Main text
     doc.setTextColor(...colors.lightGold);
     doc.text(charName, nameX, margin + 11);
@@ -5796,13 +5796,12 @@ const ReviewStep = ({
     const detailWidth = doc.getTextWidth(detailText);
     doc.text(detailText, (pageWidth - detailWidth) / 2, margin + 25);
     
-    // Player name - left corner
-    if (character.playerName) {
-      doc.setFontSize(9);
-      doc.setFont('times', 'italic');
-      doc.setTextColor(...colors.silver);
-      doc.text(`Player: ${character.playerName}`, margin + 4, margin + 6);
-    }
+    // Player name - left corner (always show)
+    doc.setFontSize(9);
+    doc.setFont('times', 'italic');
+    doc.setTextColor(...colors.silver);
+    const playerText = character.playerName ? `Player: ${character.playerName}` : 'Player: ___________';
+    doc.text(playerText, margin + 4, margin + 6);
     
     // Alignment - right corner
     if (character.alignment && ALIGNMENTS[character.alignment]) {
@@ -5864,13 +5863,14 @@ const ReviewStep = ({
     // Saving Throws header
     doc.setFontSize(11);
     doc.setFont('times', 'bold');
-    doc.setTextColor(...colors.darkPurple);
+    doc.setTextColor(...colors.accentPurple);
     doc.text('SAVING THROWS', saveColX, y);
     doc.setDrawColor(...colors.gold);
     doc.setLineWidth(0.5);
     doc.line(saveColX, y + 1.5, saveColX + 38, y + 1.5);
     
     // Skills header
+    doc.setTextColor(...colors.accentPurple);
     doc.text('SKILLS', skillCol1X, y);
     doc.line(skillCol1X, y + 1.5, skillCol1X + 18, y + 1.5);
     
@@ -5906,7 +5906,7 @@ const ReviewStep = ({
     if (proficiencies.languages && proficiencies.languages.length > 0) {
       doc.setFontSize(10);
       doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.darkPurple);
+      doc.setTextColor(...colors.accentPurple);
       doc.text('LANGUAGES', margin + 3, y);
       
       doc.setDrawColor(...colors.gold);
@@ -5936,8 +5936,8 @@ const ReviewStep = ({
     let leftY = twoColStartY;
     let rightY = twoColStartY;
     
-    // Column header helper
-    const drawColumnHeader = (text, yPos, xPos, width) => {
+    // Column header helper - now supports optional right-side text
+    const drawColumnHeader = (text, yPos, xPos, width, rightText = null) => {
       const headerHeight = 6;
       doc.setFillColor(...colors.headerBg);
       doc.rect(xPos, yPos, width, headerHeight, 'F');
@@ -5950,6 +5950,12 @@ const ReviewStep = ({
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.lightGold);
       doc.text(text, xPos + 3, yPos + 4.5);
+      // Optional right-side text (for GP, etc)
+      if (rightText) {
+        doc.setFont('times', 'bolditalic');
+        const rtWidth = doc.getTextWidth(rightText);
+        doc.text(rightText, xPos + width - rtWidth - 3, yPos + 4.5);
+      }
       return yPos + headerHeight + 2;
     };
 
@@ -6007,13 +6013,26 @@ const ReviewStep = ({
 
     // ============== LEFT COLUMN: EQUIPMENT ==============
     if (equipment.length > 0) {
-      leftY = drawColumnHeader('EQUIPMENT', leftY, bottomLeftX, leftColWidth) + 1;
+      // Calculate total GP from equipment items (background gold) + character.gold
+      let totalGP = character.gold || 0;
+      const gpRegex = /^(\d+)\s*gp$/i;
+      equipment.forEach(item => {
+        const match = item.match(gpRegex);
+        if (match) totalGP += parseInt(match[1], 10);
+      });
+      
+      // Filter out GP items from equipment list
+      const equipmentNoGP = equipment.filter(item => !gpRegex.test(item));
+      
+      // Show GP in header if any
+      const gpText = totalGP > 0 ? `${totalGP} GP` : null;
+      leftY = drawColumnHeader('EQUIPMENT', leftY, bottomLeftX, leftColWidth, gpText) + 1;
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
       
-      equipment.forEach((item, idx) => {
+      equipmentNoGP.forEach((item, idx) => {
         const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
         
         doc.setFillColor(...colors.gold);
@@ -6021,14 +6040,6 @@ const ReviewStep = ({
         doc.text(cleanItem, bottomLeftX + 7, leftY + 2);
         leftY += 4.5;
       });
-      
-      if (character.gold > 0) {
-        doc.setFontSize(11);
-        doc.setFont('times', 'bolditalic');
-        doc.setTextColor(...colors.gold);
-        doc.text(`${character.gold} gp`, bottomLeftX + 3, leftY + 2);
-        leftY += 5;
-      }
     }
     
     // ============== LEFT COLUMN: LEVEL ADVANCEMENTS ==============
@@ -6124,7 +6135,7 @@ const ReviewStep = ({
 
     // ============== RIGHT COLUMN: SPELLCASTING ==============
     if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
-      rightY = drawColumnHeader('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 1;
+      rightY = drawColumnHeader('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 2;
       
       // Multiclass disclaimer
       if (character.multiclass && character.multiclass.length > 1) {
@@ -6145,11 +6156,11 @@ const ReviewStep = ({
       const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       
-      // Spell stats
-      doc.setFontSize(11);
+      // Spell stats - smaller font to prevent clipping
+      doc.setFontSize(10);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
-      doc.text(`DC ${spellDC}  •  ATK +${spellAttack}  •  ${ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase()}`, bottomRightX + 2, rightY);
+      doc.text(`DC ${spellDC} • ATK +${spellAttack} • ${ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase()}`, bottomRightX + 2, rightY);
       rightY += 6;
       
       // Spell slots
