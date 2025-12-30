@@ -1943,7 +1943,7 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
   
   const pages = [
     { id: 'generator', label: 'Name Generator', icon: Sparkles, description: 'Create unique fantasy & sci-fi names' },
-    { id: 'character', label: 'D&D 5e Character Creator', icon: User, description: 'Build your D&D character sheet' }
+    { id: 'character', label: '5e-Compatible Character Creator', icon: User, description: 'Build your character sheet' }
   ];
 
   return (
@@ -9206,8 +9206,8 @@ const CharacterCreator = ({
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h2 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
             <User className="w-4 h-4 md:w-5 md:h-5 text-indigo-400" />
-            <span className="md:hidden">D&D 5E CC</span>
-            <span className="hidden md:inline">D&D 5e Character Creator</span>
+            <span className="md:hidden">5e CC</span>
+            <span className="hidden md:inline">5e-Compatible Character Creator</span>
           </h2>
           <span className="text-xs md:text-sm text-slate-400">
             Step {currentStep + 1} of {steps.length}
@@ -9267,7 +9267,7 @@ const CharacterCreator = ({
             onChange={(e) => setCurrentStep(Number(e.target.value))}
             className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 relative z-50"
           >
-            <option disabled>D&D 5e Character Creator</option>
+            <option disabled>5e-Compatible Character Creator</option>
             {steps.map((step, index) => (
               <option key={step.id} value={index}>
                 {index + 1}. {step.label} {index < currentStep ? '✓' : ''}
@@ -10559,7 +10559,7 @@ export default function AetherNames() {
                     <li><Volume2 className="w-3.5 h-3.5 inline text-cyan-400" /> <span className="text-cyan-400">Speaker</span> — Text-to-speech pronunciation. Hear how the name sounds.</li>
                     <li><Glasses className="w-3.5 h-3.5 inline text-amber-400" /> <span className="text-amber-400">Glasses</span> — View generation metadata (patterns, influences, syllable breakdown).</li>
                     <li><RefreshCw className="w-3.5 h-3.5 inline text-purple-400" /> <span className="text-purple-400">Refresh</span> — Reroll specific syllables while keeping parts you like.</li>
-                    <li><User className="w-3.5 h-3.5 inline text-indigo-400" /> <span className="text-indigo-400">Person</span> — Send to Character Creator to build a full D&D character.</li>
+                    <li><User className="w-3.5 h-3.5 inline text-indigo-400" /> <span className="text-indigo-400">Person</span> — Send to Character Creator to build a full 5e-compatible character.</li>
                   </ul>
                 </div>
                 <div>
@@ -10582,6 +10582,45 @@ export default function AetherNames() {
                     <li>Press <span className="text-indigo-400">Ctrl+Enter</span> anywhere to quickly generate new names.</li>
                   </ul>
                 </div>
+              </div>
+            </details>
+
+            <details className="group mt-3 bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-lg md:rounded-xl">
+              <summary className="flex items-center justify-between p-2.5 md:p-4 cursor-pointer list-none">
+                <span className="font-semibold text-indigo-400 flex items-center gap-2 text-sm md:text-base">
+                  <Sparkles className="w-4 h-4 md:w-5 md:h-5" /> About / Features
+                </span>
+                <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-indigo-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="px-4 pb-4 text-sm text-slate-400 space-y-2">
+                <p>
+                  AetherNames is a free fantasy &amp; sci-fi name generator for writers, worldbuilding, and tabletop RPGs (TTRPG).
+                </p>
+                <p>
+                  It also includes a 5e-compatible character creator and character sheet builder for campaign prep and quick NPCs.
+                </p>
+              </div>
+            </details>
+
+            <details className="group mt-3 bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-lg md:rounded-xl">
+              <summary className="flex items-center justify-between p-2.5 md:p-4 cursor-pointer list-none">
+                <span className="font-semibold text-indigo-400 flex items-center gap-2 text-sm md:text-base">
+                  <Scroll className="w-4 h-4 md:w-5 md:h-5" /> Legal / Disclaimer
+                </span>
+                <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-indigo-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="px-4 pb-4 text-sm text-slate-400 space-y-3">
+                <p className="text-slate-300">
+                  AetherNames is an independent, unofficial fan-made tool.
+                </p>
+                <p>
+                  This project is intended to follow the guidelines set forth in Wizards of the Coast&apos;s Fan Content Policy.
+                  See: <a className="text-indigo-300 hover:text-indigo-200 underline" href="https://company.wizards.com/en/legal/fancontentpolicy" target="_blank" rel="noreferrer">Wizards of the Coast Fan Content Policy</a>.
+                </p>
+                <p>
+                  Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast.
+                  © Wizards of the Coast LLC.
+                </p>
               </div>
             </details>
           </div>
