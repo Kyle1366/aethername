@@ -8136,6 +8136,51 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
   const selectedClassId = character.class;
   const selectedClass = selectedClassId ? CLASSES[selectedClassId] : null;
 
+  const renderMulticlassToggle = ({ compact = false } = {}) => {
+    if (!selectedClass) return null;
+
+    return (
+      <div className={compact ? 'p-3 rounded-xl bg-slate-800/50 border border-slate-700/50' : 'p-4 rounded-xl bg-slate-900/30 border border-slate-700/40'}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <input
+                type="checkbox"
+                checked={multiclassExpanded}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setMulticlassExpanded(checked);
+                  setRandomWithMulticlass(checked);
+                  if (checked && (character.level || 1) < 2) {
+                    updateCharacter('level', 2);
+                  }
+                  if (!checked) {
+                    updateCharacter('multiclass', []);
+                  }
+                }}
+                className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+              />
+              <span>Multi-class?</span>
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Enable to allocate levels into secondary classes.
+            </p>
+          </div>
+          {multiclassExpanded && (
+            <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full inline-flex items-center gap-1 self-start sm:self-auto">
+              <AlertCircle className="w-3 h-3" /> Requires level 2+
+            </span>
+          )}
+        </div>
+        {multiclassExpanded && (
+          <div className="mt-4">
+            <MulticlassStep character={character} updateCharacter={updateCharacter} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   useEffect(() => {
     if ((character.multiclass || []).length > 0 && !multiclassExpanded) {
       setMulticlassExpanded(true);
@@ -8177,6 +8222,9 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
         <p className="text-sm text-slate-500">
           Your class determines your abilities, features, and role in the party.
         </p>
+        <p className="text-xs text-slate-500 mt-2">
+          Multiclass options appear after selecting a primary class (right panel, or below on small screens).
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -8205,6 +8253,11 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                     Change
                   </button>
                 </div>
+              </div>
+
+              {/* Mobile: multiclass toggle directly below primary class */}
+              <div className="mt-3">
+                {renderMulticlassToggle({ compact: true })}
               </div>
             </div>
           )}
@@ -8292,45 +8345,8 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                   </div>
                 </div>
 
-                {/* Multiclass toggle (below primary class) */}
-                <div className="p-4 rounded-xl bg-slate-900/30 border border-slate-700/40">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                        <input
-                          type="checkbox"
-                          checked={multiclassExpanded}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setMulticlassExpanded(checked);
-                            setRandomWithMulticlass(checked);
-                            if (checked && (character.level || 1) < 2) {
-                              updateCharacter('level', 2);
-                            }
-                            if (!checked) {
-                              updateCharacter('multiclass', []);
-                            }
-                          }}
-                          className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-                        />
-                        <span>Multi-class?</span>
-                      </label>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Enable to allocate levels into secondary classes.
-                      </p>
-                    </div>
-                    {multiclassExpanded && (
-                      <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full inline-flex items-center gap-1 self-start sm:self-auto">
-                        <AlertCircle className="w-3 h-3" /> Requires level 2+
-                      </span>
-                    )}
-                  </div>
-                  {multiclassExpanded && (
-                    <div className="mt-4">
-                      <MulticlassStep character={character} updateCharacter={updateCharacter} />
-                    </div>
-                  )}
-                </div>
+                {/* Desktop: multiclass toggle (below primary class) */}
+                {renderMulticlassToggle()}
 
                 {/* Features */}
                 <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
