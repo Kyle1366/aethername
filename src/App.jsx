@@ -5251,6 +5251,9 @@ const ReviewStep = ({
       return items;
     } else if (character.equipmentMethod === 'gold') {
       return character.purchasedItems || [];
+    } else if (character.equipment && Array.isArray(character.equipment)) {
+      // For random characters with direct equipment array
+      return character.equipment;
     }
     return [];
   };
@@ -5724,7 +5727,7 @@ const ReviewStep = ({
     if (character.multiclass && character.multiclass.length > 0) {
       // Show all classes with levels
       classText = character.multiclass.map(mc => {
-        const mcClass = CLASS_DATA[mc.classId];
+        const mcClass = CLASSES[mc.classId];
         const mcSubclass = mc.subclass && SUBCLASSES[mc.classId]?.[mc.subclass];
         return `${mcClass?.name || 'Unknown'} ${mc.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
       }).join(' • ');
@@ -6111,7 +6114,7 @@ const ReviewStep = ({
       // Multiclass disclaimer
       if (character.multiclass && character.multiclass.length > 1) {
         const hasMultipleCasters = character.multiclass.filter(mc => {
-          const mcClass = CLASS_DATA[mc.classId];
+          const mcClass = CLASSES[mc.classId];
           return mcClass?.spellcasting;
         }).length > 1;
         
