@@ -5252,8 +5252,10 @@ const ReviewStep = ({
     } else if (character.equipmentMethod === 'gold') {
       return character.purchasedItems || [];
     } else if (character.equipment && Array.isArray(character.equipment)) {
-      // For random characters with direct equipment array
-      return character.equipment;
+      // For random characters with direct equipment array - clean up proficiency notes
+      return character.equipment.map(item => 
+        typeof item === 'string' ? item.replace(/\s*\(if proficient\)/gi, '') : item
+      );
     }
     return [];
   };
@@ -5627,7 +5629,7 @@ const ReviewStep = ({
       doc.rect(x + 1, yPos + 1, width - 2, height - 2);
       
       // Ability name
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.darkPurple);
       const abilityText = ABILITY_LABELS[ability].short.toUpperCase();
@@ -5645,7 +5647,7 @@ const ReviewStep = ({
       
       // Modifier text
       const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
-      doc.setFontSize(13);
+      doc.setFontSize(14);
       doc.setFont('times', 'bold');
       doc.setTextColor(255, 255, 255);
       const modWidth = doc.getTextWidth(modStr);
@@ -5683,7 +5685,7 @@ const ReviewStep = ({
       doc.line(margin, yPos + headerHeight, pageWidth - margin, yPos + headerHeight);
       
       // Section text
-      doc.setFontSize(13);
+      doc.setFontSize(11);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.lightGold);
       doc.text(text, margin + 3, yPos + 5.5);
@@ -5715,7 +5717,7 @@ const ReviewStep = ({
     doc.rect(margin + 1, margin + 1, pageWidth - 2 * margin - 2, 22);
     
     // Character name (large, centered)
-    doc.setFontSize(22);
+    doc.setFontSize(26);
     doc.setFont('times', 'bold');
     doc.setTextColor(...colors.lightGold);
     const charName = character.name || 'Unnamed Character';
@@ -5734,7 +5736,7 @@ const ReviewStep = ({
     } else {
       classText = `${classData?.name || 'Unknown'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`;
     }
-    doc.setFontSize(12);
+    doc.setFontSize(13);
     doc.setFont('times', 'italic');
     doc.setTextColor(255, 255, 255);
     const classWidth = doc.getTextWidth(classText);
@@ -5818,7 +5820,7 @@ const ReviewStep = ({
     const rightColX = margin + 95;
     
     // Saving Throws
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont('times', 'bolditalic');
     doc.setTextColor(...colors.darkPurple);
     doc.text('SAVING THROWS', leftColX, y);
@@ -5841,7 +5843,7 @@ const ReviewStep = ({
     });
     
     // Skills
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont('times', 'bolditalic');
     doc.setTextColor(...colors.darkPurple);
     doc.text('SKILLS', rightColX, y - 5);
@@ -6084,7 +6086,7 @@ const ReviewStep = ({
       
       y = drawSectionHeader('EQUIPMENT', y) + 2;
       
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       
@@ -6095,9 +6097,12 @@ const ReviewStep = ({
           y = margin + 10;
         }
         
+        // Clean up equipment text - remove proficiency notes
+        const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
+        
         doc.setFillColor(...colors.gold);
         doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
-        doc.text(item, margin + 5, y + 1.5);
+        doc.text(cleanItem, margin + 5, y + 1.5);
         y += 4;
       });
       
@@ -10221,6 +10226,36 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
   // Step 15: Smart Equipment Selection
   const equipment = [];
   
+  // Get class proficiencies
+  const classData = CLASSES[classId];
+  const weaponProfs = classData?.weaponProficiencies || [];
+  const armorProfs = classData?.armorProficiencies || [];
+  
+  // Check if proficient with weapon/armor
+  const hasMartialWeapons = weaponProfs.some(p => p.toLowerCase().includes('martial'));
+  const hasHeavyArmor = armorProfs.some(p => p.toLowerCase().includes('all armor') || p.toLowerCase().includes('heavy'));
+  
+  // Helper to check if item requires proficiency and if character has it
+  const checkProficiency = (item) => {
+    // Check for conditional items
+    if (item.includes('(if proficient)')) {
+      const itemName = item.replace('(if proficient)', '').trim();
+      
+      // Check weapon proficiency
+      if (itemName === 'Warhammer') {
+        return hasMartialWeapons;
+      }
+      
+      // Check armor proficiency
+      if (itemName === 'Chain mail') {
+        return hasHeavyArmor;
+      }
+      
+      return false; // Default to not proficient
+    }
+    return true; // No proficiency check needed
+  };
+  
   // Helper to make generic equipment specific
   const makeSpecific = (item) => {
     if (item === 'Any martial melee weapon') return pick(['Longsword', 'Battleaxe', 'Warhammer', 'Greatsword', 'Maul']);
@@ -10237,8 +10272,17 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     
     if (classEquipment.choices) {
       classEquipment.choices.forEach(choice => {
-        const selectedOption = makeSpecific(pick(choice.options));
-        items.push(selectedOption);
+        // Filter options to only those the character is proficient with
+        const validOptions = choice.options.filter(checkProficiency);
+        
+        if (validOptions.length > 0) {
+          const selectedOption = makeSpecific(pick(validOptions));
+          items.push(selectedOption);
+        } else {
+          // Fallback to first option without proficiency check if no valid options
+          const selectedOption = makeSpecific(choice.options[0].replace('(if proficient)', '').trim());
+          items.push(selectedOption);
+        }
       });
     }
     
