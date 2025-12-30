@@ -5898,8 +5898,9 @@ const ReviewStep = ({
     // Save starting Y position for two columns
     const twoColStartY = y;
     const bottomLeftX = margin;
-    const bottomRightX = pageWidth / 2 + 2;
-    const colWidth = pageWidth / 2 - margin - 4;
+    const bottomRightX = pageWidth / 2 + 4;
+    const leftColWidth = pageWidth / 2 - margin - 6;
+    const rightColWidth = pageWidth / 2 - margin - 6;
     
     let leftY = twoColStartY;
     let rightY = twoColStartY;
@@ -5913,7 +5914,20 @@ const ReviewStep = ({
     
     const features = [];
     if (race?.traits) features.push(...race.traits.map(t => ({ text: t, type: 'Racial' })));
-    if (classData?.features) features.push(...classData.features.map(f => ({ text: f, type: 'Class' })));
+    
+    // For multiclass, show features from all classes
+    if (character.multiclass && character.multiclass.length > 0) {
+      character.multiclass.forEach(mc => {
+        const mcClass = CLASSES[mc.classId];
+        if (mcClass?.features) {
+          features.push(...mcClass.features.map(f => ({ text: f, type: mcClass.name })));
+        }
+      });
+    } else {
+      // Single class
+      if (classData?.features) features.push(...classData.features.map(f => ({ text: f, type: 'Class' })));
+    }
+    
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
     
     features.forEach((feat, idx) => {
@@ -5931,7 +5945,7 @@ const ReviewStep = ({
       doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
-      const wrappedText = doc.splitTextToSize(feat.text, colWidth - typeWidth - 4);
+      const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - typeWidth - 4);
       wrappedText.forEach((line, lineIdx) => {
         doc.text(line, bottomLeftX + typeWidth + 2, leftY + 0.5 + lineIdx * 3);
       });
@@ -5967,7 +5981,7 @@ const ReviewStep = ({
         return yPos + headerHeight + 2;
       };
       
-      leftY = drawSectionHeaderAtX('EQUIPMENT', leftY - 9, bottomLeftX, colWidth) + 1;
+      leftY = drawSectionHeaderAtX('EQUIPMENT', leftY - 9, bottomLeftX, leftColWidth) + 1;
       
       doc.setFontSize(9);
       doc.setFont('times', 'normal');
@@ -5990,6 +6004,97 @@ const ReviewStep = ({
         doc.text(`${character.gold} gp`, bottomLeftX, leftY + 2);
         leftY += 5;
       }
+    }
+    
+    // ============== LEFT COLUMN: LEVEL ADVANCEMENTS ==============
+    const levelAdvancements = [];
+    if (character.feats && character.feats.length > 0) {
+      character.feats.forEach(feat => {
+        if (feat.choices && feat.choices.length > 0) {
+          feat.choices.forEach(choice => {
+            if (choice.type === 'feat' && choice.featId) {
+              const featData = FEATS.find(f => f.id === choice.featId);
+              if (featData) {
+                levelAdvancements.push(`Lv${feat.level}: ${featData.name}`);
+              }
+            } else if (choice.type === 'asi') {
+              const asiText = Object.entries(choice.abilities || {})
+                .filter(([_, val]) => val > 0)
+                .map(([ability, val]) => `${ABILITY_LABELS[ability].short} +${val}`)
+                .join(', ');
+              if (asiText) {
+                levelAdvancements.push(`Lv${feat.level}: ${asiText}`);
+              }
+            }
+          });
+        }
+      });
+    }
+    
+    if (levelAdvancements.length > 0) {
+      leftY += 2;
+      leftY = drawSectionHeaderAtX('LEVEL ADV', leftY - 9, bottomLeftX, leftColWidth) + 1;
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textDark);
+      
+      levelAdvancements.forEach((adv) => {
+        doc.setFillColor(...colors.accentPurple);
+        doc.circle(bottomLeftX + 1.5, leftY + 0.5, 0.7, 'F');
+        doc.text(adv, bottomLeftX + 4, leftY + 1.5);
+        leftY += 3.5;
+      });
+    }
+    
+    // ============== LEFT COLUMN: FIGHTING STYLE ==============
+    if (character.fightingStyle) {
+      leftY += 2;
+      doc.setFontSize(8);
+      doc.setFont('times', 'bolditalic');
+      doc.setTextColor(...colors.darkPurple);
+      doc.text('FIGHTING STYLE', bottomLeftX, leftY);
+      leftY += 3;
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textDark);
+      const styleName = FIGHTING_STYLES[character.fightingStyle]?.name || character.fightingStyle;
+      doc.text(styleName, bottomLeftX + 2, leftY);
+      leftY += 4;
+    }
+    
+    // ============== LEFT COLUMN: PHYSICAL CHARACTERISTICS ==============
+    const hasPhysicalTraits = character.age || character.height || character.weight || 
+                              character.eyes || character.hair || character.skin;
+    
+    if (hasPhysicalTraits) {
+      leftY += 2;
+      const physicalTraits = [
+        { label: 'Age', value: character.age },
+        { label: 'Height', value: character.height },
+        { label: 'Weight', value: character.weight },
+        { label: 'Eyes', value: character.eyes },
+        { label: 'Hair', value: character.hair },
+        { label: 'Skin', value: character.skin }
+      ].filter(t => t.value);
+      
+      doc.setFontSize(7);
+      doc.setFont('times', 'bolditalic');
+      doc.setTextColor(...colors.textMuted);
+      
+      physicalTraits.forEach((trait, idx) => {
+        if (idx % 2 === 0 && idx > 0) leftY += 6;
+        const xPos = bottomLeftX + (idx % 2) * (leftColWidth / 2);
+        doc.text(trait.label.toUpperCase(), xPos, leftY);
+        doc.setFontSize(8);
+        doc.setFont('times', 'normal');
+        doc.setTextColor(...colors.textDark);
+        doc.text(String(trait.value), xPos, leftY + 3);
+        doc.setFontSize(7);
+        doc.setFont('times', 'bolditalic');
+        doc.setTextColor(...colors.textMuted);
+      });
     }
 
     // ============== RIGHT COLUMN: SPELLCASTING ==============
@@ -6016,144 +6121,7 @@ const ReviewStep = ({
         return yPos + headerHeight + 2;
       };
       
-      rightY = drawSectionHeaderAtX('SPELLCASTING', rightY, bottomRightX, colWidth) + 1;
-
-    // ============== LEVEL ADVANCEMENTS (ASI/FEATS) ==============
-    const levelAdvancements = [];
-    if (character.feats && character.feats.length > 0) {
-      character.feats.forEach(feat => {
-        if (feat.choices && feat.choices.length > 0) {
-          feat.choices.forEach(choice => {
-            if (choice.type === 'feat' && choice.featId) {
-              const featData = FEATS.find(f => f.id === choice.featId);
-              if (featData) {
-                levelAdvancements.push(`Level ${feat.level}: Feat - ${featData.name}`);
-              }
-            } else if (choice.type === 'asi') {
-              const asiText = Object.entries(choice.abilities || {})
-                .filter(([_, val]) => val > 0)
-                .map(([ability, val]) => `${ABILITY_LABELS[ability].short} +${val}`)
-                .join(', ');
-              if (asiText) {
-                levelAdvancements.push(`Level ${feat.level}: ASI - ${asiText}`);
-              }
-            }
-          });
-        }
-      });
-    }
-
-    if (levelAdvancements.length > 0) {
-      if (y > pageHeight - 40) {
-        doc.addPage();
-        addDecorativeBorder();
-        y = margin + 10;
-      }
-      
-      y = drawSectionHeader('LEVEL ADVANCEMENTS', y) + 2;
-      
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
-      
-      levelAdvancements.forEach((adv, idx) => {
-        if (y > pageHeight - 20) {
-          doc.addPage();
-          addDecorativeBorder();
-          y = margin + 10;
-        }
-        
-        doc.setFillColor(...colors.accentPurple);
-        doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
-        doc.text(adv, margin + 5, y + 1.5);
-        y += 4.5;
-      });
-      
-      y += 4;
-    }
-
-    // ============== ELDRITCH INVOCATIONS ==============
-    if (character.class === 'warlock' && character.invocations && character.invocations.length > 0) {
-      if (y > pageHeight - 40) {
-        doc.addPage();
-        addDecorativeBorder();
-        y = margin + 10;
-      }
-      
-      y = drawSectionHeader('ELDRITCH INVOCATIONS', y) + 2;
-      
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
-      
-      character.invocations.forEach((invId, idx) => {
-        if (y > pageHeight - 20) {
-          doc.addPage();
-          addDecorativeBorder();
-          y = margin + 10;
-        }
-        
-        const invocation = WARLOCK_INVOCATIONS.find(inv => inv.id === invId);
-        if (invocation) {
-          doc.setFillColor(...colors.darkPurple);
-          doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
-          doc.text(invocation.name, margin + 5, y + 1.5);
-          y += 4.5;
-        }
-      });
-      
-      y += 4;
-    }
-
-    // ============== PHYSICAL CHARACTERISTICS ==============
-    const hasPhysicalTraits = character.age || character.height || character.weight || 
-                              character.eyes || character.hair || character.skin;
-    
-    if (hasPhysicalTraits) {
-      if (y > pageHeight - 40) {
-        doc.addPage();
-        addDecorativeBorder();
-        y = margin + 10;
-      }
-      
-      y = drawSectionHeader('PHYSICAL CHARACTERISTICS', y) + 2;
-      
-      const physicalTraits = [
-        { label: 'Age', value: character.age },
-        { label: 'Height', value: character.height },
-        { label: 'Weight', value: character.weight },
-        { label: 'Eyes', value: character.eyes },
-        { label: 'Hair', value: character.hair },
-        { label: 'Skin', value: character.skin }
-      ].filter(t => t.value);
-      
-      const traitSpacing = (pageWidth - 2 * margin) / 3;
-      let colIdx = 0;
-      let rowY = y;
-      
-      physicalTraits.forEach((trait, idx) => {
-        const x = margin + colIdx * traitSpacing;
-        
-        doc.setFontSize(9);
-        doc.setFont('times', 'bolditalic');
-        doc.setTextColor(...colors.textMuted);
-        doc.text(trait.label.toUpperCase(), x, rowY);
-        
-        doc.setFontSize(11);
-        doc.setFont('times', 'normal');
-        doc.setTextColor(...colors.textDark);
-        doc.text(String(trait.value), x, rowY + 4);
-        
-        colIdx++;
-        if (colIdx >= 3) {
-          colIdx = 0;
-          rowY += 9;
-        }
-      });
-      
-      y = rowY + (colIdx > 0 ? 9 : 4);
-    }
-
+      rightY = drawSectionHeaderAtX('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 1;
       
       // Multiclass disclaimer (compact)
       if (character.multiclass && character.multiclass.length > 1) {
@@ -6221,7 +6189,7 @@ const ReviewStep = ({
             .map(([lvl, count]) => `${lvl}:${count}`)
             .join(' • ');
           if (slotText) {
-            const wrappedSlots = doc.splitTextToSize(slotText, colWidth - 4);
+            const wrappedSlots = doc.splitTextToSize(slotText, rightColWidth - 4);
             wrappedSlots.forEach((line, idx) => {
               doc.text(line, rightColX + 2, rightY + idx * 3);
             });
@@ -6268,6 +6236,29 @@ const ReviewStep = ({
           rightY += 3.5;
         });
       }
+    }
+    
+    // ============== RIGHT COLUMN: ELDRITCH INVOCATIONS ==============
+    if (character.invocations && character.invocations.length > 0) {
+      rightY += 3;
+      doc.setFontSize(9);
+      doc.setFont('times', 'bolditalic');
+      doc.setTextColor(...colors.accentPurple);
+      doc.text('INVOCATIONS', bottomRightX, rightY);
+      rightY += 4;
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textDark);
+      character.invocations.forEach((invId) => {
+        const invocation = WARLOCK_INVOCATIONS.find(inv => inv.id === invId);
+        if (invocation) {
+          doc.setFillColor(...colors.darkPurple);
+          doc.circle(bottomRightX + 1.5, rightY + 0.5, 0.7, 'F');
+          doc.text(invocation.name, bottomRightX + 4, rightY + 1.5);
+          rightY += 3.5;
+        }
+      });
     }
 
     // Footer on each page
@@ -10283,11 +10274,34 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
   
   // Helper to make generic equipment specific
   const makeSpecific = (item) => {
-    if (item === 'Any martial melee weapon') return pick(['Longsword', 'Battleaxe', 'Warhammer', 'Greatsword', 'Maul']);
+    // Complex equipment combinations
+    if (item === 'Martial weapon + shield') return pick(['Longsword + shield', 'Battleaxe + shield', 'Warhammer + shield', 'Rapier + shield']);
+    if (item === 'Two martial weapons') return pick(['Two longswords', 'Longsword + rapier', 'Two battleaxes', 'Battleaxe + warhammer']);
+    if (item === 'Two shortswords') return 'Two shortswords';
+    if (item === 'Two simple melee weapons') return pick(['Two clubs', 'Two daggers', 'Club + mace', 'Two maces']);
+    if (item === 'Two handaxes') return 'Two handaxes';
+    
+    // Armor + weapon combos
+    if (item === 'Leather armor + longbow + 20 arrows') return 'Leather armor, longbow, 20 arrows';
+    if (item === 'Chain mail') return 'Chain mail';
+    if (item === 'Scale mail') return 'Scale mail';
+    if (item === 'Leather armor') return 'Leather armor';
+    
+    // Ranged weapon combos
+    if (item === 'Light crossbow + 20 bolts') return 'Light crossbow, 20 bolts';
+    if (item === 'Shortbow + 20 arrows') return 'Shortbow, 20 arrows';
+    if (item === '5 javelins') return '5 javelins';
+    if (item === 'Longbow') return 'Longbow';
+    if (item === '20 arrows') return '20 arrows';
+    
+    // Generic weapon types
+    if (item === 'Any martial melee weapon') return pick(['Longsword', 'Battleaxe', 'Warhammer', 'Greatsword', 'Maul', 'Rapier']);
     if (item === 'Any martial weapon') return pick(['Longsword', 'Rapier', 'Battleaxe', 'Longbow']);
-    if (item === 'Any simple weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace', 'Javelin']);
-    if (item === 'Any simple melee weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace']);
-    if (item === 'Any musical instrument') return pick(['Lute', 'Flute', 'Drum', 'Harp']);
+    if (item === 'Any simple weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace', 'Javelin', 'Spear']);
+    if (item === 'Any simple melee weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace', 'Spear']);
+    if (item === 'Any musical instrument') return pick(['Lute', 'Flute', 'Drum', 'Harp', 'Viol']);
+    
+    // Keep specific items as-is
     return item;
   };
   
