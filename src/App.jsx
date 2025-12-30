@@ -9968,54 +9968,50 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
   let multiclassLevels = [];
 
   if (enableMulticlass && level >= 2) {
-    // Decide if we should multiclass (increases with level)
-    const shouldMulticlass = Math.random() < (level >= 5 ? 0.5 : 0.35);
-
-    if (shouldMulticlass) {
-      // Allocate levels to a secondary class while keeping primary at least level 1.
-      const multiclassLevelCount = level >= 10 ? pick([2, 3, 4]) : level >= 5 ? pick([2, 3]) : 1;
-      const safeMulticlassCount = Math.min(multiclassLevelCount, Math.max(1, level - 1));
-      
-      // Pick a synergistic multiclass based on primary abilities
-      const getCompatibleMulticlass = (primaryClass) => {
-        const synergies = {
-          barbarian: ['fighter', 'ranger'],
-          bard: ['rogue', 'warlock', 'sorcerer'],
-          cleric: ['paladin', 'druid'],
-          druid: ['ranger', 'cleric'],
-          fighter: ['barbarian', 'paladin', 'ranger'],
-          monk: ['rogue', 'ranger'],
-          paladin: ['fighter', 'cleric', 'warlock'],
-          ranger: ['fighter', 'druid', 'rogue'],
-          rogue: ['bard', 'ranger', 'monk'],
-          sorcerer: ['warlock', 'bard', 'wizard'],
-          warlock: ['sorcerer', 'bard', 'paladin'],
-          wizard: ['sorcerer', 'cleric']
-        };
-        
-        const compatible = synergies[primaryClass.toLowerCase()] || [];
-        const available = compatible.filter(id => CLASSES[id]);
-        return available.length > 0 ? pick(available) : pick(Object.keys(CLASSES).filter(id => id !== classId));
+    // When multiclass is explicitly enabled, always multiclass
+    // Allocate levels to a secondary class while keeping primary at least level 1.
+    const multiclassLevelCount = level >= 10 ? pick([2, 3, 4]) : level >= 5 ? pick([2, 3]) : 1;
+    const safeMulticlassCount = Math.min(multiclassLevelCount, Math.max(1, level - 1));
+    
+    // Pick a synergistic multiclass based on primary abilities
+    const getCompatibleMulticlass = (primaryClass) => {
+      const synergies = {
+        barbarian: ['fighter', 'ranger'],
+        bard: ['rogue', 'warlock', 'sorcerer'],
+        cleric: ['paladin', 'druid'],
+        druid: ['ranger', 'cleric'],
+        fighter: ['barbarian', 'paladin', 'ranger'],
+        monk: ['rogue', 'ranger'],
+        paladin: ['fighter', 'cleric', 'warlock'],
+        ranger: ['fighter', 'druid', 'rogue'],
+        rogue: ['bard', 'ranger', 'monk'],
+        sorcerer: ['warlock', 'bard', 'wizard'],
+        warlock: ['sorcerer', 'bard', 'paladin'],
+        wizard: ['sorcerer', 'cleric']
       };
       
-      const multiclassId = getCompatibleMulticlass(selectedClass.name);
-      const multiclassData = CLASSES[multiclassId];
-      
-      // Choose a subclass if the multiclass level is high enough
-      let multiclassSubclass = null;
-      if (safeMulticlassCount >= multiclassData.subclassLevel) {
-        const subclasses = SUBCLASSES[multiclassId];
-        if (subclasses) {
-          multiclassSubclass = pick(Object.keys(subclasses));
-        }
+      const compatible = synergies[primaryClass.toLowerCase()] || [];
+      const available = compatible.filter(id => CLASSES[id]);
+      return available.length > 0 ? pick(available) : pick(Object.keys(CLASSES).filter(id => id !== classId));
+    };
+    
+    const multiclassId = getCompatibleMulticlass(selectedClass.name);
+    const multiclassData = CLASSES[multiclassId];
+    
+    // Choose a subclass if the multiclass level is high enough
+    let multiclassSubclass = null;
+    if (safeMulticlassCount >= multiclassData.subclassLevel) {
+      const subclasses = SUBCLASSES[multiclassId];
+      if (subclasses) {
+        multiclassSubclass = pick(Object.keys(subclasses));
       }
-      
-      multiclassLevels = [{
-        classId: multiclassId,
-        level: safeMulticlassCount,
-        subclass: multiclassSubclass
-      }];
     }
+    
+    multiclassLevels = [{
+      classId: multiclassId,
+      level: safeMulticlassCount,
+      subclass: multiclassSubclass
+    }];
   }
 
   // Step 9.75: Choose a subclass if required at this level
