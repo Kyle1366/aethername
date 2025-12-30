@@ -10151,35 +10151,211 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     }
   }
   
-  // Step 13: Spells for casters
+  // Step 13: Smart Spell Selection for Casters
   const spells = [];
   const cantrips = [];
   
   if (selectedClass.spellcasting) {
-    const spellAbility = selectedClass.spellcasting.ability;
     const cantripsKnown = selectedClass.spellcasting.cantrips || 0;
     
-    // Filter spells by class
+    // Define spell priorities by class and role
+    // Priority spells are always picked first, then fill remaining with random from pool
+    const SPELL_PRIORITIES = {
+      // BARD: Support/Control focus with some damage
+      bard: {
+        cantrips: {
+          priority: ['viciousMockery', 'minorIllusion'], // Core bard cantrips
+          good: ['light', 'mageHand', 'prestidigitation', 'trueStrike']
+        },
+        spells: {
+          priority: ['healingWord', 'faerieFire', 'dissonantWhispers'], // Essential bard spells
+          good: ['cureWounds', 'charmPerson', 'sleep', 'thunderwave', 'tashasHideousLaughter', 'heroism', 'bane']
+        }
+      },
+      // CLERIC: Healer/Support with domain flexibility
+      cleric: {
+        cantrips: {
+          priority: ['sacredFlame', 'guidance', 'spareTheDying'], // Core cleric trio
+          good: ['light', 'thaumaturgy', 'mending']
+        },
+        spells: {
+          priority: ['healingWord', 'guidingBolt', 'bless'], // Essential cleric spells
+          good: ['cureWounds', 'shieldOfFaith', 'sanctuary', 'inflictWounds', 'command', 'detectMagic']
+        },
+        // Subclass-specific additions
+        subclassPriority: {
+          life: { spells: ['cureWounds', 'healingWord', 'bless'] },
+          light: { spells: ['guidingBolt', 'faerieFire'], cantrips: ['light'] },
+          tempest: { spells: ['thunderwave'], cantrips: ['shockingGrasp'] },
+          war: { spells: ['shieldOfFaith', 'divineFavor'] },
+          trickery: { spells: ['charmPerson', 'disguiseSelf'] },
+          knowledge: { spells: ['detectMagic', 'identify', 'command'] },
+          nature: { spells: ['speakWithAnimals', 'animalFriendship'] }
+        }
+      },
+      // DRUID: Nature magic, control, shapeshifting support
+      druid: {
+        cantrips: {
+          priority: ['produceFlame', 'shillelagh', 'guidance'], // Combat + support
+          good: ['druidcraft', 'thornWhip', 'poisonSpray']
+        },
+        spells: {
+          priority: ['healingWord', 'entangle', 'goodberry'], // Essential druid spells
+          good: ['cureWounds', 'faerieFire', 'thunderwave', 'fogCloud', 'speakWithAnimals', 'detectMagic']
+        },
+        subclassPriority: {
+          moon: { spells: ['healingWord', 'goodberry', 'thunderwave'] }, // Self-sustain + wild shape
+          land: { spells: ['entangle', 'faerieFire', 'detectMagic'] } // Control + utility
+        }
+      },
+      // PALADIN: Smite-focused, some healing/buffs
+      paladin: {
+        cantrips: { priority: [], good: [] }, // No cantrips until higher levels
+        spells: {
+          priority: ['divineFavor', 'shieldOfFaith', 'wrathfulSmite'], // Combat buffs
+          good: ['bless', 'cureWounds', 'compelledDuel', 'command', 'thunderousSmite', 'heroism']
+        },
+        subclassPriority: {
+          devotion: { spells: ['bless', 'shieldOfFaith', 'sanctuary'] },
+          vengeance: { spells: ['huntersMark', 'divineFavor', 'wrathfulSmite'] },
+          ancients: { spells: ['entangle', 'speakWithAnimals', 'ensnaring_strike'] }
+        }
+      },
+      // RANGER: Hunter/tracker with nature spells
+      ranger: {
+        cantrips: { priority: [], good: [] }, // No cantrips
+        spells: {
+          priority: ['huntersMark', 'cureWounds', 'goodberry'], // Core ranger kit
+          good: ['fogCloud', 'speakWithAnimals', 'longstrider', 'detectMagic', 'alarm', 'jump']
+        },
+        subclassPriority: {
+          hunter: { spells: ['huntersMark', 'fogCloud', 'jump'] },
+          beastMaster: { spells: ['speakWithAnimals', 'animalFriendship', 'goodberry'] }
+        }
+      },
+      // SORCERER: Raw damage dealer with metamagic flexibility
+      sorcerer: {
+        cantrips: {
+          priority: ['firebolt', 'rayOfFrost', 'shockingGrasp'], // Damage cantrips
+          good: ['light', 'mageHand', 'prestidigitation', 'minorIllusion', 'chill_touch']
+        },
+        spells: {
+          priority: ['shield', 'magicMissile', 'mageArmor'], // Defense + reliable damage
+          good: ['burningHands', 'chromaticOrb', 'thunderwave', 'sleep', 'charmPerson', 'falseLife']
+        },
+        subclassPriority: {
+          draconicBloodline: { spells: ['burningHands', 'chromaticOrb', 'shield'], cantrips: ['firebolt'] },
+          wildMagic: { spells: ['magicMissile', 'charmPerson', 'sleep'] }
+        }
+      },
+      // WARLOCK: Eldritch blast focused, patron-themed
+      warlock: {
+        cantrips: {
+          priority: ['eldritchBlast', 'minorIllusion'], // EB is essential
+          good: ['chillTouch', 'mageHand', 'prestidigitation', 'trueStrike']
+        },
+        spells: {
+          priority: ['hex', 'armorOfAgathys', 'hellishRebuke'], // Core warlock kit
+          good: ['charmPerson', 'expeditiousRetreat', 'witchBolt', 'protectionFromEvilAndGood']
+        },
+        subclassPriority: {
+          fiend: { spells: ['burningHands', 'hellishRebuke', 'armorOfAgathys'] },
+          archfey: { spells: ['faerieFire', 'charmPerson', 'sleep'] },
+          greatOldOne: { spells: ['dissonantWhispers', 'tashasHideousLaughter', 'detectThoughts'] }
+        }
+      },
+      // WIZARD: Versatile, school-focused
+      wizard: {
+        cantrips: {
+          priority: ['firebolt', 'mageHand', 'prestidigitation'], // Damage + utility
+          good: ['light', 'minorIllusion', 'rayOfFrost', 'shockingGrasp', 'chill_touch']
+        },
+        spells: {
+          priority: ['shield', 'mageArmor', 'magicMissile'], // Defense + reliable damage
+          good: ['findFamiliar', 'detectMagic', 'sleep', 'burningHands', 'identify', 'featherFall']
+        },
+        subclassPriority: {
+          evocation: { spells: ['burningHands', 'magicMissile', 'thunderwave'], cantrips: ['firebolt'] },
+          abjuration: { spells: ['shield', 'mageArmor', 'protectionFromEvilAndGood'] },
+          divination: { spells: ['detectMagic', 'identify', 'comprehendLanguages'], cantrips: ['guidance'] },
+          illusion: { spells: ['disguiseSelf', 'silentImage', 'colorSpray'], cantrips: ['minorIllusion'] },
+          enchantment: { spells: ['charmPerson', 'sleep', 'tashasHideousLaughter'] },
+          necromancy: { spells: ['falseLife', 'rayOfSickness', 'causeFear'], cantrips: ['chillTouch'] },
+          conjuration: { spells: ['findFamiliar', 'fogCloud', 'grease'] },
+          transmutation: { spells: ['featherFall', 'longstrider', 'expeditiousRetreat'] }
+        }
+      }
+    };
+    
+    // Get class spell priorities
+    const classKey = classId;
+    const classPriorities = SPELL_PRIORITIES[classKey] || { cantrips: { priority: [], good: [] }, spells: { priority: [], good: [] } };
+    
+    // Get subclass-specific priorities if applicable
+    const subclassPriorities = classPriorities.subclassPriority?.[subclass] || {};
+    
+    // Combine priorities: subclass priority > class priority > class good
+    const cantripPriorityList = [
+      ...(subclassPriorities.cantrips || []),
+      ...(classPriorities.cantrips.priority || []),
+      ...(classPriorities.cantrips.good || [])
+    ];
+    
+    const spellPriorityList = [
+      ...(subclassPriorities.spells || []),
+      ...(classPriorities.spells.priority || []),
+      ...(classPriorities.spells.good || [])
+    ];
+    
+    // Get all class spells
     const classSpells = Object.entries(SPELLS).filter(([id, spell]) => 
       spell.classes?.includes(selectedClass.name.toLowerCase())
     );
     
-    // Pick cantrips
+    // Pick cantrips with priority
     const availableCantrips = classSpells.filter(([id, spell]) => spell.level === 0);
-    const shuffledCantrips = [...availableCantrips].sort(() => Math.random() - 0.5);
+    const selectedCantrips = new Set();
     
-    for (let i = 0; i < Math.min(cantripsKnown, shuffledCantrips.length); i++) {
-      cantrips.push(shuffledCantrips[i][0]);
+    // First, add priority cantrips
+    for (const cantripId of cantripPriorityList) {
+      if (selectedCantrips.size >= cantripsKnown) break;
+      if (availableCantrips.some(([id]) => id === cantripId) && !selectedCantrips.has(cantripId)) {
+        selectedCantrips.add(cantripId);
+      }
     }
     
-    // Pick 1st level spells (simplified - just pick a few)
+    // Fill remaining with random from available
+    const remainingCantrips = availableCantrips.filter(([id]) => !selectedCantrips.has(id));
+    const shuffledRemainingCantrips = [...remainingCantrips].sort(() => Math.random() - 0.5);
+    for (const [id] of shuffledRemainingCantrips) {
+      if (selectedCantrips.size >= cantripsKnown) break;
+      selectedCantrips.add(id);
+    }
+    
+    cantrips.push(...selectedCantrips);
+    
+    // Pick 1st level spells with priority
     const available1stLevel = classSpells.filter(([id, spell]) => spell.level === 1);
-    const shuffled1st = [...available1stLevel].sort(() => Math.random() - 0.5);
-    const spellsToKnow = Math.min(4, shuffled1st.length); // Pick ~4 spells
+    const selectedSpells = new Set();
+    const spellsToKnow = Math.min(4, available1stLevel.length);
     
-    for (let i = 0; i < spellsToKnow; i++) {
-      spells.push(shuffled1st[i][0]);
+    // First, add priority spells
+    for (const spellId of spellPriorityList) {
+      if (selectedSpells.size >= spellsToKnow) break;
+      if (available1stLevel.some(([id]) => id === spellId) && !selectedSpells.has(spellId)) {
+        selectedSpells.add(spellId);
+      }
     }
+    
+    // Fill remaining with random from available
+    const remainingSpells = available1stLevel.filter(([id]) => !selectedSpells.has(id));
+    const shuffledRemainingSpells = [...remainingSpells].sort(() => Math.random() - 0.5);
+    for (const [id] of shuffledRemainingSpells) {
+      if (selectedSpells.size >= spellsToKnow) break;
+      selectedSpells.add(id);
+    }
+    
+    spells.push(...selectedSpells);
   }
   
   // Step 14: Class-specific features
