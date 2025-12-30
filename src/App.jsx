@@ -3868,9 +3868,9 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
   (primaryClassData?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a));
   multiclassData.forEach((cls) => (cls?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a)));
 
+  // Saving throws only from primary class per official 5e rules
   const savingThrowOrder = [];
   (primaryClassData?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a));
-  multiclassData.forEach((cls) => (cls?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a)));
   
   // Calculate unassigned indices from assignments
   const getUnassignedIndices = () => {
@@ -4419,9 +4419,9 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
   (primaryClassData?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a));
   multiclassData.forEach((cls) => (cls?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a)));
 
+  // Saving throws only from primary class per official 5e rules
   const savingThrowOrder = [];
   (primaryClassData?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a));
-  multiclassData.forEach((cls) => (cls?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a)));
   
   // Initialize ASI choices if not exist
   const asiChoices = character.asiChoices || {};
@@ -5227,22 +5227,13 @@ const ReviewStep = ({
       return skillName;
     });
     
-    // Collect saving throws from primary class AND multiclass entries
-    // This is generous interpretation for random/multiclass characters
-    const allSavingThrowAbilities = new Set();
-    (classData?.savingThrows || []).forEach(s => allSavingThrowAbilities.add(s));
-    // Also add saving throws from multiclass entries
-    (character.multiclass || []).forEach(mc => {
-      const mcClassData = CLASSES[mc.classId];
-      (mcClassData?.savingThrows || []).forEach(s => allSavingThrowAbilities.add(s));
-    });
-    
+    // Saving throws - only from primary class per official 5e rules
     const profs = {
       armor: classData?.armorProficiencies || [],
       weapons: classData?.weaponProficiencies || [],
       tools: background?.toolProficiencies || [],
       skills: allSkillsWithBonuses,
-      savingThrows: Array.from(allSavingThrowAbilities).map(s => {
+      savingThrows: (classData?.savingThrows || []).map(s => {
         const abilityMod = getModifier(finalAbilities[s]);
         const totalBonus = abilityMod + proficiencyBonus;
         const bonusStr = totalBonus >= 0 ? `+${totalBonus}` : `${totalBonus}`;
