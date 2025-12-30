@@ -6664,6 +6664,225 @@ const ReviewStep = ({
             </div>
           </div>
 
+          {/* Pending Choices - Languages (moved to left column) */}
+          {(() => {
+            const raceChoices = getRaceLanguageChoices(character.race, character.subrace);
+            const bgChoices = getBackgroundLanguageChoices(character.background);
+            const totalChoices = raceChoices + bgChoices;
+            const fixedLangs = getFixedLanguages(character.race, character.subrace);
+            const chosenLangs = character.chosenLanguages || [];
+            
+            if (totalChoices === 0) return null;
+            
+            const knownLanguageNames = [...fixedLangs, ...chosenLangs.map(id => LANGUAGES[id]?.name)].map(n => n?.toLowerCase());
+            const availableLanguages = Object.entries(LANGUAGES).filter(([id, lang]) => 
+              !knownLanguageNames.includes(lang.name.toLowerCase())
+            );
+            
+            const toggleLanguage = (langId) => {
+              const current = character.chosenLanguages || [];
+              if (current.includes(langId)) {
+                updateCharacter('chosenLanguages', current.filter(l => l !== langId));
+              } else if (current.length < totalChoices) {
+                updateCharacter('chosenLanguages', [...current, langId]);
+              }
+            };
+            
+            const isComplete = chosenLangs.length >= totalChoices;
+            
+            return (
+              <div className={`p-4 rounded-xl border ${
+                isComplete 
+                  ? 'bg-green-500/10 border-green-500/30' 
+                  : 'bg-amber-500/10 border-amber-500/30'
+              }`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
+                    {isComplete ? '✓ ' : '⚠ '}Language Selection
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
+                      {chosenLangs.length}/{totalChoices} chosen
+                    </span>
+                    <button
+                      onClick={() => goToStep(5)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-700/30 border border-slate-600/40 text-slate-200 text-[11px] hover:bg-slate-600/40 transition-all"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-xs text-slate-400 mb-3">
+                  {raceChoices > 0 && <span>{raceChoices} from {RACES[character.race]?.name || 'race'}</span>}
+                  {raceChoices > 0 && bgChoices > 0 && <span> • </span>}
+                  {bgChoices > 0 && <span>{bgChoices} from {BACKGROUNDS[character.background]?.name || 'background'}</span>}
+                </div>
+                
+                {/* Already known */}
+                {fixedLangs.length > 0 && (
+                  <div className="mb-3">
+                    <div className="text-xs text-slate-500 mb-1">Already Known</div>
+                    <div className="flex flex-wrap gap-1">
+                      {fixedLangs.map((lang, i) => (
+                        <span key={i} className="px-2 py-1 rounded-md bg-slate-700/50 text-slate-400 text-xs">
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Selected */}
+                {chosenLangs.length > 0 && (
+                  <div className="mb-3">
+                    <div className="text-xs text-slate-500 mb-1">Selected</div>
+                    <div className="flex flex-wrap gap-1">
+                      {chosenLangs.map(id => (
+                        <button
+                          key={id}
+                          onClick={() => toggleLanguage(id)}
+                          className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs flex items-center gap-1 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                        >
+                          {LANGUAGES[id]?.name}
+                          <X className="w-3 h-3" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Available choices */}
+                {!isComplete && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-2">Choose {totalChoices - chosenLangs.length} more</div>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto">
+                      {availableLanguages.map(([id, lang]) => (
+                        <button
+                          key={id}
+                          onClick={() => toggleLanguage(id)}
+                          className="px-2 py-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-indigo-500/30 transition-all text-left"
+                        >
+                          <div>{lang.name}</div>
+                          <div className="text-[10px] text-slate-500">{lang.type}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Pending Choices - Skill Replacements (moved to left column) */}
+          {(() => {
+            const overlap = getSkillOverlap(character.class, character.background);
+            
+            if (overlap.length === 0) return null;
+            
+            const chosenReplacements = character.replacementSkills || [];
+            const availableSkills = getAvailableReplacementSkills(
+              character.class, 
+              character.background, 
+              chosenReplacements
+            );
+            
+            const toggleSkill = (skillId) => {
+              const current = character.replacementSkills || [];
+              if (current.includes(skillId)) {
+                updateCharacter('replacementSkills', current.filter(s => s !== skillId));
+              } else if (current.length < overlap.length) {
+                updateCharacter('replacementSkills', [...current, skillId]);
+              }
+            };
+            
+            const isComplete = chosenReplacements.length >= overlap.length;
+            
+            return (
+              <div className={`p-4 rounded-xl border ${
+                isComplete 
+                  ? 'bg-green-500/10 border-green-500/30' 
+                  : 'bg-amber-500/10 border-amber-500/30'
+              }`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
+                    {isComplete ? '✓ ' : '⚠ '}Skill Replacement
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
+                      {chosenReplacements.length}/{overlap.length} chosen
+                    </span>
+                    <button
+                      onClick={() => goToStep(5)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-700/30 border border-slate-600/40 text-slate-200 text-[11px] hover:bg-slate-600/40 transition-all"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-xs text-slate-400 mb-3">
+                  Your <span className="text-purple-300">{BACKGROUNDS[character.background]?.name}</span> background 
+                  grants skills that overlap with <span className="text-indigo-300">{CLASSES[character.class]?.name}</span> options.
+                  Choose {overlap.length} replacement skill{overlap.length > 1 ? 's' : ''}.
+                </div>
+                
+                {/* Overlapping skills */}
+                <div className="mb-3">
+                  <div className="text-xs text-slate-500 mb-1">Overlapping Skills (from background)</div>
+                  <div className="flex flex-wrap gap-1">
+                    {overlap.map((skill, i) => (
+                      <span key={i} className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Selected replacements */}
+                {chosenReplacements.length > 0 && (
+                  <div className="mb-3">
+                    <div className="text-xs text-slate-500 mb-1">Replacement Skills</div>
+                    <div className="flex flex-wrap gap-1">
+                      {chosenReplacements.map(id => (
+                        <button
+                          key={id}
+                          onClick={() => toggleSkill(id)}
+                          className="px-2 py-1 rounded-md bg-green-500/20 text-green-300 text-xs flex items-center gap-1 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                        >
+                          {SKILLS[id]?.name}
+                          <X className="w-3 h-3" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Available choices */}
+                {!isComplete && (
+                  <div>
+                    <div className="text-xs text-slate-500 mb-2">Choose {overlap.length - chosenReplacements.length} more</div>
+                    <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
+                      {availableSkills.map(([id, skill]) => (
+                        <button
+                          key={id}
+                          onClick={() => toggleSkill(id)}
+                          className="px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-green-500/30 transition-all text-left"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div className="font-medium">{skill.name}</div>
+                            <div className="text-[10px] text-indigo-400 shrink-0">{ABILITY_LABELS[skill.ability]?.short}</div>
+                          </div>
+                          <div className="text-[10px] text-slate-500 leading-relaxed">{skill.description}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
         </div>
         {/* Right Column */}
         <div className="space-y-4">
@@ -7133,225 +7352,6 @@ const ReviewStep = ({
           )}
         </div>
       </div>
-
-      {/* Pending Choices - Languages */}
-      {(() => {
-        const raceChoices = getRaceLanguageChoices(character.race, character.subrace);
-        const bgChoices = getBackgroundLanguageChoices(character.background);
-        const totalChoices = raceChoices + bgChoices;
-        const fixedLangs = getFixedLanguages(character.race, character.subrace);
-        const chosenLangs = character.chosenLanguages || [];
-        
-        if (totalChoices === 0) return null;
-        
-        const knownLanguageNames = [...fixedLangs, ...chosenLangs.map(id => LANGUAGES[id]?.name)].map(n => n?.toLowerCase());
-        const availableLanguages = Object.entries(LANGUAGES).filter(([id, lang]) => 
-          !knownLanguageNames.includes(lang.name.toLowerCase())
-        );
-        
-        const toggleLanguage = (langId) => {
-          const current = character.chosenLanguages || [];
-          if (current.includes(langId)) {
-            updateCharacter('chosenLanguages', current.filter(l => l !== langId));
-          } else if (current.length < totalChoices) {
-            updateCharacter('chosenLanguages', [...current, langId]);
-          }
-        };
-        
-        const isComplete = chosenLangs.length >= totalChoices;
-        
-        return (
-          <div className={`mt-6 p-4 rounded-xl border ${
-            isComplete 
-              ? 'bg-green-500/10 border-green-500/30' 
-              : 'bg-amber-500/10 border-amber-500/30'
-          }`}>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
-                {isComplete ? '✓ ' : '⚠ '}Language Selection
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
-                  {chosenLangs.length}/{totalChoices} chosen
-                </span>
-                <button
-                  onClick={() => goToStep(5)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-700/30 border border-slate-600/40 text-slate-200 text-[11px] hover:bg-slate-600/40 transition-all"
-                >
-                  Edit
-                </button>
-              </div>
-            </div>
-            
-            <div className="text-xs text-slate-400 mb-3">
-              {raceChoices > 0 && <span>{raceChoices} from {RACES[character.race]?.name || 'race'}</span>}
-              {raceChoices > 0 && bgChoices > 0 && <span> • </span>}
-              {bgChoices > 0 && <span>{bgChoices} from {BACKGROUNDS[character.background]?.name || 'background'}</span>}
-            </div>
-            
-            {/* Already known */}
-            {fixedLangs.length > 0 && (
-              <div className="mb-3">
-                <div className="text-xs text-slate-500 mb-1">Already Known</div>
-                <div className="flex flex-wrap gap-1">
-                  {fixedLangs.map((lang, i) => (
-                    <span key={i} className="px-2 py-1 rounded-md bg-slate-700/50 text-slate-400 text-xs">
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Selected */}
-            {chosenLangs.length > 0 && (
-              <div className="mb-3">
-                <div className="text-xs text-slate-500 mb-1">Selected</div>
-                <div className="flex flex-wrap gap-1">
-                  {chosenLangs.map(id => (
-                    <button
-                      key={id}
-                      onClick={() => toggleLanguage(id)}
-                      className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs flex items-center gap-1 hover:bg-red-500/20 hover:text-red-300 transition-colors"
-                    >
-                      {LANGUAGES[id]?.name}
-                      <X className="w-3 h-3" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Available choices */}
-            {!isComplete && (
-              <div>
-                <div className="text-xs text-slate-500 mb-2">Choose {totalChoices - chosenLangs.length} more</div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 max-h-32 sm:max-h-48 overflow-y-auto">
-                  {availableLanguages.map(([id, lang]) => (
-                    <button
-                      key={id}
-                      onClick={() => toggleLanguage(id)}
-                      className="px-2 py-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-indigo-500/30 transition-all text-left"
-                    >
-                      <div>{lang.name}</div>
-                      <div className="text-[10px] text-slate-500">{lang.type}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* Pending Choices - Skill Replacements */}
-      {(() => {
-        const overlap = getSkillOverlap(character.class, character.background);
-        
-        if (overlap.length === 0) return null;
-        
-        const chosenReplacements = character.replacementSkills || [];
-        const availableSkills = getAvailableReplacementSkills(
-          character.class, 
-          character.background, 
-          chosenReplacements
-        );
-        
-        const toggleSkill = (skillId) => {
-          const current = character.replacementSkills || [];
-          if (current.includes(skillId)) {
-            updateCharacter('replacementSkills', current.filter(s => s !== skillId));
-          } else if (current.length < overlap.length) {
-            updateCharacter('replacementSkills', [...current, skillId]);
-          }
-        };
-        
-        const isComplete = chosenReplacements.length >= overlap.length;
-        
-        return (
-          <div className={`mt-6 p-4 rounded-xl border ${
-            isComplete 
-              ? 'bg-green-500/10 border-green-500/30' 
-              : 'bg-amber-500/10 border-amber-500/30'
-          }`}>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
-                {isComplete ? '✓ ' : '⚠ '}Skill Replacement
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
-                  {chosenReplacements.length}/{overlap.length} chosen
-                </span>
-                <button
-                  onClick={() => goToStep(5)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-700/30 border border-slate-600/40 text-slate-200 text-[11px] hover:bg-slate-600/40 transition-all"
-                >
-                  Edit
-                </button>
-              </div>
-            </div>
-            
-            <div className="text-xs text-slate-400 mb-3">
-              Your <span className="text-purple-300">{BACKGROUNDS[character.background]?.name}</span> background 
-              grants skills that overlap with <span className="text-indigo-300">{CLASSES[character.class]?.name}</span> options.
-              Choose {overlap.length} replacement skill{overlap.length > 1 ? 's' : ''}.
-            </div>
-            
-            {/* Overlapping skills */}
-            <div className="mb-3">
-              <div className="text-xs text-slate-500 mb-1">Overlapping Skills (from background)</div>
-              <div className="flex flex-wrap gap-1">
-                {overlap.map((skill, i) => (
-                  <span key={i} className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            {/* Selected replacements */}
-            {chosenReplacements.length > 0 && (
-              <div className="mb-3">
-                <div className="text-xs text-slate-500 mb-1">Replacement Skills</div>
-                <div className="flex flex-wrap gap-1">
-                  {chosenReplacements.map(id => (
-                    <button
-                      key={id}
-                      onClick={() => toggleSkill(id)}
-                      className="px-2 py-1 rounded-md bg-green-500/20 text-green-300 text-xs flex items-center gap-1 hover:bg-red-500/20 hover:text-red-300 transition-colors"
-                    >
-                      {SKILLS[id]?.name}
-                      <X className="w-3 h-3" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Available choices */}
-            {!isComplete && (
-              <div>
-                <div className="text-xs text-slate-500 mb-2">Choose {overlap.length - chosenReplacements.length} more</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
-                  {availableSkills.map(([id, skill]) => (
-                    <button
-                      key={id}
-                      onClick={() => toggleSkill(id)}
-                      className="px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs hover:border-green-500/30 transition-all text-left"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="font-medium">{skill.name}</div>
-                        <div className="text-[10px] text-indigo-400 shrink-0">{ABILITY_LABELS[skill.ability]?.short}</div>
-                      </div>
-                      <div className="text-[10px] text-slate-500 leading-relaxed">{skill.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
 
       {/* Export Options */}
       <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
