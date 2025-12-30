@@ -5719,8 +5719,18 @@ const ReviewStep = ({
     const nameWidth = doc.getTextWidth(charName);
     doc.text(charName, (pageWidth - nameWidth) / 2, margin + 10);
     
-    // Class/Level line
-    const classText = `${classData?.name || 'Unknown'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`;
+    // Class/Level line with multiclass support
+    let classText = '';
+    if (character.multiclass && character.multiclass.length > 0) {
+      // Show all classes with levels
+      classText = character.multiclass.map(mc => {
+        const mcClass = CLASS_DATA[mc.classId];
+        const mcSubclass = mc.subclass && SUBCLASSES[mc.classId]?.[mc.subclass];
+        return `${mcClass?.name || 'Unknown'} ${mc.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
+      }).join(' • ');
+    } else {
+      classText = `${classData?.name || 'Unknown'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`;
+    }
     doc.setFontSize(11);
     doc.setFont('times', 'italic');
     doc.setTextColor(255, 255, 255);
@@ -5914,6 +5924,142 @@ const ReviewStep = ({
     
     y += 4;
 
+    // ============== LEVEL ADVANCEMENTS (ASI/FEATS) ==============
+    const levelAdvancements = [];
+    if (character.feats && character.feats.length > 0) {
+      character.feats.forEach(feat => {
+        if (feat.choices && feat.choices.length > 0) {
+          feat.choices.forEach(choice => {
+            if (choice.type === 'feat' && choice.featId) {
+              const featData = FEATS.find(f => f.id === choice.featId);
+              if (featData) {
+                levelAdvancements.push(`Level ${feat.level}: Feat - ${featData.name}`);
+              }
+            } else if (choice.type === 'asi') {
+              const asiText = Object.entries(choice.abilities || {})
+                .filter(([_, val]) => val > 0)
+                .map(([ability, val]) => `${ABILITY_LABELS[ability].short} +${val}`)
+                .join(', ');
+              if (asiText) {
+                levelAdvancements.push(`Level ${feat.level}: ASI - ${asiText}`);
+              }
+            }
+          });
+        }
+      });
+    }
+
+    if (levelAdvancements.length > 0) {
+      if (y > pageHeight - 40) {
+        doc.addPage();
+        addDecorativeBorder();
+        y = margin + 10;
+      }
+      
+      y = drawSectionHeader('LEVEL ADVANCEMENTS', y) + 3;
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textDark);
+      
+      levelAdvancements.forEach((adv, idx) => {
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          addDecorativeBorder();
+          y = margin + 10;
+        }
+        
+        doc.setFillColor(...colors.accentPurple);
+        doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
+        doc.text(adv, margin + 5, y + 1.5);
+        y += 4.5;
+      });
+      
+      y += 4;
+    }
+
+    // ============== ELDRITCH INVOCATIONS ==============
+    if (character.class === 'warlock' && character.invocations && character.invocations.length > 0) {
+      if (y > pageHeight - 40) {
+        doc.addPage();
+        addDecorativeBorder();
+        y = margin + 10;
+      }
+      
+      y = drawSectionHeader('ELDRITCH INVOCATIONS', y) + 3;
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textDark);
+      
+      character.invocations.forEach((invId, idx) => {
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          addDecorativeBorder();
+          y = margin + 10;
+        }
+        
+        const invocation = WARLOCK_INVOCATIONS.find(inv => inv.id === invId);
+        if (invocation) {
+          doc.setFillColor(...colors.darkPurple);
+          doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
+          doc.text(invocation.name, margin + 5, y + 1.5);
+          y += 4.5;
+        }
+      });
+      
+      y += 4;
+    }
+
+    // ============== PHYSICAL CHARACTERISTICS ==============
+    const hasPhysicalTraits = character.age || character.height || character.weight || 
+                              character.eyes || character.hair || character.skin;
+    
+    if (hasPhysicalTraits) {
+      if (y > pageHeight - 40) {
+        doc.addPage();
+        addDecorativeBorder();
+        y = margin + 10;
+      }
+      
+      y = drawSectionHeader('PHYSICAL CHARACTERISTICS', y) + 3;
+      
+      const physicalTraits = [
+        { label: 'Age', value: character.age },
+        { label: 'Height', value: character.height },
+        { label: 'Weight', value: character.weight },
+        { label: 'Eyes', value: character.eyes },
+        { label: 'Hair', value: character.hair },
+        { label: 'Skin', value: character.skin }
+      ].filter(t => t.value);
+      
+      const traitSpacing = (pageWidth - 2 * margin) / 3;
+      let colIdx = 0;
+      let rowY = y;
+      
+      physicalTraits.forEach((trait, idx) => {
+        const x = margin + colIdx * traitSpacing;
+        
+        doc.setFontSize(7);
+        doc.setFont('times', 'bolditalic');
+        doc.setTextColor(...colors.textMuted);
+        doc.text(trait.label.toUpperCase(), x, rowY);
+        
+        doc.setFontSize(9);
+        doc.setFont('times', 'normal');
+        doc.setTextColor(...colors.textDark);
+        doc.text(String(trait.value), x, rowY + 4);
+        
+        colIdx++;
+        if (colIdx >= 3) {
+          colIdx = 0;
+          rowY += 9;
+        }
+      });
+      
+      y = rowY + (colIdx > 0 ? 9 : 4);
+    }
+
     // ============== EQUIPMENT ==============
     if (equipment.length > 0) {
       if (y > pageHeight - 40) {
@@ -5961,6 +6107,26 @@ const ReviewStep = ({
       }
       
       y = drawSectionHeader('SPELLCASTING', y) + 3;
+      
+      // Multiclass disclaimer
+      if (character.multiclass && character.multiclass.length > 1) {
+        const hasMultipleCasters = character.multiclass.filter(mc => {
+          const mcClass = CLASS_DATA[mc.classId];
+          return mcClass?.spellcasting;
+        }).length > 1;
+        
+        if (hasMultipleCasters) {
+          doc.setFontSize(7);
+          doc.setFont('times', 'italic');
+          doc.setTextColor(...colors.accentBlue);
+          const disclaimer = 'Note: Multiclass spellcasting isn\'t fully calculated yet (spell slots/spells shown are primary-class only).';
+          const disclaimerLines = doc.splitTextToSize(disclaimer, pageWidth - 2 * margin - 4);
+          disclaimerLines.forEach((line, idx) => {
+            doc.text(line, margin + 2, y + idx * 3.5);
+          });
+          y += disclaimerLines.length * 3.5 + 3;
+        }
+      }
       
       const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
