@@ -5074,6 +5074,11 @@ const ReviewStep = ({
   const classData = character.class ? CLASSES[character.class] : null;
   const background = character.background ? BACKGROUNDS[character.background] : null;
 
+  const totalLevel = character.level || 1;
+  const multiclassEntries = character.multiclass || [];
+  const multiclassLevelSum = multiclassEntries.reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
+  const primaryLevel = Math.max(1, totalLevel - multiclassLevelSum);
+
   // Start with racial/subrace bonuses and include Variant Human +1/+1
   const baseRacialBonuses = getRacialBonuses(character.race, character.subrace);
   const racialBonuses = (() => {
@@ -5119,10 +5124,10 @@ const ReviewStep = ({
     return out;
   })();
 
-  const spellcastingInfo = character.class ? getSpellcastingInfo(character.class, character.level) : null;
+  const spellcastingInfo = character.class ? getSpellcastingInfo(character.class, totalLevel) : null;
 
   // Calculate derived stats
-  const proficiencyBonus = Math.ceil(1 + character.level / 4) + 1; // +2 at level 1
+  const proficiencyBonus = Math.ceil(totalLevel / 4) + 1; // +2 at level 1
   const initiative = getModifier(finalAbilities.dexterity);
   const speed = subrace?.speed || race?.speed || 30;
   
@@ -5152,7 +5157,33 @@ const ReviewStep = ({
   // HP calculation - uses calculateHP helper for multi-level support
   const hitDie = classData?.hitDie || 8;
   const conMod = getModifier(finalAbilities.constitution);
-  const maxHP = character.class ? calculateHP(character.class, character.level, conMod, 'average') : hitDie + conMod;
+
+  const calculateMulticlassHP = () => {
+    if (!character.class) return hitDie + conMod;
+
+    const getAverageGain = (hitDieValue) => Math.floor(hitDieValue / 2) + 1;
+    const primaryHitDie = CLASSES[character.class]?.hitDie || hitDie;
+
+    // Starter approximation:
+    // - Level 1 (primary): max hit die + CON
+    // - Remaining primary levels: average + CON
+    // - Multiclass levels: average + CON each level
+    const primaryFirst = primaryHitDie + conMod;
+    const primaryRemainder = Math.max(0, primaryLevel - 1) * (getAverageGain(primaryHitDie) + conMod);
+
+    const multiclassHP = multiclassEntries.reduce((sum, mc) => {
+      const mcClass = CLASSES[mc.classId];
+      if (!mcClass) return sum;
+      const mcLevels = Math.max(0, Number(mc.level) || 0);
+      return sum + mcLevels * (getAverageGain(mcClass.hitDie) + conMod);
+    }, 0);
+
+    return Math.max(1, primaryFirst + primaryRemainder + multiclassHP);
+  };
+
+  const maxHP = character.class
+    ? (multiclassEntries.length > 0 ? calculateMulticlassHP() : calculateHP(character.class, totalLevel, conMod, 'average'))
+    : hitDie + conMod;
 
   // Passive Perception
   const passivePerception = 10 + getModifier(finalAbilities.wisdom);
@@ -5271,7 +5302,7 @@ const ReviewStep = ({
       '═══════════════════════════════════════════════════════════',
       '',
       `Race: ${race?.name || 'None'}${subrace ? ` (${subrace.name})` : ''}`,
-      `Class: ${classData?.name || 'None'} ${character.level}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}${character.multiclass && character.multiclass.length > 0 ? ` / ${character.multiclass.map(m => {
+      `Class: ${classData?.name || 'None'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}${character.multiclass && character.multiclass.length > 0 ? ` / ${character.multiclass.map(m => {
         const mcClass = CLASSES[m.classId];
         const mcSubclass = m.subclass && SUBCLASSES[m.classId]?.[m.subclass];
         return `${mcClass?.name} ${m.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
@@ -5293,7 +5324,7 @@ const ReviewStep = ({
       '─── COMBAT STATS ─────────────────────────────────────────',
       '',
       `AC: ${baseAC}`,
-      `HP: ${maxHP} (d${hitDie} + ${conMod})`,
+      `HP: ${maxHP}${character.multiclass && character.multiclass.length > 0 ? ' (approx. average for multiclass)' : ' (d' + hitDie + ' + ' + conMod + ')'}`,
       `Initiative: ${initiative >= 0 ? '+' : ''}${initiative}`,
       `Speed: ${speed} ft`,
       `Proficiency Bonus: +${proficiencyBonus}`,
@@ -5407,7 +5438,7 @@ const ReviewStep = ({
       lines.push(`Spell Attack: +${proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability])}`);
       
       // Add spell slots to export
-      const slots = getSpellSlots(character.class, character.level);
+      const slots = getSpellSlots(character.class, totalLevel);
       if (slots) {
         if (character.class === 'warlock') {
           lines.push(`Pact Magic: ${slots.slots} slots (Level ${slots.level})`);
@@ -5445,7 +5476,7 @@ const ReviewStep = ({
       race: race?.name,
       subrace: subrace?.name || null,
       class: classData?.name,
-      level: character.level,
+      level: totalLevel,
       background: background?.name,
       abilities: {
         base: character.abilities,
@@ -5527,7 +5558,7 @@ const ReviewStep = ({
   const skillsComplete = skillOverlap.length === 0 || (character.replacementSkills || []).length >= skillOverlap.length;
 
   // Check if subclass is required and selected
-  const subclassRequired = classData && character.level >= classData.subclassLevel;
+  const subclassRequired = classData && totalLevel >= classData.subclassLevel;
   const subclassComplete = !subclassRequired || !!character.subclass;
 
   // Core required fields (always required)
@@ -5671,7 +5702,7 @@ const ReviewStep = ({
             </h2>
             <p className="text-slate-300">
               {race?.name || 'Unknown Race'}
-              {subrace ? ` (${subrace.name})` : ''} {classData?.name || 'Unknown Class'} {character.level}
+              {subrace ? ` (${subrace.name})` : ''} {classData?.name || 'Unknown Class'} {totalLevel}
               {character.subclass && SUBCLASSES[character.class]?.[character.subclass] && (
                 <span className="text-indigo-300"> ({SUBCLASSES[character.class][character.subclass].name})</span>
               )}
@@ -5685,6 +5716,11 @@ const ReviewStep = ({
                 </span>
               )}
             </p>
+            {character.multiclass && character.multiclass.length > 0 && (
+              <div className="mt-2 text-xs text-purple-200/70">
+                Spellcasting note: multiclass spellcasting isn’t fully calculated yet (spell slots/spells shown are primary-class only).
+              </div>
+            )}
             {background && (
               <p className="text-slate-400 text-sm mt-1">{background.name} Background</p>
             )}
@@ -6163,17 +6199,17 @@ const ReviewStep = ({
           )}
 
           {/* Equipment */}
-          {equipment.length > 0 && (
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-semibold text-slate-300">Equipment</h4>
-                <button
-                  onClick={() => goToStep(6)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
-                >
-                  Edit
-                </button>
-              </div>
+          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-slate-300">Equipment</h4>
+              <button
+                onClick={() => goToStep(6)}
+                className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+              >
+                Edit
+              </button>
+            </div>
+            {equipment.length > 0 ? (
               <div className="flex flex-wrap gap-1">
                 {equipment.map((item, i) => (
                   <span key={i} className="px-2 py-1 rounded-md bg-slate-700/50 text-slate-300 text-xs">
@@ -6181,13 +6217,15 @@ const ReviewStep = ({
                   </span>
                 ))}
               </div>
-              {character.equipmentMethod === 'gold' && character.gold > 0 && (
-                <div className="mt-2 text-sm text-amber-400">
-                  💰 {character.gold} gp remaining
-                </div>
-              )}
-            </div>
-          )}
+            ) : (
+              <div className="text-sm text-slate-500">Not selected.</div>
+            )}
+            {character.equipmentMethod === 'gold' && character.gold > 0 && (
+              <div className="mt-2 text-sm text-amber-400">
+                💰 {character.gold} gp remaining
+              </div>
+            )}
+          </div>
 
           {/* Spells */}
           {spellcastingInfo?.available && (
@@ -6201,6 +6239,11 @@ const ReviewStep = ({
                   Edit
                 </button>
               </div>
+              {character.multiclass && character.multiclass.length > 0 && (
+                <div className="text-xs text-purple-200/80 mb-3">
+                  Note: multiclass spellcasting isn’t fully calculated yet (spell slots/spells shown are primary-class only).
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
                 <div>
                   <span className="text-slate-500">Save DC: </span>
@@ -6298,6 +6341,10 @@ const ReviewStep = ({
                     })}
                   </div>
                 </div>
+              )}
+
+              {spellList.cantrips.length === 0 && spellList.spells.length === 0 && (
+                <div className="text-sm text-slate-400">Not selected.</div>
               )}
             </div>
           )}
@@ -9208,6 +9255,15 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
       }];
     }
   }
+
+  // Step 9.75: Choose a subclass if required at this level
+  let subclass = null;
+  if (level >= selectedClass.subclassLevel) {
+    const subclasses = SUBCLASSES[classId];
+    if (subclasses) {
+      subclass = pick(Object.keys(subclasses));
+    }
+  }
   
   // Step 10: Personality traits (if background has them)
   let personalityTraits = [];
@@ -9280,24 +9336,32 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     }
   });
   
-  // Step 12: Replacement skills (if background skills overlap with class skills)
+  // Step 12: Replacement skills (to satisfy overlap requirements in Review)
   const replacementSkills = [];
-  if (selectedBackground.skillProficiencies && classSkills.length > 0) {
-    const overlap = selectedBackground.skillProficiencies.filter(
-      skill => classSkills.includes(skill)
-    );
-    
-    if (overlap.length > 0) {
-      // Pick replacement skills from all skills not already chosen
-      const allSkills = Object.keys(SKILLS);
-      const unavailable = [...classSkills, ...selectedBackground.skillProficiencies];
-      const available = allSkills.filter(s => !unavailable.includes(s));
-      
-      const shuffledAvailable = [...available].sort(() => Math.random() - 0.5);
-      
-      for (let i = 0; i < Math.min(overlap.length, shuffledAvailable.length); i++) {
-        replacementSkills.push(shuffledAvailable[i]);
-      }
+  const skillOverlap = getSkillOverlap(classId, backgroundId);
+  if (skillOverlap.length > 0) {
+    const availableReplacements = getAvailableReplacementSkills(classId, backgroundId, []);
+    const shuffledAvailable = [...availableReplacements].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < Math.min(skillOverlap.length, shuffledAvailable.length); i++) {
+      replacementSkills.push(shuffledAvailable[i][0]);
+    }
+  }
+
+  // Step 12.5: Language choices (to satisfy language-choice requirements in Review)
+  const chosenLanguages = [];
+  const raceLanguageChoices = getRaceLanguageChoices(raceId, subraceId);
+  const bgLanguageChoices = getBackgroundLanguageChoices(backgroundId);
+  const totalLanguageChoices = raceLanguageChoices + bgLanguageChoices;
+
+  if (totalLanguageChoices > 0) {
+    const fixedLangNames = getFixedLanguages(raceId, subraceId).map(n => (n || '').toLowerCase());
+    const availableLanguageIds = Object.entries(LANGUAGES)
+      .filter(([_, lang]) => !fixedLangNames.includes((lang?.name || '').toLowerCase()))
+      .map(([id]) => id);
+
+    const shuffledLanguages = [...availableLanguageIds].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < Math.min(totalLanguageChoices, shuffledLanguages.length); i++) {
+      chosenLanguages.push(shuffledLanguages[i]);
     }
   }
   
@@ -9409,15 +9473,15 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     race: raceId,
     subrace: subraceId,
     class: classId,
-    subclass: null, // User can choose subclass manually
+    subclass: subclass,
     background: backgroundId,
     alignment: alignment,
     level: level,
     multiclass: multiclassLevels,
     abilities: abilities,
     abilityMethod: 'standard',
-    chosenLanguages: [],
-    replacementSkills: [],
+    chosenLanguages: chosenLanguages,
+    replacementSkills: replacementSkills,
     classSkills: classSkills,
     personalityTraits: personalityTraits,
     ideals: ideals,
