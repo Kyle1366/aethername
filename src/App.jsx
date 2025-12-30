@@ -6088,7 +6088,7 @@ const ReviewStep = ({
       leftY += 3;
       doc.setFontSize(10);
       doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.darkPurple);
+      doc.setTextColor(...colors.accentPurple);
       doc.text('FIGHTING STYLE', bottomLeftX + 2, leftY);
       leftY += 4;
       
@@ -6168,7 +6168,7 @@ const ReviewStep = ({
       if (slots) {
         doc.setFontSize(10);
         doc.setFont('times', 'bold');
-        doc.setTextColor(...colors.darkPurple);
+        doc.setTextColor(...colors.accentPurple);
         doc.text('Slots:', bottomRightX + 2, rightY);
         rightY += 4;
         
@@ -10591,6 +10591,8 @@ const CharacterCreator = ({
   const randomizeFromReview = () => {
     const prev = character;
     const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
+    // Preserve playerName from previous character
+    randomChar.playerName = prev.playerName || '';
     setLastRandomSnapshot(prev);
     setCharacter(randomChar);
   };
@@ -10770,6 +10772,8 @@ const CharacterCreator = ({
                 <button
                   onClick={() => {
                     const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
+                    // Preserve playerName if user entered it before randomizing
+                    randomChar.playerName = character.playerName || '';
                     setCharacter(randomChar);
                     // Jump to review step (last step)
                     setCurrentStep(steps.length - 1);
