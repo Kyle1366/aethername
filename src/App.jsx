@@ -2932,7 +2932,7 @@ const STARTING_EQUIPMENT = {
       { name: 'Focus', options: ['Component pouch', 'Arcane focus'] },
       { name: 'Pack', options: ['Scholar\'s pack', 'Dungeoneer\'s pack'] }
     ],
-    fixed: ['Leather armor', 'Any simple weapon', 'Two daggers']
+    fixed: ['Leather armor', 'Two daggers']
   },
   wizard: {
     choices: [
@@ -5894,16 +5894,20 @@ const ReviewStep = ({
 
     y += 4;
 
-    // ============== FEATURES & TRAITS ==============
-    if (y > pageHeight - 50) {
-      doc.addPage();
-      addDecorativeBorder();
-      y = margin + 10;
-    }
+    // ============== TWO-COLUMN LAYOUT FOR BOTTOM SECTIONS ==============
+    // Save starting Y position for two columns
+    const twoColStartY = y;
+    const bottomLeftX = margin;
+    const bottomRightX = pageWidth / 2 + 2;
+    const colWidth = pageWidth / 2 - margin - 4;
     
-    y = drawSectionHeader('FEATURES & TRAITS', y) + 1;
+    let leftY = twoColStartY;
+    let rightY = twoColStartY;
+
+    // ============== LEFT COLUMN: FEATURES & TRAITS ==============
+    leftY = drawSectionHeader('FEATURES & TRAITS', leftY) + 1;
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textDark);
     
@@ -5913,32 +5917,106 @@ const ReviewStep = ({
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
     
     features.forEach((feat, idx) => {
-      if (y > pageHeight - 20) {
-        doc.addPage();
-        addDecorativeBorder();
-        y = margin + 10;
-      }
-      
       // Type label
       doc.setFillColor(...colors.headerBg);
       const typeWidth = doc.getTextWidth(feat.type) + 3;
-      doc.roundedRect(margin, y - 2, typeWidth, 4, 1, 1, 'F');
+      doc.roundedRect(bottomLeftX, leftY - 2, typeWidth, 4, 1, 1, 'F');
       
       doc.setFontSize(6);
       doc.setFont('times', 'bold');
       doc.setTextColor(255, 255, 255);
-      doc.text(feat.type, margin + 1.5, y + 0.5);
+      doc.text(feat.type, bottomLeftX + 1.5, leftY + 0.5);
       
-      // Feature text
+      // Feature text - wrap within column width
       doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
-      doc.text(feat.text, margin + typeWidth + 2, y + 0.5);
+      const wrappedText = doc.splitTextToSize(feat.text, colWidth - typeWidth - 4);
+      wrappedText.forEach((line, lineIdx) => {
+        doc.text(line, bottomLeftX + typeWidth + 2, leftY + 0.5 + lineIdx * 3);
+      });
       
-      y += 3.5;
+      leftY += Math.max(3, wrappedText.length * 3);
     });
     
-    y += 2;
+    leftY += 2;
+
+    // ============== LEFT COLUMN: EQUIPMENT ==============
+    if (equipment.length > 0) {
+      leftY = drawSectionHeader('EQUIPMENT', leftY) + 2;
+      
+      // Helper function to draw at specific X position
+      const drawSectionHeaderAtX = (text, yPos, xPos, width) => {
+        const headerHeight = 6;
+        doc.setFillColor(...colors.headerBg);
+        doc.rect(xPos, yPos, width, headerHeight, 'F');
+        doc.setDrawColor(...colors.gold);
+        doc.setLineWidth(1.5);
+        doc.line(xPos, yPos, xPos + width, yPos);
+        doc.setLineWidth(0.5);
+        doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
+        doc.setFontSize(11);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.lightGold);
+        doc.text(text, xPos + 3, yPos + 5.5);
+        doc.setFillColor(...colors.gold);
+        doc.circle(xPos, yPos, 1, 'F');
+        doc.circle(xPos + width, yPos, 1, 'F');
+        doc.circle(xPos, yPos + headerHeight, 1, 'F');
+        doc.circle(xPos + width, yPos + headerHeight, 1, 'F');
+        return yPos + headerHeight + 2;
+      };
+      
+      leftY = drawSectionHeaderAtX('EQUIPMENT', leftY - 9, bottomLeftX, colWidth) + 1;
+      
+      doc.setFontSize(9);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textDark);
+      
+      equipment.forEach((item, idx) => {
+        // Clean up equipment text - remove proficiency notes
+        const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
+        
+        doc.setFillColor(...colors.gold);
+        doc.circle(bottomLeftX + 1.5, leftY + 0.5, 0.8, 'F');
+        doc.text(cleanItem, bottomLeftX + 5, leftY + 1.5);
+        leftY += 3.5;
+      });
+      
+      if (character.gold > 0) {
+        doc.setFontSize(10);
+        doc.setFont('times', 'bolditalic');
+        doc.setTextColor(...colors.gold);
+        doc.text(`${character.gold} gp`, bottomLeftX, leftY + 2);
+        leftY += 5;
+      }
+    }
+
+    // ============== RIGHT COLUMN: SPELLCASTING ==============
+    if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
+      // Custom header for right column
+      const drawSectionHeaderAtX = (text, yPos, xPos, width) => {
+        const headerHeight = 6;
+        doc.setFillColor(...colors.headerBg);
+        doc.rect(xPos, yPos, width, headerHeight, 'F');
+        doc.setDrawColor(...colors.gold);
+        doc.setLineWidth(1.5);
+        doc.line(xPos, yPos, xPos + width, yPos);
+        doc.setLineWidth(0.5);
+        doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
+        doc.setFontSize(11);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.lightGold);
+        doc.text(text, xPos + 3, yPos + 5.5);
+        doc.setFillColor(...colors.gold);
+        doc.circle(xPos, yPos, 1, 'F');
+        doc.circle(xPos + width, yPos, 1, 'F');
+        doc.circle(xPos, yPos + headerHeight, 1, 'F');
+        doc.circle(xPos + width, yPos + headerHeight, 1, 'F');
+        return yPos + headerHeight + 2;
+      };
+      
+      rightY = drawSectionHeaderAtX('SPELLCASTING', rightY, bottomRightX, colWidth) + 1;
 
     // ============== LEVEL ADVANCEMENTS (ASI/FEATS) ==============
     const levelAdvancements = [];
@@ -6076,58 +6154,8 @@ const ReviewStep = ({
       y = rowY + (colIdx > 0 ? 9 : 4);
     }
 
-    // ============== EQUIPMENT ==============
-    if (equipment.length > 0) {
-      if (y > pageHeight - 40) {
-        doc.addPage();
-        addDecorativeBorder();
-        y = margin + 10;
-      }
       
-      y = drawSectionHeader('EQUIPMENT', y) + 2;
-      
-      doc.setFontSize(11);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
-      
-      equipment.forEach((item, idx) => {
-        if (y > pageHeight - 20) {
-          doc.addPage();
-          addDecorativeBorder();
-          y = margin + 10;
-        }
-        
-        // Clean up equipment text - remove proficiency notes
-        const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
-        
-        doc.setFillColor(...colors.gold);
-        doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
-        doc.text(cleanItem, margin + 5, y + 1.5);
-        y += 4;
-      });
-      
-      if (character.gold > 0) {
-        doc.setFontSize(11);
-        doc.setFont('times', 'bolditalic');
-        doc.setTextColor(...colors.gold);
-        doc.text(`💰 ${character.gold} gp`, margin, y + 2);
-        y += 5;
-      }
-      
-      y += 2;
-    }
-
-    // ============== SPELLCASTING ==============
-    if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
-      if (y > pageHeight - 60) {
-        doc.addPage();
-        addDecorativeBorder();
-        y = margin + 10;
-      }
-      
-      y = drawSectionHeader('SPELLCASTING', y) + 2;
-      
-      // Multiclass disclaimer
+      // Multiclass disclaimer (compact)
       if (character.multiclass && character.multiclass.length > 1) {
         const hasMultipleCasters = character.multiclass.filter(mc => {
           const mcClass = CLASSES[mc.classId];
@@ -6135,112 +6163,109 @@ const ReviewStep = ({
         }).length > 1;
         
         if (hasMultipleCasters) {
-          doc.setFontSize(9);
+          doc.setFontSize(7);
           doc.setFont('times', 'italic');
           doc.setTextColor(...colors.accentBlue);
-          const disclaimer = 'Note: Multiclass spellcasting isn\'t fully calculated yet (spell slots/spells shown are primary-class only).';
-          const disclaimerLines = doc.splitTextToSize(disclaimer, pageWidth - 2 * margin - 4);
-          disclaimerLines.forEach((line, idx) => {
-            doc.text(line, margin + 2, y + idx * 3.5);
-          });
-          y += disclaimerLines.length * 3.5 + 3;
+          const disclaimer = 'Multiclass spells: primary class only';
+          doc.text(disclaimer, rightColX, rightY);
+          rightY += 4;
+        }
+      }
+      
+      // Multiclass disclaimer (compact)
+      if (character.multiclass && character.multiclass.length > 1) {
+        const hasMultipleCasters = character.multiclass.filter(mc => {
+          const mcClass = CLASSES[mc.classId];
+          return mcClass?.spellcasting;
+        }).length > 1;
+        
+        if (hasMultipleCasters) {
+          doc.setFontSize(7);
+          doc.setFont('times', 'italic');
+          doc.setTextColor(...colors.accentBlue);
+          const disclaimer = 'Multiclass spells: primary class only';
+          doc.text(disclaimer, rightColX, rightY);
+          rightY += 4;
         }
       }
       
       const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       
-      // Spell stats boxes
-      addStyledBox(margin, y, 36, 18, 'SPELL DC', spellDC, 9, 15, colors.accentPurple);
-      addStyledBox(margin + 40, y, 36, 18, 'SPELL ATK', `+${spellAttack}`, 9, 15, colors.accentPurple);
-      addStyledBox(margin + 80, y, 56, 18, 'ABILITY', ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase(), 9, 13, colors.accentPurple);
-      
-      y += 22;
+      // Spell stats (compact, inline)
+      doc.setFontSize(9);
+      doc.setFont('times', 'bold');
+      doc.setTextColor(...colors.accentPurple);
+      doc.text(`DC ${spellDC}  •  ATK +${spellAttack}  •  ${ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase()}`, bottomRightX, rightY);
+      rightY += 6;
       
       // Spell slots
       const slots = getSpellSlots(character.class, totalLevel);
       if (slots) {
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.darkPurple);
-        doc.text('SPELL SLOTS:', margin, y);
-        y += 4;
+        doc.text('Slots:', bottomRightX, rightY);
+        rightY += 3;
         
         doc.setFontSize(8);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         
         if (character.class === 'warlock') {
-          doc.text(`${slots.slots} × Level ${slots.level} (Pact Magic)`, margin + 2, y);
-          y += 5;
+          doc.text(`${slots.slots} × Lv${slots.level}`, rightColX + 2, rightY);
+          rightY += 5;
         } else {
           const slotText = Object.entries(slots)
             .filter(([_, count]) => count > 0)
-            .map(([lvl, count]) => `${lvl}${lvl === '1' ? 'st' : lvl === '2' ? 'nd' : lvl === '3' ? 'rd' : 'th'}: ${count}`)
+            .map(([lvl, count]) => `${lvl}:${count}`)
             .join(' • ');
           if (slotText) {
-            doc.text(slotText, margin + 2, y);
-            y += 5;
+            const wrappedSlots = doc.splitTextToSize(slotText, colWidth - 4);
+            wrappedSlots.forEach((line, idx) => {
+              doc.text(line, rightColX + 2, rightY + idx * 3);
+            });
+            rightY += wrappedSlots.length * 3 + 2;
           }
         }
       }
       
       // Cantrips
       if (spellList.cantrips.length > 0) {
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('CANTRIPS', margin, y);
+        doc.text('CANTRIPS', bottomRightX, rightY);
+        rightY += 4;
         
-        doc.setDrawColor(...colors.gold);
-        doc.setLineWidth(0.3);
-        doc.line(margin, y + 1, margin + 22, y + 1);
-        
-        y += 4;
-        
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         spellList.cantrips.forEach((spell, idx) => {
-          if (y > pageHeight - 15) {
-            doc.addPage();
-            addDecorativeBorder();
-            y = margin + 10;
-          }
           doc.setFillColor(...colors.accentPurple);
-          doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
-          doc.text(spell, margin + 5, y + 1.5);
-          y += 4.5;
+          doc.circle(bottomRightX + 1.5, rightY + 0.5, 0.7, 'F');
+          doc.text(spell, bottomRightX + 4, rightY + 1.5);
+          rightY += 3.5;
         });
-        y += 2;
+        rightY += 2;
       }
       
       // Prepared/Known Spells
       if (spellList.spells.length > 0) {
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('PREPARED/KNOWN SPELLS', margin, y);
+        doc.text('KNOWN/PREPARED', bottomRightX, rightY);
+        rightY += 4;
         
-        doc.setDrawColor(...colors.gold);
-        doc.setLineWidth(0.3);
-        doc.line(margin, y + 1, margin + 52, y + 1);
-        
-        y += 4;
-        
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         spellList.spells.forEach((spell, idx) => {
-          if (y > pageHeight - 15) {
-            doc.addPage();
-            addDecorativeBorder();
-            y = margin + 10;
-          }
-          doc.setFillColor(...colors.accentBlue);
-          doc.circle(margin + 1.5, y + 0.5, 0.8, 'F');
-          doc.text(spell, margin + 5, y + 1.5);
-          y += 4.5;
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(bottomRightX + 1.5, rightY + 0.5, 0.7, 'F');
+          doc.text(spell, bottomRightX + 4, rightY + 1.5);
+          rightY += 3.5;
         });
       }
     }
@@ -10287,7 +10312,9 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     }
     
     if (classEquipment.fixed) {
-      items.push(...classEquipment.fixed);
+      // Apply makeSpecific to fixed items too
+      const fixedItems = classEquipment.fixed.map(item => makeSpecific(item));
+      items.push(...fixedItems);
     }
     
     return items;
