@@ -8223,7 +8223,7 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
           Your class determines your abilities, features, and role in the party.
         </p>
         <p className="text-xs text-slate-500 mt-2">
-          Multiclass options appear after selecting a primary class (right panel, or below on small screens).
+          Multiclass options appear after selecting a primary class (below the class grid, or below on small screens).
         </p>
       </div>
 
@@ -8305,6 +8305,11 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
               );
             })}
           </div>
+
+          {/* Desktop/tablet: multiclass lives under the class grid (red area) */}
+          <div className="hidden md:block mt-4">
+            {renderMulticlassToggle()}
+          </div>
         </div>
 
         {/* Details Panel */}
@@ -8344,9 +8349,6 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                     </div>
                   </div>
                 </div>
-
-                {/* Desktop: multiclass toggle (below primary class) */}
-                {renderMulticlassToggle()}
 
                 {/* Features */}
                 <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-700/40">
