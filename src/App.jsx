@@ -4408,6 +4408,19 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
 
 const ASIFeatsStep = ({ character, updateCharacter }) => {
   const asiLevels = getASILevels(character.level || 1);
+
+  const primaryClassData = character.class ? CLASSES[character.class] : null;
+  const multiclassData = (character.multiclass || []).map(mc => CLASSES[mc.classId]).filter(Boolean);
+  const addUnique = (list, value) => {
+    if (value && !list.includes(value)) list.push(value);
+  };
+  const primaryAbilityOrder = [];
+  (primaryClassData?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a));
+  multiclassData.forEach((cls) => (cls?.primaryAbility || []).forEach((a) => addUnique(primaryAbilityOrder, a)));
+
+  const savingThrowOrder = [];
+  (primaryClassData?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a));
+  multiclassData.forEach((cls) => (cls?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a)));
   
   // Initialize ASI choices if not exist
   const asiChoices = character.asiChoices || {};
@@ -4435,6 +4448,21 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
         <p className="text-sm text-slate-500">
           At certain levels, you can choose to increase ability scores OR gain a feat.
         </p>
+        {(primaryClassData || multiclassData.length > 0) && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-slate-500">Saving Throws:</span>
+            {savingThrowOrder.map((st) => (
+              <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
+                {ABILITY_LABELS[st]?.short}
+              </span>
+            ))}
+            {primaryAbilityOrder.length > 0 && (
+              <span className="text-slate-600 text-xs ml-2">
+                Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       
       {asiLevels.map(level => {
@@ -5020,9 +5048,26 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
 // REVIEW & EXPORT STEP (PHASE 8)
 // ============================================================================
 
-const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }) => {
+const ReviewStep = ({
+  character,
+  updateCharacter,
+  onRandomize,
+  onUndo,
+  canUndo,
+  randomWithMulticlass,
+  setRandomWithMulticlass,
+  onGoToStep
+}) => {
   const [exportFormat, setExportFormat] = useState(null);
   const [copied, setCopied] = useState(false);
+
+  const goToStep = (stepIndex) => {
+    if (typeof stepIndex !== 'number') return;
+    if (typeof onGoToStep === 'function') {
+      onGoToStep(stepIndex);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const race = character.race ? RACES[character.race] : null;
   const subrace = character.subrace && race?.subraces ? race.subraces[character.subrace] : null;
@@ -5571,6 +5616,24 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           }`}>
             {completionCount}/{totalRequired} Complete
           </div>
+
+          <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
+            <input
+              type="checkbox"
+              checked={!!randomWithMulticlass}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                if (typeof setRandomWithMulticlass === 'function') {
+                  setRandomWithMulticlass(checked);
+                }
+                if (checked && (character.level || 1) < 2) {
+                  updateCharacter('level', 2);
+                }
+              }}
+              className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+            />
+            <span>Multiclass (Random)</span>
+          </label>
           <button
             onClick={onRandomize}
             className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
@@ -5641,7 +5704,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
         <div className="space-y-4">
           {/* Combat Stats */}
           <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-            <h4 className="text-sm font-semibold text-slate-300 mb-3">Combat Stats</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-slate-300">Combat Stats</h4>
+              <button
+                onClick={() => goToStep(3)}
+                className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+              >
+                Edit
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center p-3 rounded-lg bg-slate-900/50">
                 <div className="text-2xl font-bold text-blue-400">{baseAC}</div>
@@ -5681,7 +5752,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
 
           {/* Ability Scores */}
           <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-            <h4 className="text-sm font-semibold text-slate-300 mb-3">Ability Scores</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-slate-300">Ability Scores</h4>
+              <button
+                onClick={() => goToStep(3)}
+                className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+              >
+                Edit
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {ABILITY_NAMES.map(a => {
                 const final = finalAbilities[a];
@@ -5706,7 +5785,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
 
           {/* Proficiencies */}
           <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-            <h4 className="text-sm font-semibold text-slate-300 mb-3">Proficiencies</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-slate-300">Proficiencies</h4>
+              <button
+                onClick={() => goToStep(5)}
+                className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+              >
+                Edit
+              </button>
+            </div>
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-slate-500">Saving Throws: </span>
@@ -5769,7 +5856,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             </summary>
           </details>
           <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="hidden md:block text-sm font-semibold text-slate-300 mb-3">Features & Traits</h4>
+              <div className="hidden md:flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Features & Traits</h4>
+                <button
+                  onClick={() => goToStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
             <div className="space-y-3">
               {race?.traits && race.traits.length > 0 && (
                 <div>
@@ -5836,7 +5931,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Level Advancements (ASI/Feats) */}
           {character.asiChoices && Object.keys(character.asiChoices).length > 0 && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Level Advancements</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Level Advancements</h4>
+                <button
+                  onClick={() => goToStep(4)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <div className="space-y-2">
                 {Object.entries(character.asiChoices)
                   .sort(([aLevel], [bLevel]) => Number(aLevel) - Number(bLevel))
@@ -5868,7 +5971,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Fighting Style */}
           {character.fightingStyle && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Fighting Style</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Fighting Style</h4>
+                <button
+                  onClick={() => goToStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <Tooltip content={FIGHTING_STYLES[character.fightingStyle]?.description || ''}>
                 <div className="px-2 py-1.5 rounded-md bg-blue-500/20 border border-blue-500/30">
                   <div className="text-xs font-semibold text-blue-300">{FIGHTING_STYLES[character.fightingStyle]?.name}</div>
@@ -5883,7 +5994,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Warlock Invocations */}
           {character.warlockInvocations && character.warlockInvocations.length > 0 && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Eldritch Invocations</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Eldritch Invocations</h4>
+                <button
+                  onClick={() => goToStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <div className="space-y-2">
                 {character.warlockInvocations.map(invKey => {
                   const inv = WARLOCK_INVOCATIONS[invKey];
@@ -5908,7 +6027,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Metamagic Options */}
           {character.metamagicOptions && character.metamagicOptions.length > 0 && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Metamagic Options</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Metamagic Options</h4>
+                <button
+                  onClick={() => goToStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <div className="space-y-2">
                 {character.metamagicOptions.map(metaKey => {
                   const meta = METAMAGIC_OPTIONS[metaKey];
@@ -5931,7 +6058,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Battle Master Maneuvers */}
           {character.battleMasterManeuvers && character.battleMasterManeuvers.length > 0 && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Battle Master Maneuvers</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Battle Master Maneuvers</h4>
+                <button
+                  onClick={() => goToStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <div className="space-y-2">
                 {character.battleMasterManeuvers.map(manKey => {
                   const man = BATTLE_MASTER_MANEUVERS[manKey];
@@ -5954,7 +6089,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Musical Instrument */}
           {character.musicalInstrument && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Musical Instrument Proficiency</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Musical Instrument Proficiency</h4>
+                <button
+                  onClick={() => goToStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <span className="px-2 py-1 rounded-md bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30">
                 {MUSICAL_INSTRUMENTS[character.musicalInstrument]?.name || character.musicalInstrument}
               </span>
@@ -5969,7 +6112,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
             character.physicalCharacteristics?.hair || 
             character.physicalCharacteristics?.skin) && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Physical Characteristics</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Physical Characteristics</h4>
+                <button
+                  onClick={() => goToStep(0)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                 {character.physicalCharacteristics?.age && (
                   <div>
@@ -6014,7 +6165,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Equipment */}
           {equipment.length > 0 && (
             <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Equipment</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Equipment</h4>
+                <button
+                  onClick={() => goToStep(6)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <div className="flex flex-wrap gap-1">
                 {equipment.map((item, i) => (
                   <span key={i} className="px-2 py-1 rounded-md bg-slate-700/50 text-slate-300 text-xs">
@@ -6033,7 +6192,15 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
           {/* Spells */}
           {spellcastingInfo?.available && (
             <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
-              <h4 className="text-sm font-semibold text-purple-300 mb-3">Spellcasting</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-purple-300">Spellcasting</h4>
+                <button
+                  onClick={() => goToStep(7)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
                 <div>
                   <span className="text-slate-500">Save DC: </span>
@@ -6173,9 +6340,17 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
               <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
                 {isComplete ? '✓ ' : '⚠ '}Language Selection
               </h4>
-              <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
-                {chosenLangs.length}/{totalChoices} chosen
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
+                  {chosenLangs.length}/{totalChoices} chosen
+                </span>
+                <button
+                  onClick={() => goToStep(5)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/30 border border-slate-600/40 text-slate-200 text-[11px] hover:bg-slate-600/40 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
             
             <div className="text-xs text-slate-400 mb-3">
@@ -6273,9 +6448,17 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
               <h4 className={`text-sm font-semibold ${isComplete ? 'text-green-300' : 'text-amber-300'}`}>
                 {isComplete ? '✓ ' : '⚠ '}Skill Replacement
               </h4>
-              <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
-                {chosenReplacements.length}/{overlap.length} chosen
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs ${isComplete ? 'text-green-400' : 'text-amber-400'}`}>
+                  {chosenReplacements.length}/{overlap.length} chosen
+                </span>
+                <button
+                  onClick={() => goToStep(5)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700/30 border border-slate-600/40 text-slate-200 text-[11px] hover:bg-slate-600/40 transition-all"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
             
             <div className="text-xs text-slate-400 mb-3">
@@ -6385,13 +6568,7 @@ const ReviewStep = ({ character, updateCharacter, onRandomize, onUndo, canUndo }
                 key={idx}
                 onClick={() => {
                   // Jump to the step that needs completion
-                  if (typeof item.step === 'number') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    setTimeout(() => {
-                      const stepContentEl = document.querySelector('[ref="stepContentRef"]');
-                      if (stepContentEl) stepContentEl.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                  }
+                  if (typeof item.step === 'number') goToStep(item.step);
                 }}
                 className="w-full text-left flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 transition-all group"
               >
@@ -9845,6 +10022,9 @@ const CharacterCreator = ({
             onRandomize={randomizeFromReview}
             onUndo={undoRandomizeFromReview}
             canUndo={!!lastRandomSnapshot}
+            randomWithMulticlass={randomWithMulticlass}
+            setRandomWithMulticlass={setRandomWithMulticlass}
+            onGoToStep={setCurrentStep}
           />
         )}
       </div>
