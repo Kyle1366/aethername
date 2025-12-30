@@ -5627,7 +5627,7 @@ const ReviewStep = ({
       doc.rect(x + 1, yPos + 1, width - 2, height - 2);
       
       // Ability name
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.darkPurple);
       const abilityText = ABILITY_LABELS[ability].short.toUpperCase();
@@ -5645,14 +5645,14 @@ const ReviewStep = ({
       
       // Modifier text
       const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
-      doc.setFontSize(11);
+      doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.setTextColor(255, 255, 255);
       const modWidth = doc.getTextWidth(modStr);
       doc.text(modStr, x + (width - modWidth) / 2, circleY + 2);
       
       // Score value
-      doc.setFontSize(10);
+      doc.setFontSize(12);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       const scoreWidth = doc.getTextWidth(String(score));
@@ -5683,7 +5683,7 @@ const ReviewStep = ({
       doc.line(margin, yPos + headerHeight, pageWidth - margin, yPos + headerHeight);
       
       // Section text
-      doc.setFontSize(11);
+      doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.lightGold);
       doc.text(text, margin + 3, yPos + 5.5);
@@ -5715,7 +5715,7 @@ const ReviewStep = ({
     doc.rect(margin + 1, margin + 1, pageWidth - 2 * margin - 2, 28);
     
     // Character name (large, centered)
-    doc.setFontSize(22);
+    doc.setFontSize(28);
     doc.setFont('times', 'bold');
     doc.setTextColor(...colors.lightGold);
     const charName = character.name || 'Unnamed Character';
@@ -5734,7 +5734,7 @@ const ReviewStep = ({
     } else {
       classText = `${classData?.name || 'Unknown'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`;
     }
-    doc.setFontSize(11);
+    doc.setFontSize(14);
     doc.setFont('times', 'italic');
     doc.setTextColor(255, 255, 255);
     const classWidth = doc.getTextWidth(classText);
@@ -5744,21 +5744,21 @@ const ReviewStep = ({
     const raceText = `${race?.name || 'Unknown'}${subrace ? ` (${subrace.name})` : ''}`;
     const bgText = background?.name || 'Unknown';
     const detailText = `${raceText} • ${bgText}`;
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setTextColor(...colors.silver);
     const detailWidth = doc.getTextWidth(detailText);
     doc.text(detailText, (pageWidth - detailWidth) / 2, margin + 25);
     
     // Player & Alignment (corners)
     if (character.playerName) {
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'italic');
       doc.setTextColor(...colors.silver);
       doc.text(`Player: ${character.playerName}`, margin + 3, margin + 6);
     }
     
     if (character.alignment && ALIGNMENTS[character.alignment]) {
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setTextColor(...colors.silver);
       const alignText = ALIGNMENTS[character.alignment].name;
       const alignWidth = doc.getTextWidth(alignText);
@@ -5770,16 +5770,27 @@ const ReviewStep = ({
     // ============== CORE STATS ==============
     y = drawSectionHeader('CORE STATS', y) + 3;
     
-    const statSpacing = 26;
+    // Use flexible spacing to fit all stats on page
+    const availableWidth = pageWidth - 2 * margin;
+    const boxWidths = [26, 26, 28, 28, 34, 30, 26]; // AC, INIT, SPEED, PROF, HP MAX, HIT DIE, PERC
+    const totalBoxWidth = boxWidths.reduce((a, b) => a + b, 0);
+    const totalGap = availableWidth - totalBoxWidth;
+    const gap = totalGap / (boxWidths.length - 1);
     
-    // Combat stats row with new styling
-    addStyledBox(margin, y, 24, 18, 'AC', baseAC, 7, 13);
-    addStyledBox(margin + statSpacing, y, 24, 18, 'INIT', initiative >= 0 ? `+${initiative}` : initiative, 7, 12);
-    addStyledBox(margin + statSpacing * 2, y, 24, 18, 'SPEED', `${speed}ft`, 7, 11);
-    addStyledBox(margin + statSpacing * 3, y, 28, 18, 'PROF', `+${proficiencyBonus}`, 7, 13);
-    addStyledBox(margin + statSpacing * 4 + 4, y, 32, 18, 'HP MAX', maxHP, 7, 14, colors.accentBlue);
-    addStyledBox(margin + statSpacing * 5 + 8, y, 28, 18, 'HIT DIE', `d${hitDie}`, 7, 12);
-    addStyledBox(margin + statSpacing * 6 + 12, y, 24, 18, 'PERC', passivePerception, 7, 12);
+    let xPos = margin;
+    addStyledBox(xPos, y, boxWidths[0], 22, 'AC', baseAC, 9, 16);
+    xPos += boxWidths[0] + gap;
+    addStyledBox(xPos, y, boxWidths[1], 22, 'INIT', initiative >= 0 ? `+${initiative}` : initiative, 9, 15);
+    xPos += boxWidths[1] + gap;
+    addStyledBox(xPos, y, boxWidths[2], 22, 'SPEED', `${speed}ft`, 9, 14);
+    xPos += boxWidths[2] + gap;
+    addStyledBox(xPos, y, boxWidths[3], 22, 'PROF', `+${proficiencyBonus}`, 9, 16);
+    xPos += boxWidths[3] + gap;
+    addStyledBox(xPos, y, boxWidths[4], 22, 'HP MAX', maxHP, 9, 17, colors.accentBlue);
+    xPos += boxWidths[4] + gap;
+    addStyledBox(xPos, y, boxWidths[5], 22, 'HIT DIE', `d${hitDie}`, 9, 15);
+    xPos += boxWidths[5] + gap;
+    addStyledBox(xPos, y, boxWidths[6], 22, 'PERC', passivePerception, 9, 15);
 
     y += 22;
 
@@ -5807,7 +5818,7 @@ const ReviewStep = ({
     const rightColX = margin + 95;
     
     // Saving Throws
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('times', 'bolditalic');
     doc.setTextColor(...colors.darkPurple);
     doc.text('SAVING THROWS', leftColX, y);
@@ -5817,7 +5828,7 @@ const ReviewStep = ({
     doc.line(leftColX, y + 1, leftColX + 35, y + 1);
     
     y += 5;
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textDark);
     
@@ -5830,7 +5841,7 @@ const ReviewStep = ({
     });
     
     // Skills
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('times', 'bolditalic');
     doc.setTextColor(...colors.darkPurple);
     doc.text('SKILLS', rightColX, y - 5);
@@ -5838,7 +5849,7 @@ const ReviewStep = ({
     doc.setDrawColor(...colors.gold);
     doc.line(rightColX, y - 4, rightColX + 20, y - 4);
     
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textDark);
     
@@ -5859,7 +5870,7 @@ const ReviewStep = ({
     
     // Languages
     if (proficiencies.languages && proficiencies.languages.length > 0) {
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'bolditalic');
       doc.setTextColor(...colors.darkPurple);
       doc.text('LANGUAGES', leftColX, y);
@@ -5868,7 +5879,7 @@ const ReviewStep = ({
       doc.line(leftColX, y + 1, leftColX + 28, y + 1);
       
       y += 4;
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       const langText = proficiencies.languages.join(', ');
@@ -5890,7 +5901,7 @@ const ReviewStep = ({
     
     y = drawSectionHeader('FEATURES & TRAITS', y) + 3;
     
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textDark);
     
@@ -5961,7 +5972,7 @@ const ReviewStep = ({
       
       y = drawSectionHeader('LEVEL ADVANCEMENTS', y) + 3;
       
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       
@@ -5991,7 +6002,7 @@ const ReviewStep = ({
       
       y = drawSectionHeader('ELDRITCH INVOCATIONS', y) + 3;
       
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       
@@ -6043,12 +6054,12 @@ const ReviewStep = ({
       physicalTraits.forEach((trait, idx) => {
         const x = margin + colIdx * traitSpacing;
         
-        doc.setFontSize(7);
+        doc.setFontSize(9);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.textMuted);
         doc.text(trait.label.toUpperCase(), x, rowY);
         
-        doc.setFontSize(9);
+        doc.setFontSize(11);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         doc.text(String(trait.value), x, rowY + 4);
@@ -6073,7 +6084,7 @@ const ReviewStep = ({
       
       y = drawSectionHeader('EQUIPMENT', y) + 3;
       
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       
@@ -6091,7 +6102,7 @@ const ReviewStep = ({
       });
       
       if (character.gold > 0) {
-        doc.setFontSize(9);
+        doc.setFontSize(11);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.gold);
         doc.text(`💰 ${character.gold} gp`, margin, y + 2);
@@ -6119,7 +6130,7 @@ const ReviewStep = ({
         }).length > 1;
         
         if (hasMultipleCasters) {
-          doc.setFontSize(7);
+          doc.setFontSize(9);
           doc.setFont('times', 'italic');
           doc.setTextColor(...colors.accentBlue);
           const disclaimer = 'Note: Multiclass spellcasting isn\'t fully calculated yet (spell slots/spells shown are primary-class only).';
@@ -6135,16 +6146,16 @@ const ReviewStep = ({
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       
       // Spell stats boxes
-      addStyledBox(margin, y, 32, 14, 'SPELL DC', spellDC, 7, 12, colors.accentPurple);
-      addStyledBox(margin + 36, y, 32, 14, 'SPELL ATK', `+${spellAttack}`, 7, 12, colors.accentPurple);
-      addStyledBox(margin + 72, y, 50, 14, 'ABILITY', ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase(), 7, 10, colors.accentPurple);
+      addStyledBox(margin, y, 36, 18, 'SPELL DC', spellDC, 9, 15, colors.accentPurple);
+      addStyledBox(margin + 40, y, 36, 18, 'SPELL ATK', `+${spellAttack}`, 9, 15, colors.accentPurple);
+      addStyledBox(margin + 80, y, 56, 18, 'ABILITY', ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase(), 9, 13, colors.accentPurple);
       
-      y += 18;
+      y += 22;
       
       // Spell slots
       const slots = getSpellSlots(character.class, totalLevel);
       if (slots) {
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.darkPurple);
         doc.text('SPELL SLOTS:', margin, y);
@@ -6171,7 +6182,7 @@ const ReviewStep = ({
       
       // Cantrips
       if (spellList.cantrips.length > 0) {
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.accentPurple);
         doc.text('CANTRIPS', margin, y);
@@ -6182,7 +6193,7 @@ const ReviewStep = ({
         
         y += 4;
         
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         spellList.cantrips.forEach((spell, idx) => {
@@ -6201,7 +6212,7 @@ const ReviewStep = ({
       
       // Prepared/Known Spells
       if (spellList.spells.length > 0) {
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.accentPurple);
         doc.text('PREPARED/KNOWN SPELLS', margin, y);
@@ -6212,7 +6223,7 @@ const ReviewStep = ({
         
         y += 4;
         
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         spellList.spells.forEach((spell, idx) => {
@@ -6231,7 +6242,7 @@ const ReviewStep = ({
 
     // Footer on each page
     const addFooter = (pageNum) => {
-      doc.setFontSize(7);
+      doc.setFontSize(9);
       doc.setFont('times', 'italic');
       doc.setTextColor(...colors.textMuted);
       doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 6, { align: 'center' });
