@@ -5331,11 +5331,11 @@ const ReviewStep = ({
       '═══════════════════════════════════════════════════════════',
       '',
       `Race: ${race?.name || 'None'}${subrace ? ` (${subrace.name})` : ''}`,
-      `Class: ${classData?.name || 'None'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}${character.multiclass && character.multiclass.length > 0 ? ` / ${character.multiclass.map(m => {
+      `Class: ${classData?.name || 'None'} ${primaryLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}${character.multiclass && character.multiclass.length > 0 ? ` / ${character.multiclass.map(m => {
         const mcClass = CLASSES[m.classId];
         const mcSubclass = m.subclass && SUBCLASSES[m.classId]?.[m.subclass];
         return `${mcClass?.name} ${m.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
-      }).join(' / ')}` : ''}`,
+      }).join(' / ')}` : ''}${character.multiclass && character.multiclass.length > 0 ? ` (Total Level: ${totalLevel})` : ''}`,
       `Background: ${background?.name || 'None'}`,
       '',
       '─── ABILITY SCORES ───────────────────────────────────────',
@@ -5771,7 +5771,7 @@ const ReviewStep = ({
     // Multiclass array contains ADDITIONAL classes only
     let classText = '';
     const primarySubclassName = character.subclass && SUBCLASSES[character.class]?.[character.subclass]?.name;
-    const primaryClassText = `${classData?.name || 'Unknown'} ${character.level || totalLevel}${primarySubclassName ? ` (${primarySubclassName})` : ''}`;
+    const primaryClassText = `${classData?.name || 'Unknown'} ${primaryLevel}${primarySubclassName ? ` (${primarySubclassName})` : ''}`;
     
     if (character.multiclass && character.multiclass.length > 0) {
       // Show primary class + all additional multiclass entries
@@ -5780,7 +5780,7 @@ const ReviewStep = ({
         const mcSubclass = mc.subclass && SUBCLASSES[mc.classId]?.[mc.subclass];
         return `${mcClass?.name || 'Unknown'} ${mc.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
       }).join(' / ');
-      classText = `${primaryClassText} / ${multiclassText}`;
+      classText = `${primaryClassText} / ${multiclassText}  [Total Lvl ${totalLevel}]`;
     } else {
       classText = primaryClassText;
     }
@@ -6492,13 +6492,13 @@ const ReviewStep = ({
             </h2>
             <p className="text-slate-300">
               {race?.name || 'Unknown Race'}
-              {subrace ? ` (${subrace.name})` : ''} {classData?.name || 'Unknown Class'} {totalLevel}
+              {subrace ? ` (${subrace.name})` : ''} {classData?.name || 'Unknown Class'} {primaryLevel}
               {character.subclass && SUBCLASSES[character.class]?.[character.subclass] && (
                 <span className="text-indigo-300"> ({SUBCLASSES[character.class][character.subclass].name})</span>
               )}
               {character.multiclass && character.multiclass.length > 0 && (
                 <span className="text-amber-300">
-                  {' '}• {character.multiclass.map(m => {
+                  {' '}/ {character.multiclass.map(m => {
                     const mcClass = CLASSES[m.classId];
                     const mcSubclass = m.subclass && SUBCLASSES[m.classId]?.[m.subclass];
                     return `${mcClass?.name} ${m.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
