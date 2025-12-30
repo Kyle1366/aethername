@@ -9,7 +9,9 @@ import jsPDF from 'jspdf';
 
 const STORAGE_KEYS = {
   FAVORITES: 'aethername_favorites',
-  HISTORY: 'aethername_history'
+  HISTORY: 'aethername_history',
+  CHARACTER: 'aethername_character',
+  CREATOR_STEP: 'aethername_creator_step'
 };
 
 const LocalStorageUtil = {
@@ -5057,7 +5059,8 @@ const ReviewStep = ({
   canUndo,
   randomWithMulticlass,
   setRandomWithMulticlass,
-  onGoToStep
+  onGoToStep,
+  resetCharacter
 }) => {
   const [exportFormat, setExportFormat] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -6886,23 +6889,17 @@ const ReviewStep = ({
         </div>
         {/* Right Column */}
         <div className="space-y-4">
-          {/* Features - Mobile Collapsible */}
-          <details className="md:hidden" open>
-            <summary className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 cursor-pointer list-none flex items-center justify-between mb-4">
+          {/* Features & Traits - Desktop */}
+          <div className="hidden md:block p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold text-slate-300">Features & Traits</h4>
-              <ChevronDown className="w-4 h-4 text-slate-400" />
-            </summary>
-          </details>
-          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-              <div className="hidden md:flex items-center justify-between mb-3">
-                <h4 className="text-sm font-semibold text-slate-300">Features & Traits</h4>
-                <button
-                  onClick={() => goToStep(2)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
-                >
-                  Edit
-                </button>
-              </div>
+              <button
+                onClick={() => goToStep(2)}
+                className="px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+              >
+                Edit
+              </button>
+            </div>
             <div className="space-y-3">
               {race?.traits && race.traits.length > 0 && (
                 <div>
@@ -6957,7 +6954,7 @@ const ReviewStep = ({
                     <div className="px-2 py-1.5 rounded-md bg-green-500/20 border border-green-500/30">
                       <div className="text-xs font-semibold text-green-300">{FEATS[character.variantHumanFeat].name}</div>
                       <div className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
-                        Hover to view details
+                        Tap to view details
                       </div>
                     </div>
                   </Tooltip>
@@ -6965,6 +6962,81 @@ const ReviewStep = ({
               )}
             </div>
           </div>
+
+          {/* Features & Traits - Mobile Collapsible */}
+          <details className="md:hidden rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
+            <summary className="p-4 cursor-pointer list-none flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-slate-300">Features & Traits</h4>
+              <ChevronDown className="w-4 h-4 text-slate-400 transition-transform details-open:rotate-180" />
+            </summary>
+            <div className="px-4 pb-4 space-y-3">
+              {race?.traits && race.traits.length > 0 && (
+                <div>
+                  <div className="text-xs text-indigo-400 mb-1">Racial Traits</div>
+                  <div className="flex flex-wrap gap-1">
+                    {race.traits.map((t, i) => {
+                      const info = TRAIT_INFO[t];
+                      const chip = (
+                        <span key={i} className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs">
+                          {t}
+                        </span>
+                      );
+                      return info ? (
+                        <Tooltip key={`${t}-${i}-mobile`} content={info}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
+                  </div>
+                </div>
+              )}
+              {classData?.features && classData.features.length > 0 && (
+                <div>
+                  <div className="text-xs text-purple-400 mb-1">Class Features</div>
+                  <div className="flex flex-wrap gap-1">
+                    {classData.features.map((f, i) => {
+                      const info = FEATURE_INFO[f];
+                      const chip = (
+                        <span key={i} className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs">
+                          {f}
+                        </span>
+                      );
+                      return info ? (
+                        <Tooltip key={`${f}-${i}-mobile`} content={info}>{chip}</Tooltip>
+                      ) : chip;
+                    })}
+                  </div>
+                </div>
+              )}
+              {background?.feature && (
+                <div>
+                  <div className="text-xs text-amber-400 mb-1">Background Feature</div>
+                  <Tooltip content={background.featureDesc}>
+                    <span className="px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs">
+                      {background.feature}
+                    </span>
+                  </Tooltip>
+                </div>
+              )}
+              {character.variantHumanFeat && FEATS[character.variantHumanFeat] && (
+                <div>
+                  <div className="text-xs text-green-400 mb-1">Feat (Variant Human)</div>
+                  <Tooltip content={FEATS[character.variantHumanFeat].description}>
+                    <div className="px-2 py-1.5 rounded-md bg-green-500/20 border border-green-500/30">
+                      <div className="text-xs font-semibold text-green-300">{FEATS[character.variantHumanFeat].name}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+                        Tap to view details
+                      </div>
+                    </div>
+                  </Tooltip>
+                </div>
+              )}
+              <button
+                onClick={() => goToStep(2)}
+                className="w-full mt-2 px-3 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 text-xs hover:bg-slate-600/50 transition-all"
+              >
+                Edit Features
+              </button>
+            </div>
+          </details>
 
           {/* Level Advancements (ASI/Feats) */}
           {character.asiChoices && Object.keys(character.asiChoices).length > 0 && (
@@ -7222,7 +7294,7 @@ const ReviewStep = ({
             ) : (
               <div className="text-sm text-slate-500">Not selected.</div>
             )}
-            {character.equipmentMethod === 'gold' && character.gold > 0 && (
+            {character.gold > 0 && (
               <div className="mt-2 text-sm text-amber-400">
                 💰 {character.gold} gp remaining
               </div>
@@ -7388,6 +7460,15 @@ const ReviewStep = ({
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy to Clipboard'}
+          </button>
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-700/50">
+          <button
+            onClick={resetCharacter}
+            className="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-colors flex items-center gap-2 text-sm"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Start New Character
           </button>
         </div>
       </div>
@@ -10624,9 +10705,93 @@ const CharacterCreator = ({
   onGoToGenerator 
 }) => {
   const currentTheme = themeConfig[theme] || themeConfig.mixed;
-  const [currentStep, setCurrentStep] = useState(0);
   const stepContentRef = useRef(null);
   const containerRef = useRef(null);
+
+  // Default character state
+  const defaultCharacter = {
+    name: importedName || '',
+    playerName: '',
+    race: null,
+    subrace: null,
+    class: null,
+    subclass: null,
+    background: null,
+    alignment: null,
+    level: 1,
+    multiclass: [],
+    abilities: {
+      strength: 10,
+      dexterity: 10,
+      constitution: 10,
+      intelligence: 10,
+      wisdom: 10,
+      charisma: 10
+    },
+    abilityMethod: null,
+    chosenLanguages: [],
+    replacementSkills: [],
+    classSkills: [],
+    personalityTraits: [],
+    ideals: null,
+    bonds: null,
+    flaws: null,
+    fightingStyle: null,
+    warlockInvocations: [],
+    metamagicOptions: [],
+    battleMasterManeuvers: [],
+    musicalInstrument: null,
+    chosenTools: [],
+    physicalCharacteristics: {
+      age: '',
+      height: '',
+      weight: '',
+      eyes: '',
+      hair: '',
+      skin: ''
+    },
+    skills: [],
+    equipment: [],
+    cantrips: [],
+    spells: [],
+    traits: [],
+    proficiencies: {
+      armor: [],
+      weapons: [],
+      tools: [],
+      languages: [],
+      savingThrows: [],
+      skills: []
+    }
+  };
+
+  // Load saved state from localStorage
+  const savedStep = LocalStorageUtil.getItem(STORAGE_KEYS.CREATOR_STEP, 0);
+  const savedCharacter = LocalStorageUtil.getItem(STORAGE_KEYS.CHARACTER, null);
+  
+  const [currentStep, setCurrentStep] = useState(savedStep);
+  const [character, setCharacter] = useState(() => {
+    if (savedCharacter) {
+      // If we have saved character data, use it but override name if importedName is provided
+      return importedName ? { ...savedCharacter, name: importedName } : savedCharacter;
+    }
+    return defaultCharacter;
+  });
+
+  // Save character state to localStorage whenever it changes
+  useEffect(() => {
+    // Only save if character has meaningful data (not just defaults)
+    const hasData = character.race || character.class || character.background || 
+                    character.name !== '' || character.playerName !== '';
+    if (hasData) {
+      LocalStorageUtil.setItem(STORAGE_KEYS.CHARACTER, character);
+    }
+  }, [character]);
+
+  // Save current step to localStorage whenever it changes
+  useEffect(() => {
+    LocalStorageUtil.setItem(STORAGE_KEYS.CREATOR_STEP, currentStep);
+  }, [currentStep]);
 
   // Auto-scroll to top when step changes
   useEffect(() => {
@@ -10648,68 +10813,6 @@ const CharacterCreator = ({
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-  const [character, setCharacter] = useState({
-    name: importedName || '',
-    playerName: '',
-    race: null,
-    subrace: null,
-    class: null,
-    subclass: null,
-    background: null,
-    alignment: null,
-    level: 1,
-    // Multi-classing support
-    multiclass: [], // Array of {classId, level, subclass} for additional classes
-    
-    abilities: {
-      strength: 10,
-      dexterity: 10,
-      constitution: 10,
-      intelligence: 10,
-      wisdom: 10,
-      charisma: 10
-    },
-    abilityMethod: null, // 'standard', 'pointbuy', 'roll', 'manual'
-    chosenLanguages: [], // Languages chosen by player (not automatic ones)
-    replacementSkills: [], // Skills chosen to replace overlapping background/class skills
-    classSkills: [], // Skills chosen from class skill list
-    personalityTraits: [], // Up to 2 personality traits
-    ideals: null, // One ideal
-    bonds: null, // One bond
-    flaws: null, // One flaw
-    
-    // Class-specific choices
-    fightingStyle: null, // Fighting style for Fighter/Paladin/Ranger
-    warlockInvocations: [], // Warlock invocations (2 at level 2+)
-    metamagicOptions: [], // Sorcerer metamagic (2 at level 3+)
-    battleMasterManeuvers: [], // Battle Master maneuvers (3 at level 3+)
-    musicalInstrument: null, // Bard's chosen instrument
-    chosenTools: [], // Tools chosen from background options
-    
-    // Physical characteristics
-    physicalCharacteristics: {
-      age: '',
-      height: '',
-      weight: '',
-      eyes: '',
-      hair: '',
-      skin: ''
-    },
-    
-    skills: [],
-    equipment: [],
-    cantrips: [],
-    spells: [],
-    traits: [],
-    proficiencies: {
-      armor: [],
-      weapons: [],
-      tools: [],
-      languages: [],
-      savingThrows: [],
-      skills: []
-    }
-  });
 
   // Update character name when importedName changes
   useEffect(() => {
@@ -10758,6 +10861,16 @@ const CharacterCreator = ({
       
       return updated;
     });
+  };
+
+  // Reset character to defaults and clear localStorage
+  const resetCharacter = () => {
+    if (window.confirm('Are you sure you want to start a new character? All current progress will be lost.')) {
+      setCharacter(defaultCharacter);
+      setCurrentStep(0);
+      LocalStorageUtil.removeItem(STORAGE_KEYS.CHARACTER);
+      LocalStorageUtil.removeItem(STORAGE_KEYS.CREATOR_STEP);
+    }
   };
 
   // One-level undo snapshot for randomize on Review step
@@ -11194,6 +11307,7 @@ const CharacterCreator = ({
             randomWithMulticlass={randomWithMulticlass}
             setRandomWithMulticlass={setRandomWithMulticlass}
             onGoToStep={setCurrentStep}
+            resetCharacter={resetCharacter}
           />
         )}
       </div>
