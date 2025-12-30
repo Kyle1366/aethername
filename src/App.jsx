@@ -6934,7 +6934,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
               {selectedSpells.length} / {maxPreparedSpells}
             </div>
             <div className="text-xs text-slate-500">
-              {ABILITY_LABELS[effectiveSpellcasting?.ability]?.short} mod ({getModifier(character.abilities[effectiveSpellcasting?.ability])}) + Level ({character.level})
+              {ABILITY_LABELS[effectiveSpellcasting?.ability]?.short} mod ({getModifier(character.abilities[effectiveSpellcasting?.ability])}) + Total Level ({character.level})
             </div>
           </div>
         )}
@@ -8224,6 +8224,9 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
         </p>
         <p className="text-xs text-slate-500 mt-2">
           Multiclass options appear after selecting a primary class (below the class grid, or below on small screens).
+        </p>
+        <p className="text-xs text-slate-500 mt-1">
+          Note: multiclassing splits your total character level across classes.
         </p>
       </div>
 
@@ -9662,7 +9665,7 @@ const CharacterCreator = ({
             {/* Level */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Starting Level
+                Character Level (Total)
               </label>
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
@@ -9680,7 +9683,7 @@ const CharacterCreator = ({
                 ))}
               </div>
               <p className="text-xs text-slate-500 mt-2">
-                Most campaigns start at level 1. Levels 4 and 8 grant Ability Score Improvements or Feats. Level 9+ unlocks 5th-level spells.
+                This is your total character level. If you multiclass, levels are split across classes (e.g., Level 5 total = Barbarian 3 / Warlock 2). Levels 4 and 8 grant Ability Score Improvements or Feats.
               </p>
             </div>
 
