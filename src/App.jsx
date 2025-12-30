@@ -5227,12 +5227,22 @@ const ReviewStep = ({
       return skillName;
     });
     
+    // Collect saving throws from primary class AND multiclass entries
+    // This is generous interpretation for random/multiclass characters
+    const allSavingThrowAbilities = new Set();
+    (classData?.savingThrows || []).forEach(s => allSavingThrowAbilities.add(s));
+    // Also add saving throws from multiclass entries
+    (character.multiclass || []).forEach(mc => {
+      const mcClassData = CLASSES[mc.classId];
+      (mcClassData?.savingThrows || []).forEach(s => allSavingThrowAbilities.add(s));
+    });
+    
     const profs = {
       armor: classData?.armorProficiencies || [],
       weapons: classData?.weaponProficiencies || [],
       tools: background?.toolProficiencies || [],
       skills: allSkillsWithBonuses,
-      savingThrows: (classData?.savingThrows || []).map(s => {
+      savingThrows: Array.from(allSavingThrowAbilities).map(s => {
         const abilityMod = getModifier(finalAbilities[s]);
         const totalBonus = abilityMod + proficiencyBonus;
         const bonusStr = totalBonus >= 0 ? `+${totalBonus}` : `${totalBonus}`;
