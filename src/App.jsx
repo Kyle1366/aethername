@@ -5549,22 +5549,31 @@ const ReviewStep = ({
     const margin = 10;
     let y = margin;
 
-    // Color palette - Fantasy RPG theme
+    // Color palette - Dark Fantasy RPG theme
     const colors = {
-      parchment: [252, 248, 240],
-      darkPurple: [45, 35, 75],
-      gold: [218, 165, 32],
-      lightGold: [255, 215, 100],
-      silver: [192, 192, 192],
-      headerBg: [58, 45, 95],
-      textDark: [40, 30, 50],
-      textMuted: [100, 90, 110],
-      accentBlue: [70, 130, 180],
-      accentPurple: [138, 92, 246]
+      // Background colors
+      pageBg: [35, 32, 45],           // Dark slate purple
+      cardBg: [45, 42, 58],           // Slightly lighter card background
+      // Accent colors
+      gold: [218, 175, 85],           // Warm gold
+      lightGold: [255, 220, 130],     // Bright gold for text
+      bronze: [180, 140, 75],         // Muted bronze
+      // Purple theme
+      darkPurple: [75, 55, 110],      // Rich purple
+      headerBg: [55, 45, 85],         // Section header bg
+      accentPurple: [160, 120, 255],  // Bright purple accent
+      // Text colors
+      textLight: [240, 235, 250],     // Primary text (light)
+      textMuted: [160, 150, 180],     // Secondary text
+      textGold: [255, 215, 100],      // Gold text
+      // Other accents
+      silver: [200, 200, 210],
+      accentBlue: [100, 160, 220],
+      accentRed: [220, 100, 100]
     };
 
-    // Parchment background
-    doc.setFillColor(...colors.parchment);
+    // Dark background
+    doc.setFillColor(...colors.pageBg);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
     // Helper functions
@@ -5590,7 +5599,7 @@ const ReviewStep = ({
       });
     };
 
-    const addText = (text, x, yPos, size = 12, style = 'normal', color = colors.textDark) => {
+    const addText = (text, x, yPos, size = 12, style = 'normal', color = colors.textLight) => {
       doc.setFontSize(size);
       doc.setFont('times', style);
       doc.setTextColor(...color);
@@ -5598,8 +5607,8 @@ const ReviewStep = ({
     };
 
     const addStyledBox = (x, yPos, width, height, label, value, labelSize = 8, valueSize = 16, boxColor = colors.darkPurple) => {
-      // Clean white background
-      doc.setFillColor(255, 255, 255);
+      // Dark card background
+      doc.setFillColor(...colors.cardBg);
       doc.rect(x, yPos, width, height, 'F');
       
       // Strong border
@@ -5622,7 +5631,7 @@ const ReviewStep = ({
       // Value (large, centered, bold)
       doc.setFontSize(valueSize);
       doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       const valueStr = String(value);
       const valueWidth = doc.getTextWidth(valueStr);
       doc.text(valueStr, x + (width - valueWidth) / 2, yPos + height - 5);
@@ -5633,7 +5642,8 @@ const ReviewStep = ({
       const height = 30;
       
       // White background with purple border
-      doc.setFillColor(255, 255, 255);
+      // Dark card background
+      doc.setFillColor(...colors.cardBg);
       doc.setDrawColor(...colors.darkPurple);
       doc.setLineWidth(1.5);
       doc.rect(x, yPos, width, height, 'FD');
@@ -5646,7 +5656,7 @@ const ReviewStep = ({
       // Ability abbreviation
       doc.setFontSize(10);
       doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.darkPurple);
+      doc.setTextColor(...colors.lightGold);
       const abilityText = ABILITY_LABELS[ability].short.toUpperCase();
       const abilityWidth = doc.getTextWidth(abilityText);
       doc.text(abilityText, x + (width - abilityWidth) / 2, yPos + 6);
@@ -5670,7 +5680,7 @@ const ReviewStep = ({
       // Score at bottom
       doc.setFontSize(11);
       doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       const scoreWidth = doc.getTextWidth(String(score));
       doc.text(String(score), x + (width - scoreWidth) / 2, yPos + height - 3);
       
@@ -5851,7 +5861,7 @@ const ReviewStep = ({
     // Saving Throws list
     doc.setFontSize(11);
     doc.setFont('times', 'normal');
-    doc.setTextColor(...colors.textDark);
+    doc.setTextColor(...colors.textLight);
     
     proficiencies.savingThrows.forEach((save, idx) => {
       doc.setFillColor(...colors.gold);
@@ -5887,7 +5897,7 @@ const ReviewStep = ({
       y += 5;
       doc.setFontSize(11);
       doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       const langText = proficiencies.languages.join(', ');
       const langLines = doc.splitTextToSize(langText, pageWidth - 2 * margin - 6);
       langLines.forEach((line, idx) => {
@@ -5930,7 +5940,7 @@ const ReviewStep = ({
     
     doc.setFontSize(9);
     doc.setFont('times', 'normal');
-    doc.setTextColor(...colors.textDark);
+    doc.setTextColor(...colors.textLight);
     
     const features = [];
     if (race?.traits) features.push(...race.traits.map(t => ({ text: t, type: 'Racial' })));
@@ -5966,7 +5976,7 @@ const ReviewStep = ({
       // Feature text
       doc.setFontSize(9);
       doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - typeWidth - 4);
       wrappedText.forEach((line, lineIdx) => {
         doc.text(line, bottomLeftX + typeWidth + 3, leftY + 1.5 + lineIdx * 3.5);
@@ -5983,7 +5993,7 @@ const ReviewStep = ({
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       
       equipment.forEach((item, idx) => {
         const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
@@ -6034,7 +6044,7 @@ const ReviewStep = ({
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       
       levelAdvancements.forEach((adv) => {
         doc.setFillColor(...colors.accentPurple);
@@ -6055,7 +6065,7 @@ const ReviewStep = ({
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       const styleName = FIGHTING_STYLES[character.fightingStyle]?.name || character.fightingStyle;
       doc.text(styleName, bottomLeftX + 5, leftY);
       leftY += 5;
@@ -6086,7 +6096,7 @@ const ReviewStep = ({
         doc.text(trait.label.toUpperCase(), xPos, leftY);
         doc.setFontSize(9);
         doc.setFont('times', 'normal');
-        doc.setTextColor(...colors.textDark);
+        doc.setTextColor(...colors.textLight);
         doc.text(String(trait.value), xPos, leftY + 3);
         doc.setFontSize(8);
         doc.setFont('times', 'bolditalic');
@@ -6135,7 +6145,7 @@ const ReviewStep = ({
         
         doc.setFontSize(10);
         doc.setFont('times', 'normal');
-        doc.setTextColor(...colors.textDark);
+        doc.setTextColor(...colors.textLight);
         
         if (character.class === 'warlock') {
           doc.text(`${slots.slots} × Lv${slots.level}`, bottomRightX + 4, rightY);
@@ -6165,7 +6175,7 @@ const ReviewStep = ({
         
         doc.setFontSize(10);
         doc.setFont('times', 'normal');
-        doc.setTextColor(...colors.textDark);
+        doc.setTextColor(...colors.textLight);
         spellList.cantrips.forEach((spell, idx) => {
           doc.setFillColor(...colors.accentPurple);
           doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
@@ -6185,7 +6195,7 @@ const ReviewStep = ({
         
         doc.setFontSize(10);
         doc.setFont('times', 'normal');
-        doc.setTextColor(...colors.textDark);
+        doc.setTextColor(...colors.textLight);
         spellList.spells.forEach((spell, idx) => {
           doc.setFillColor(...colors.accentPurple);
           doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
@@ -6206,7 +6216,7 @@ const ReviewStep = ({
       
       doc.setFontSize(10);
       doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textDark);
+      doc.setTextColor(...colors.textLight);
       character.warlockInvocations.forEach((invKey) => {
         const invocation = WARLOCK_INVOCATIONS[invKey];
         if (invocation) {
@@ -6220,15 +6230,15 @@ const ReviewStep = ({
 
     // Footer
     const addFooter = (pageNum) => {
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('times', 'italic');
-      doc.setTextColor(...colors.textMuted);
-      doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 8, { align: 'center' });
+      doc.setTextColor(...colors.lightGold);
+      doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 12, { align: 'center' });
       
       // Decorative footer line
       doc.setDrawColor(...colors.gold);
       doc.setLineWidth(0.5);
-      doc.line(margin, pageHeight - 9, pageWidth - margin, pageHeight - 9);
+      doc.line(margin + 5, pageHeight - 14, pageWidth - margin - 5, pageHeight - 14);
     };
     
     // Add footer to all pages
