@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
   FAVORITES: 'aethername_favorites',
   HISTORY: 'aethername_history',
   CHARACTER: 'aethername_character',
-  CREATOR_STEP: 'aethername_creator_step'
+  CREATOR_STEP: 'aethername_creator_step',
+  CURRENT_PAGE: 'aethername_current_page'
 };
 
 const LocalStorageUtil = {
@@ -11402,9 +11403,22 @@ const CharacterCreator = ({
 // ============================================================================
 
 export default function AetherNames() {
-  // Page navigation state
-  const [currentPage, setCurrentPage] = useState('generator');
+  // Page navigation state - load from localStorage if available
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = LocalStorageUtil.getItem(STORAGE_KEYS.CURRENT_PAGE, 'generator');
+    // Only restore 'character' page if we have saved character data
+    const hasCharacterData = LocalStorageUtil.getItem(STORAGE_KEYS.CHARACTER, null);
+    if (savedPage === 'character' && hasCharacterData) {
+      return 'character';
+    }
+    return 'generator';
+  });
   const [characterImportName, setCharacterImportName] = useState('');
+
+  // Save current page to localStorage whenever it changes
+  useEffect(() => {
+    LocalStorageUtil.setItem(STORAGE_KEYS.CURRENT_PAGE, currentPage);
+  }, [currentPage]);
 
   const [config, setConfig] = useState({
     nameType: 'character',
