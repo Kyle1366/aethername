@@ -5898,17 +5898,34 @@ const ReviewStep = ({
     // Save starting Y position for two columns
     const twoColStartY = y;
     const bottomLeftX = margin;
-    const bottomRightX = pageWidth / 2 + 4;
-    const leftColWidth = pageWidth / 2 - margin - 6;
-    const rightColWidth = pageWidth / 2 - margin - 6;
+    const bottomRightX = pageWidth / 2 + 5;
+    const leftColWidth = pageWidth / 2 - margin - 8;
+    const rightColWidth = pageWidth / 2 - margin - 8;
     
     let leftY = twoColStartY;
     let rightY = twoColStartY;
+    
+    // Helper function to draw column-specific headers
+    const drawColumnHeader = (text, yPos, xPos, width) => {
+      const headerHeight = 5;
+      doc.setFillColor(...colors.headerBg);
+      doc.rect(xPos, yPos, width, headerHeight, 'F');
+      doc.setDrawColor(...colors.gold);
+      doc.setLineWidth(1);
+      doc.line(xPos, yPos, xPos + width, yPos);
+      doc.setLineWidth(0.3);
+      doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
+      doc.setFontSize(9);
+      doc.setFont('times', 'bold');
+      doc.setTextColor(...colors.lightGold);
+      doc.text(text, xPos + 2, yPos + 4);
+      return yPos + headerHeight + 2;
+    };
 
     // ============== LEFT COLUMN: FEATURES & TRAITS ==============
-    leftY = drawSectionHeader('FEATURES & TRAITS', leftY) + 1;
+    leftY = drawColumnHeader('FEATURES & TRAITS', leftY, bottomLeftX, leftColWidth);
     
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textDark);
     
@@ -5931,57 +5948,33 @@ const ReviewStep = ({
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
     
     features.forEach((feat, idx) => {
-      // Type label
+      // Type label (small badge)
       doc.setFillColor(...colors.headerBg);
-      const typeWidth = doc.getTextWidth(feat.type) + 3;
-      doc.roundedRect(bottomLeftX, leftY - 2, typeWidth, 4, 1, 1, 'F');
+      doc.setFontSize(5);
+      const typeWidth = doc.getTextWidth(feat.type) + 2;
+      doc.roundedRect(bottomLeftX, leftY - 1.5, typeWidth, 3, 0.5, 0.5, 'F');
       
-      doc.setFontSize(6);
       doc.setFont('times', 'bold');
       doc.setTextColor(255, 255, 255);
-      doc.text(feat.type, bottomLeftX + 1.5, leftY + 0.5);
+      doc.text(feat.type, bottomLeftX + 1, leftY + 0.5);
       
       // Feature text - wrap within column width
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
-      const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - typeWidth - 4);
+      const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - typeWidth - 3);
       wrappedText.forEach((line, lineIdx) => {
-        doc.text(line, bottomLeftX + typeWidth + 2, leftY + 0.5 + lineIdx * 3);
+        doc.text(line, bottomLeftX + typeWidth + 1, leftY + 0.5 + lineIdx * 2.5);
       });
       
-      leftY += Math.max(3, wrappedText.length * 3);
+      leftY += Math.max(2.5, wrappedText.length * 2.5);
     });
     
     leftY += 2;
 
     // ============== LEFT COLUMN: EQUIPMENT ==============
     if (equipment.length > 0) {
-      leftY = drawSectionHeader('EQUIPMENT', leftY) + 2;
-      
-      // Helper function to draw at specific X position
-      const drawSectionHeaderAtX = (text, yPos, xPos, width) => {
-        const headerHeight = 6;
-        doc.setFillColor(...colors.headerBg);
-        doc.rect(xPos, yPos, width, headerHeight, 'F');
-        doc.setDrawColor(...colors.gold);
-        doc.setLineWidth(1.5);
-        doc.line(xPos, yPos, xPos + width, yPos);
-        doc.setLineWidth(0.5);
-        doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
-        doc.setFontSize(11);
-        doc.setFont('times', 'bold');
-        doc.setTextColor(...colors.lightGold);
-        doc.text(text, xPos + 3, yPos + 5.5);
-        doc.setFillColor(...colors.gold);
-        doc.circle(xPos, yPos, 1, 'F');
-        doc.circle(xPos + width, yPos, 1, 'F');
-        doc.circle(xPos, yPos + headerHeight, 1, 'F');
-        doc.circle(xPos + width, yPos + headerHeight, 1, 'F');
-        return yPos + headerHeight + 2;
-      };
-      
-      leftY = drawSectionHeaderAtX('EQUIPMENT', leftY - 9, bottomLeftX, leftColWidth) + 1;
+      leftY = drawColumnHeader('EQUIPMENT', leftY, bottomLeftX, leftColWidth) + 1;
       
       doc.setFontSize(9);
       doc.setFont('times', 'normal');
@@ -6033,7 +6026,7 @@ const ReviewStep = ({
     
     if (levelAdvancements.length > 0) {
       leftY += 2;
-      leftY = drawSectionHeaderAtX('LEVEL ADV', leftY - 9, bottomLeftX, leftColWidth) + 1;
+      leftY = drawColumnHeader('LEVEL ADV', leftY, bottomLeftX, leftColWidth) + 1;
       
       doc.setFontSize(8);
       doc.setFont('times', 'normal');
@@ -6099,29 +6092,7 @@ const ReviewStep = ({
 
     // ============== RIGHT COLUMN: SPELLCASTING ==============
     if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
-      // Custom header for right column
-      const drawSectionHeaderAtX = (text, yPos, xPos, width) => {
-        const headerHeight = 6;
-        doc.setFillColor(...colors.headerBg);
-        doc.rect(xPos, yPos, width, headerHeight, 'F');
-        doc.setDrawColor(...colors.gold);
-        doc.setLineWidth(1.5);
-        doc.line(xPos, yPos, xPos + width, yPos);
-        doc.setLineWidth(0.5);
-        doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
-        doc.setFontSize(11);
-        doc.setFont('times', 'bold');
-        doc.setTextColor(...colors.lightGold);
-        doc.text(text, xPos + 3, yPos + 5.5);
-        doc.setFillColor(...colors.gold);
-        doc.circle(xPos, yPos, 1, 'F');
-        doc.circle(xPos + width, yPos, 1, 'F');
-        doc.circle(xPos, yPos + headerHeight, 1, 'F');
-        doc.circle(xPos + width, yPos + headerHeight, 1, 'F');
-        return yPos + headerHeight + 2;
-      };
-      
-      rightY = drawSectionHeaderAtX('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 1;
+      rightY = drawColumnHeader('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 1;
       
       // Multiclass disclaimer (compact)
       if (character.multiclass && character.multiclass.length > 1) {
@@ -6135,7 +6106,7 @@ const ReviewStep = ({
           doc.setFont('times', 'italic');
           doc.setTextColor(...colors.accentBlue);
           const disclaimer = 'Multiclass spells: primary class only';
-          doc.text(disclaimer, rightColX, rightY);
+          doc.text(disclaimer, bottomRightX, rightY);
           rightY += 4;
         }
       }
@@ -6152,7 +6123,7 @@ const ReviewStep = ({
           doc.setFont('times', 'italic');
           doc.setTextColor(...colors.accentBlue);
           const disclaimer = 'Multiclass spells: primary class only';
-          doc.text(disclaimer, rightColX, rightY);
+          doc.text(disclaimer, bottomRightX, rightY);
           rightY += 4;
         }
       }
@@ -6181,7 +6152,7 @@ const ReviewStep = ({
         doc.setTextColor(...colors.textDark);
         
         if (character.class === 'warlock') {
-          doc.text(`${slots.slots} × Lv${slots.level}`, rightColX + 2, rightY);
+          doc.text(`${slots.slots} × Lv${slots.level}`, bottomRightX + 2, rightY);
           rightY += 5;
         } else {
           const slotText = Object.entries(slots)
@@ -6191,7 +6162,7 @@ const ReviewStep = ({
           if (slotText) {
             const wrappedSlots = doc.splitTextToSize(slotText, rightColWidth - 4);
             wrappedSlots.forEach((line, idx) => {
-              doc.text(line, rightColX + 2, rightY + idx * 3);
+              doc.text(line, bottomRightX + 2, rightY + idx * 3);
             });
             rightY += wrappedSlots.length * 3 + 2;
           }
@@ -6239,7 +6210,7 @@ const ReviewStep = ({
     }
     
     // ============== RIGHT COLUMN: ELDRITCH INVOCATIONS ==============
-    if (character.invocations && character.invocations.length > 0) {
+    if (character.warlockInvocations && character.warlockInvocations.length > 0) {
       rightY += 3;
       doc.setFontSize(9);
       doc.setFont('times', 'bolditalic');
@@ -6250,8 +6221,8 @@ const ReviewStep = ({
       doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
-      character.invocations.forEach((invId) => {
-        const invocation = WARLOCK_INVOCATIONS.find(inv => inv.id === invId);
+      character.warlockInvocations.forEach((invKey) => {
+        const invocation = WARLOCK_INVOCATIONS[invKey];
         if (invocation) {
           doc.setFillColor(...colors.darkPurple);
           doc.circle(bottomRightX + 1.5, rightY + 0.5, 0.7, 'F');
