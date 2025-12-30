@@ -10079,49 +10079,86 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
 
   if (enableMulticlass && level >= 2) {
     // When multiclass is explicitly enabled, always multiclass
-    // Allocate levels to a secondary class while keeping primary at least level 1.
-    const multiclassLevelCount = level >= 10 ? pick([2, 3, 4]) : level >= 5 ? pick([2, 3]) : 1;
-    const safeMulticlassCount = Math.min(multiclassLevelCount, Math.max(1, level - 1));
+    // Decide how many multiclasses: 1 class most of the time, 2 classes at higher levels
+    // Need at least level 3 for triple class (1 primary + 1 + 1 minimum)
+    const canTripleClass = level >= 6; // Level 6+ can reasonably split 3 ways
+    const doTripleClass = canTripleClass && Math.random() < 0.25; // 25% chance for triple class
+    const numMulticlasses = doTripleClass ? 2 : 1;
     
-    // Pick a synergistic multiclass based on primary abilities
-    const getCompatibleMulticlass = (primaryClass) => {
+    // Calculate total levels to allocate to multiclasses
+    // For triple class at higher levels, allocate more levels
+    let totalMulticlassLevels;
+    if (doTripleClass) {
+      // Triple class: allocate 2-6 levels depending on total level, minimum 2 (1 per class)
+      totalMulticlassLevels = level >= 15 ? pick([4, 5, 6]) : level >= 10 ? pick([3, 4, 5]) : pick([2, 3, 4]);
+    } else {
+      // Single multiclass: existing logic
+      totalMulticlassLevels = level >= 10 ? pick([2, 3, 4]) : level >= 5 ? pick([2, 3]) : 1;
+    }
+    const safeMulticlassTotal = Math.min(totalMulticlassLevels, Math.max(numMulticlasses, level - 1));
+    
+    // Pick synergistic multiclasses based on primary abilities
+    const getCompatibleMulticlass = (primaryClass, excludeClasses = []) => {
       const synergies = {
-        barbarian: ['fighter', 'ranger'],
-        bard: ['rogue', 'warlock', 'sorcerer'],
-        cleric: ['paladin', 'druid'],
-        druid: ['ranger', 'cleric'],
-        fighter: ['barbarian', 'paladin', 'ranger'],
-        monk: ['rogue', 'ranger'],
-        paladin: ['fighter', 'cleric', 'warlock'],
-        ranger: ['fighter', 'druid', 'rogue'],
-        rogue: ['bard', 'ranger', 'monk'],
-        sorcerer: ['warlock', 'bard', 'wizard'],
-        warlock: ['sorcerer', 'bard', 'paladin'],
-        wizard: ['sorcerer', 'cleric']
+        barbarian: ['fighter', 'ranger', 'rogue'],
+        bard: ['rogue', 'warlock', 'sorcerer', 'cleric'],
+        cleric: ['paladin', 'druid', 'fighter', 'monk'],
+        druid: ['ranger', 'cleric', 'monk', 'barbarian'],
+        fighter: ['barbarian', 'paladin', 'ranger', 'rogue'],
+        monk: ['rogue', 'ranger', 'cleric', 'druid'],
+        paladin: ['fighter', 'cleric', 'warlock', 'sorcerer'],
+        ranger: ['fighter', 'druid', 'rogue', 'monk'],
+        rogue: ['bard', 'ranger', 'monk', 'fighter'],
+        sorcerer: ['warlock', 'bard', 'wizard', 'paladin'],
+        warlock: ['sorcerer', 'bard', 'paladin', 'fighter'],
+        wizard: ['sorcerer', 'cleric', 'fighter', 'rogue']
       };
       
       const compatible = synergies[primaryClass.toLowerCase()] || [];
-      const available = compatible.filter(id => CLASSES[id]);
-      return available.length > 0 ? pick(available) : pick(Object.keys(CLASSES).filter(id => id !== classId));
+      const available = compatible.filter(id => CLASSES[id] && !excludeClasses.includes(id));
+      if (available.length > 0) return pick(available);
+      // Fallback to any class not already chosen
+      return pick(Object.keys(CLASSES).filter(id => id !== classId && !excludeClasses.includes(id)));
     };
     
-    const multiclassId = getCompatibleMulticlass(selectedClass.name);
-    const multiclassData = CLASSES[multiclassId];
+    // Generate multiclass entries
+    const chosenMulticlasses = [];
+    let remainingLevels = safeMulticlassTotal;
     
-    // Choose a subclass if the multiclass level is high enough
-    let multiclassSubclass = null;
-    if (safeMulticlassCount >= multiclassData.subclassLevel) {
-      const subclasses = SUBCLASSES[multiclassId];
-      if (subclasses) {
-        multiclassSubclass = pick(Object.keys(subclasses));
+    for (let i = 0; i < numMulticlasses && remainingLevels > 0; i++) {
+      const excludeIds = [classId, ...chosenMulticlasses.map(mc => mc.classId)];
+      const multiclassId = getCompatibleMulticlass(selectedClass.name, excludeIds);
+      const multiclassData = CLASSES[multiclassId];
+      
+      // Distribute levels: for last multiclass, use all remaining; otherwise use roughly half
+      let mcLevels;
+      if (i === numMulticlasses - 1) {
+        mcLevels = remainingLevels;
+      } else {
+        // Distribute roughly evenly with some variance
+        const evenSplit = Math.ceil(remainingLevels / (numMulticlasses - i));
+        mcLevels = Math.max(1, Math.min(evenSplit, remainingLevels - (numMulticlasses - i - 1)));
       }
+      
+      remainingLevels -= mcLevels;
+      
+      // Choose a subclass if the multiclass level is high enough
+      let multiclassSubclass = null;
+      if (mcLevels >= multiclassData.subclassLevel) {
+        const subclasses = SUBCLASSES[multiclassId];
+        if (subclasses) {
+          multiclassSubclass = pick(Object.keys(subclasses));
+        }
+      }
+      
+      chosenMulticlasses.push({
+        classId: multiclassId,
+        level: mcLevels,
+        subclass: multiclassSubclass
+      });
     }
     
-    multiclassLevels = [{
-      classId: multiclassId,
-      level: safeMulticlassCount,
-      subclass: multiclassSubclass
-    }];
+    multiclassLevels = chosenMulticlasses;
   }
 
   // Step 9.75: Choose a subclass if required at this level
@@ -10594,26 +10631,28 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
     equipment.push(...pickEquipment(primaryClassEquipment));
   }
   
-  // If multiclassed, potentially add some equipment from secondary class
+  // If multiclassed, potentially add some equipment from secondary/tertiary classes
   if (multiclassLevels.length > 0) {
-    const secondaryClassId = multiclassLevels[0].classId;
-    const secondaryClassEquipment = STARTING_EQUIPMENT[secondaryClassId];
-    
-    if (secondaryClassEquipment) {
-      // 50% chance to add weapon/armor from secondary class (to represent versatility)
-      if (Math.random() < 0.5) {
-        // Pick one random choice from secondary class
-        if (secondaryClassEquipment.choices && secondaryClassEquipment.choices.length > 0) {
-          const randomChoice = pick(secondaryClassEquipment.choices);
-          const selectedOption = makeSpecific(pick(randomChoice.options));
-          
-          // Avoid duplicates
-          if (!equipment.includes(selectedOption)) {
-            equipment.push(selectedOption);
+    multiclassLevels.forEach((mc, index) => {
+      const secondaryClassEquipment = STARTING_EQUIPMENT[mc.classId];
+      
+      if (secondaryClassEquipment) {
+        // Chance decreases for each additional class (50% for first, 30% for second)
+        const addChance = index === 0 ? 0.5 : 0.3;
+        if (Math.random() < addChance) {
+          // Pick one random choice from this multiclass
+          if (secondaryClassEquipment.choices && secondaryClassEquipment.choices.length > 0) {
+            const randomChoice = pick(secondaryClassEquipment.choices);
+            const selectedOption = makeSpecific(pick(randomChoice.options));
+            
+            // Avoid duplicates
+            if (!equipment.includes(selectedOption)) {
+              equipment.push(selectedOption);
+            }
           }
         }
       }
-    }
+    });
   }
   
   // Add background equipment
