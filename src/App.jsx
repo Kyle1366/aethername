@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight, AlertCircle, FileText } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 // ============================================================================
 // LOCAL STORAGE UTILITIES
@@ -5516,8 +5517,351 @@ const ReviewStep = ({
     }, null, 2);
   };
 
+  // Generate beautiful PDF character sheet
+  const generatePDFExport = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    let y = margin;
+
+    // Helper functions
+    const addText = (text, x, yPos, size = 10, style = 'normal', color = [0, 0, 0]) => {
+      doc.setFontSize(size);
+      doc.setFont('helvetica', style);
+      doc.setTextColor(...color);
+      doc.text(text, x, yPos);
+    };
+
+    const addBox = (x, yPos, width, height, label, value, labelSize = 7, valueSize = 11) => {
+      // Draw border
+      doc.setDrawColor(100, 100, 100);
+      doc.setLineWidth(0.5);
+      doc.rect(x, yPos, width, height);
+      
+      // Add label (small, top)
+      doc.setFontSize(labelSize);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(label, x + 2, yPos + 4);
+      
+      // Add value (larger, centered)
+      doc.setFontSize(valueSize);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      const valueStr = String(value);
+      const valueWidth = doc.getTextWidth(valueStr);
+      doc.text(valueStr, x + (width - valueWidth) / 2, yPos + height - 3);
+    };
+
+    const addCircle = (x, yPos, radius, filled = false) => {
+      doc.setDrawColor(100, 100, 100);
+      doc.setLineWidth(0.5);
+      if (filled) {
+        doc.setFillColor(0, 0, 0);
+        doc.circle(x, yPos, radius, 'FD');
+      } else {
+        doc.circle(x, yPos, radius);
+      }
+    };
+
+    const drawSectionHeader = (text, yPos) => {
+      doc.setFillColor(50, 50, 100);
+      doc.rect(margin, yPos, pageWidth - 2 * margin, 6, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(text, margin + 2, yPos + 4);
+      return yPos + 6;
+    };
+
+    // ============== HEADER ==============
+    doc.setFillColor(240, 240, 255);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    
+    addText(character.name || 'Unnamed Character', margin, 10, 18, 'bold', [30, 30, 100]);
+    
+    const classText = `${classData?.name || 'Unknown'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`;
+    const raceText = `${race?.name || 'Unknown'}${subrace ? ` (${subrace.name})` : ''}`;
+    const bgText = background?.name || 'Unknown';
+    
+    addText(classText, margin, 18, 11, 'normal', [50, 50, 50]);
+    addText(`${raceText} • ${bgText}`, margin, 25, 9, 'normal', [80, 80, 80]);
+    
+    if (character.playerName) {
+      addText(`Player: ${character.playerName}`, pageWidth - margin - 50, 10, 8, 'normal', [100, 100, 100]);
+    }
+    
+    if (character.alignment && ALIGNMENTS[character.alignment]) {
+      addText(ALIGNMENTS[character.alignment].name, pageWidth - margin - 50, 18, 9, 'normal', [80, 80, 80]);
+    }
+
+    y = 40;
+
+    // ============== CORE STATS ==============
+    y = drawSectionHeader('CORE STATS', y) + 2;
+    
+    const boxWidth = 20;
+    const boxHeight = 16;
+    const statSpacing = 22;
+    
+    // Combat stats row
+    addBox(margin, y, boxWidth, boxHeight, 'AC', baseAC);
+    addBox(margin + statSpacing, y, boxWidth, boxHeight, 'INIT', initiative >= 0 ? `+${initiative}` : initiative);
+    addBox(margin + statSpacing * 2, y, boxWidth, boxHeight, 'SPEED', `${speed}ft`);
+    addBox(margin + statSpacing * 3, y, boxWidth + 5, boxHeight, 'PROF', `+${proficiencyBonus}`);
+    addBox(margin + statSpacing * 4 + 5, y, boxWidth + 10, boxHeight, 'HP', maxHP);
+    addBox(margin + statSpacing * 5 + 15, y, boxWidth + 10, boxHeight, 'HIT DIE', `d${hitDie}`);
+    addBox(margin + statSpacing * 6 + 25, y, boxWidth, boxHeight, 'PERC', passivePerception);
+
+    y += boxHeight + 8;
+
+    // ============== ABILITY SCORES ==============
+    y = drawSectionHeader('ABILITY SCORES', y) + 2;
+    
+    const abilityBoxWidth = 28;
+    const abilityBoxHeight = 22;
+    const abilitySpacing = 30;
+    
+    ABILITY_NAMES.forEach((ability, idx) => {
+      const final = finalAbilities[ability];
+      const mod = getModifier(final);
+      const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+      const bonus = racialBonuses[ability] || 0;
+      
+      const x = margin + idx * abilitySpacing;
+      
+      // Box with score
+      doc.setDrawColor(100, 100, 100);
+      doc.setLineWidth(0.5);
+      doc.rect(x, y, abilityBoxWidth, abilityBoxHeight);
+      
+      // Ability name
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(ABILITY_LABELS[ability].short.toUpperCase(), x + abilityBoxWidth / 2, y + 4, { align: 'center' });
+      
+      // Modifier (large circle)
+      doc.circle(x + abilityBoxWidth / 2, y + 11, 5);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(modStr, x + abilityBoxWidth / 2, y + 13, { align: 'center' });
+      
+      // Score (bottom)
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${final}`, x + abilityBoxWidth / 2, y + 20, { align: 'center' });
+      
+      // Bonus indicator
+      if (bonus > 0) {
+        doc.setFontSize(6);
+        doc.setTextColor(50, 50, 200);
+        doc.text(`+${bonus}`, x + abilityBoxWidth - 2, y + 20);
+      }
+    });
+
+    y += abilityBoxHeight + 8;
+
+    // ============== SAVING THROWS & SKILLS ==============
+    y = drawSectionHeader('PROFICIENCIES', y) + 2;
+    
+    // Saving Throws
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(50, 50, 50);
+    doc.text('SAVING THROWS', margin, y);
+    
+    y += 4;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    
+    proficiencies.savingThrows.forEach((save, idx) => {
+      addCircle(margin + 1.5, y + idx * 4 + 0.5, 1.5, true);
+      doc.text(save, margin + 5, y + idx * 4 + 1);
+    });
+    
+    const savesHeight = proficiencies.savingThrows.length * 4;
+    
+    // Skills (right column)
+    const skillX = margin + 60;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(50, 50, 50);
+    doc.text('SKILLS', skillX, y - 4);
+    
+    const skillY = y;
+    proficiencies.skills.forEach((skill, idx) => {
+      if (idx < 9) {
+        addCircle(skillX + 1.5, skillY + idx * 4 + 0.5, 1.5, true);
+        doc.setFont('helvetica', 'normal');
+        doc.text(skill, skillX + 5, skillY + idx * 4 + 1);
+      }
+    });
+    
+    // Additional skills in second column if needed
+    if (proficiencies.skills.length > 9) {
+      const skill2X = skillX + 60;
+      proficiencies.skills.slice(9).forEach((skill, idx) => {
+        addCircle(skill2X + 1.5, skillY + idx * 4 + 0.5, 1.5, true);
+        doc.setFont('helvetica', 'normal');
+        doc.text(skill, skill2X + 5, skillY + idx * 4 + 1);
+      });
+    }
+    
+    y += Math.max(savesHeight, proficiencies.skills.length > 9 ? 36 : proficiencies.skills.length * 4) + 8;
+
+    // ============== FEATURES & TRAITS ==============
+    if (y > pageHeight - 80) {
+      doc.addPage();
+      y = margin;
+    }
+    
+    y = drawSectionHeader('FEATURES & TRAITS', y) + 2;
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    const features = [];
+    if (race?.traits) features.push(...race.traits.map(t => `• ${t} (Racial)`));
+    if (classData?.features) features.push(...classData.features.map(f => `• ${f} (Class)`));
+    if (background?.feature) features.push(`• ${background.feature} (Background)`);
+    
+    features.forEach((feat, idx) => {
+      if (y > pageHeight - 15) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(feat, margin, y + idx * 4);
+    });
+    
+    y += features.length * 4 + 8;
+
+    // ============== EQUIPMENT ==============
+    if (equipment.length > 0) {
+      if (y > pageHeight - 40) {
+        doc.addPage();
+        y = margin;
+      }
+      
+      y = drawSectionHeader('EQUIPMENT', y) + 2;
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      
+      equipment.forEach((item, idx) => {
+        if (y > pageHeight - 15) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(`• ${item}`, margin, y + idx * 4);
+      });
+      
+      y += equipment.length * 4 + 8;
+    }
+
+    // ============== SPELLCASTING ==============
+    if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
+      if (y > pageHeight - 50) {
+        doc.addPage();
+        y = margin;
+      }
+      
+      y = drawSectionHeader('SPELLCASTING', y) + 2;
+      
+      const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
+      const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
+      
+      addBox(margin, y, 30, 12, 'SPELL DC', spellDC, 6, 10);
+      addBox(margin + 35, y, 30, 12, 'SPELL ATK', `+${spellAttack}`, 6, 10);
+      addBox(margin + 70, y, 40, 12, 'ABILITY', ABILITY_LABELS[spellcastingInfo.ability]?.name, 6, 9);
+      
+      y += 16;
+      
+      // Spell slots
+      const slots = getSpellSlots(character.class, totalLevel);
+      if (slots) {
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text('SPELL SLOTS:', margin, y);
+        y += 4;
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        
+        if (character.class === 'warlock') {
+          doc.text(`${slots.slots}x Level ${slots.level} (Pact Magic)`, margin, y);
+          y += 5;
+        } else {
+          const slotText = Object.entries(slots)
+            .filter(([_, count]) => count > 0)
+            .map(([lvl, count]) => `${lvl}${lvl === '1' ? 'st' : lvl === '2' ? 'nd' : lvl === '3' ? 'rd' : 'th'}: ${count}`)
+            .join(' • ');
+          if (slotText) {
+            doc.text(slotText, margin, y);
+            y += 5;
+          }
+        }
+      }
+      
+      // Cantrips
+      if (spellList.cantrips.length > 0) {
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text('CANTRIPS:', margin, y);
+        y += 4;
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        spellList.cantrips.forEach((spell, idx) => {
+          if (y > pageHeight - 15) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(`• ${spell}`, margin, y + idx * 4);
+        });
+        y += spellList.cantrips.length * 4 + 4;
+      }
+      
+      // Spells
+      if (spellList.spells.length > 0) {
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PREPARED/KNOWN SPELLS:', margin, y);
+        y += 4;
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        spellList.spells.forEach((spell, idx) => {
+          if (y > pageHeight - 15) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(`• ${spell}`, margin, y + idx * 4);
+        });
+        y += spellList.spells.length * 4;
+      }
+    }
+
+    // Footer
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 8, { align: 'center' });
+    
+    return doc;
+  };
+
   const handleExport = (format) => {
     setExportFormat(format);
+    
+    if (format === 'pdf') {
+      // Generate and download PDF
+      const doc = generatePDFExport();
+      doc.save(`${character.name || 'character'}.pdf`);
+      return;
+    }
     
     let content, filename, type;
     
@@ -6574,6 +6918,13 @@ const ReviewStep = ({
       <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
         <h4 className="text-sm font-semibold text-slate-300 mb-3">Export Character</h4>
         <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => handleExport('pdf')}
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 border border-indigo-500/50 text-white hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-2 font-semibold shadow-lg shadow-indigo-500/25"
+          >
+            <FileText className="w-4 h-4" />
+            Download PDF
+          </button>
           <button
             onClick={() => handleExport('txt')}
             className="px-4 py-2 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50 transition-colors flex items-center gap-2"
