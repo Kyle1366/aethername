@@ -2590,47 +2590,84 @@ const getSpellSlots = (classId, level) => {
   return null;
 };
 
-// Multi-class spell slot calculation
+// Multi-class spell slot calculation (D&D 5e rules)
 const getMulticlassSpellSlots = (character) => {
-  if (!character.multiclass || character.multiclass.length === 0) {
-    // Single class - use normal calculation
+  const fullCasters = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard'];
+  const halfCasters = ['paladin', 'ranger'];
+  // Third casters: Eldritch Knight (fighter), Arcane Trickster (rogue) - handled via subclass
+  const thirdCasterSubclasses = {
+    fighter: ['eldritchKnight'],
+    rogue: ['arcaneTrickster']
+  };
+  
+  const multiclassEntries = character.multiclass || [];
+  
+  // Check if single class (no multiclassing)
+  if (multiclassEntries.length === 0) {
     return getSpellSlots(character.class, character.level);
   }
   
-  const fullCasters = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard'];
-  const halfCasters = ['paladin', 'ranger'];
+  // Calculate total caster level across all classes
+  // Full casters: level counts as full
+  // Half casters: level / 2 (round down)
+  // Third casters: level / 3 (round down)
   
-  // Calculate adjusted level for spell slot purposes
-  let adjustedLevel = character.level;
+  // Calculate multiclass level sum
+  const multiclassLevelSum = multiclassEntries.reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
+  const primaryLevel = Math.max(1, (character.level || 1) - multiclassLevelSum);
   
-  // Check if primary class and multiclasses have spellcasting
-  const primaryCanCast = fullCasters.includes(character.class) || halfCasters.includes(character.class);
-  
-  // For multiclass, if primary class is a full caster:
-  // - Calculate spell slots based on total character level, but each class counts differently
-  if (fullCasters.includes(character.class)) {
-    // Primary is full caster - combine levels for spell slots
-    let totalCasterLevel = character.level;
-    
-    // Warlocks don't combine with other spellcasters (separate pact magic)
-    const hasWarlock = character.multiclass.some(m => m.classId === 'warlock');
-    
-    if (hasWarlock) {
-      // Warlock levels don't combine with other spell slots
-      // But we still calculate spell slots for the full caster levels
-      totalCasterLevel = character.level - character.multiclass.find(m => m.classId === 'warlock').level;
+  // Helper to get caster contribution
+  const getCasterLevel = (classId, subclass, classLevel) => {
+    if (fullCasters.includes(classId)) {
+      return classLevel; // Full caster level
     }
-    
-    return getSpellSlots(character.class, Math.min(totalCasterLevel, 20));
+    if (halfCasters.includes(classId)) {
+      return Math.floor(classLevel / 2); // Half caster
+    }
+    // Check for third caster subclasses
+    if (thirdCasterSubclasses[classId]?.includes(subclass)) {
+      return Math.floor(classLevel / 3); // Third caster
+    }
+    return 0; // Non-caster
+  };
+  
+  // Calculate total caster level
+  let totalCasterLevel = getCasterLevel(character.class, character.subclass, primaryLevel);
+  
+  // Add multiclass caster levels
+  multiclassEntries.forEach(mc => {
+    if (mc.classId !== 'warlock') { // Warlock pact magic is separate
+      totalCasterLevel += getCasterLevel(mc.classId, mc.subclass, mc.level);
+    }
+  });
+  
+  // Cap at 20
+  totalCasterLevel = Math.min(totalCasterLevel, 20);
+  
+  // If no caster levels, return null
+  if (totalCasterLevel === 0) {
+    return null;
   }
   
-  // For multiclass, if primary class can't cast but multiclass has caster
-  const multiClassCaster = character.multiclass.find(m => 
-    fullCasters.includes(m.classId) || halfCasters.includes(m.classId)
-  );
+  // Return spell slots based on total caster level (use full caster table)
+  return SPELL_SLOTS.full[totalCasterLevel];
+};
+
+// Get warlock pact magic slots separately (they don't combine with other spellcasting)
+const getWarlockPactSlots = (character) => {
+  const multiclassEntries = character.multiclass || [];
   
-  if (multiClassCaster) {
-    return getSpellSlots(multiClassCaster.classId, Math.min(character.level, 20));
+  // Check if primary class is warlock
+  if (character.class === 'warlock') {
+    const multiclassLevelSum = multiclassEntries.reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
+    const warlockLevel = Math.max(1, (character.level || 1) - multiclassLevelSum);
+    return SPELL_SLOTS.warlock[Math.min(warlockLevel, 20)];
+  }
+  
+  // Check if any multiclass is warlock
+  const warlockMulticlass = multiclassEntries.find(mc => mc.classId === 'warlock');
+  if (warlockMulticlass) {
+    return SPELL_SLOTS.warlock[Math.min(warlockMulticlass.level, 20)];
   }
   
   return null;
@@ -6507,9 +6544,9 @@ const ReviewStep = ({
               )}
             </p>
             {character.multiclass && character.multiclass.length > 0 && (
-              <div className="mt-2 text-xs text-purple-200/70">
-                Spellcasting note: multiclass spellcasting isn’t fully calculated yet (spell slots/spells shown are primary-class only).
-              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Total Level: {totalLevel}
+              </p>
             )}
             {background && (
               <p className="text-slate-400 text-sm mt-1">{background.name} Background</p>
@@ -7316,7 +7353,7 @@ const ReviewStep = ({
               </div>
               {character.multiclass && character.multiclass.length > 0 && (
                 <div className="text-xs text-purple-200/80 mb-3">
-                  Note: multiclass spellcasting isn’t fully calculated yet (spell slots/spells shown are primary-class only).
+                  Multiclass spellcasting: Combined caster level used for spell slots.
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
@@ -7334,49 +7371,83 @@ const ReviewStep = ({
                 </div>
               </div>
               
-              {/* Spell Slots */}
+              {/* Spell Slots - use multiclass calculation */}
               {(() => {
-                const slots = getSpellSlots(character.class, character.level);
-                if (!slots) return null;
+                // Check for warlock pact magic separately
+                const warlockSlots = getWarlockPactSlots(character);
+                const hasMulticlass = character.multiclass && character.multiclass.length > 0;
                 
-                if (character.class === 'warlock') {
+                // Get regular spellcasting slots (multiclass combined)
+                const slots = hasMulticlass 
+                  ? getMulticlassSpellSlots(character) 
+                  : getSpellSlots(character.class, character.level);
+                
+                // Pure warlock with no multiclass
+                if (character.class === 'warlock' && !hasMulticlass) {
+                  const pactSlots = getSpellSlots('warlock', character.level);
+                  if (!pactSlots) return null;
                   return (
                     <div className="mb-3 p-2 rounded-lg bg-slate-900/50">
                       <div className="text-xs text-slate-400 mb-1">Pact Magic Slots</div>
                       <div className="flex items-center gap-2">
                         <div className="flex gap-1">
-                          {Array(slots.slots).fill(0).map((_, i) => (
+                          {Array(pactSlots.slots).fill(0).map((_, i) => (
                             <div key={i} className="w-4 h-4 rounded-full bg-purple-500/50 border border-purple-400"></div>
                           ))}
                         </div>
-                        <span className="text-xs text-purple-300">Level {slots.level}</span>
+                        <span className="text-xs text-purple-300">Level {pactSlots.level}</span>
                       </div>
                     </div>
                   );
                 }
                 
-                const slotLevels = Object.entries(slots).filter(([_, count]) => count > 0);
-                if (slotLevels.length === 0) return null;
+                // Render slots section
+                const renderSlots = [];
                 
-                return (
-                  <div className="mb-3 p-2 rounded-lg bg-slate-900/50">
-                    <div className="text-xs text-slate-400 mb-2">Spell Slots</div>
-                    <div className="flex flex-wrap gap-2">
-                      {slotLevels.map(([level, count]) => (
-                        <div key={level} className="flex items-center gap-1">
-                          <span className="text-xs text-slate-500">
-                            {level === '1' ? '1st' : level === '2' ? '2nd' : level === '3' ? '3rd' : `${level}th`}:
-                          </span>
-                          <div className="flex gap-0.5">
-                            {Array(count).fill(0).map((_, i) => (
-                              <div key={i} className="w-3 h-3 rounded-full bg-indigo-500/50 border border-indigo-400"></div>
-                            ))}
-                          </div>
+                // Regular spell slots (from combined caster level)
+                if (slots) {
+                  const slotLevels = Object.entries(slots).filter(([_, count]) => count > 0);
+                  if (slotLevels.length > 0) {
+                    renderSlots.push(
+                      <div key="regular" className="mb-3 p-2 rounded-lg bg-slate-900/50">
+                        <div className="text-xs text-slate-400 mb-2">Spell Slots {hasMulticlass ? '(Combined)' : ''}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {slotLevels.map(([level, count]) => (
+                            <div key={level} className="flex items-center gap-1">
+                              <span className="text-xs text-slate-500">
+                                {level === '1' ? '1st' : level === '2' ? '2nd' : level === '3' ? '3rd' : `${level}th`}:
+                              </span>
+                              <div className="flex gap-0.5">
+                                {Array(count).fill(0).map((_, i) => (
+                                  <div key={i} className="w-3 h-3 rounded-full bg-indigo-500/50 border border-indigo-400"></div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    );
+                  }
+                }
+                
+                // Warlock pact magic (separate from other spellcasting)
+                if (warlockSlots && hasMulticlass) {
+                  renderSlots.push(
+                    <div key="pact" className="mb-3 p-2 rounded-lg bg-slate-900/50">
+                      <div className="text-xs text-slate-400 mb-1">Pact Magic Slots (Separate)</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          {Array(warlockSlots.slots).fill(0).map((_, i) => (
+                            <div key={i} className="w-4 h-4 rounded-full bg-purple-500/50 border border-purple-400"></div>
+                          ))}
+                        </div>
+                        <span className="text-xs text-purple-300">Level {warlockSlots.level}</span>
+                      </div>
                     </div>
-                  </div>
-                );
+                  );
+                }
+                
+                return renderSlots.length > 0 ? renderSlots : null;
               })()}
               
               {spellList.cantrips.length > 0 && (
