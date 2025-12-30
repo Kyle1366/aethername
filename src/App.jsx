@@ -5571,38 +5571,34 @@ const ReviewStep = ({
       });
     };
 
-    const addText = (text, x, yPos, size = 10, style = 'normal', color = colors.textDark) => {
+    const addText = (text, x, yPos, size = 12, style = 'normal', color = colors.textDark) => {
       doc.setFontSize(size);
       doc.setFont('times', style);
       doc.setTextColor(...color);
       doc.text(text, x, yPos);
     };
 
-    const addStyledBox = (x, yPos, width, height, label, value, labelSize = 7, valueSize = 12, boxColor = colors.darkPurple) => {
-      // Decorative background with gradient effect (simulated with layered rects)
+    const addStyledBox = (x, yPos, width, height, label, value, labelSize = 8, valueSize = 16, boxColor = colors.darkPurple) => {
+      // Clean white background
       doc.setFillColor(255, 255, 255);
       doc.rect(x, yPos, width, height, 'F');
       
-      // Double border for depth
+      // Strong border
       doc.setDrawColor(...boxColor);
-      doc.setLineWidth(1.2);
+      doc.setLineWidth(1.5);
       doc.rect(x, yPos, width, height);
       
+      // Inner gold accent
       doc.setDrawColor(...colors.gold);
-      doc.setLineWidth(0.3);
-      doc.rect(x + 0.5, yPos + 0.5, width - 1, height - 1);
+      doc.setLineWidth(0.4);
+      doc.rect(x + 1, yPos + 1, width - 2, height - 2);
       
-      // Label with decorative underline
+      // Label at top
       doc.setFontSize(labelSize);
-      doc.setFont('times', 'italic');
+      doc.setFont('times', 'bold');
       doc.setTextColor(...colors.textMuted);
       const labelWidth = doc.getTextWidth(label);
-      doc.text(label, x + (width - labelWidth) / 2, yPos + 4);
-      
-      // Decorative underline
-      doc.setDrawColor(...colors.lightGold);
-      doc.setLineWidth(0.2);
-      doc.line(x + 2, yPos + 5, x + width - 2, yPos + 5);
+      doc.text(label, x + (width - labelWidth) / 2, yPos + 5);
       
       // Value (large, centered, bold)
       doc.setFontSize(valueSize);
@@ -5610,42 +5606,41 @@ const ReviewStep = ({
       doc.setTextColor(...colors.textDark);
       const valueStr = String(value);
       const valueWidth = doc.getTextWidth(valueStr);
-      doc.text(valueStr, x + (width - valueWidth) / 2, yPos + height - 3);
+      doc.text(valueStr, x + (width - valueWidth) / 2, yPos + height - 5);
     };
 
     const addAbilityBox = (x, yPos, ability, score, modifier, bonus = 0) => {
       const width = 28;
-      const height = 32;
+      const height = 30;
       
-      // Hexagon-style background
+      // White background with purple border
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(...colors.darkPurple);
       doc.setLineWidth(1.5);
       doc.rect(x, yPos, width, height, 'FD');
       
-      // Gold accent border
+      // Gold inner accent
       doc.setDrawColor(...colors.gold);
       doc.setLineWidth(0.4);
       doc.rect(x + 1, yPos + 1, width - 2, height - 2);
       
-      // Ability name
-      doc.setFontSize(11);
+      // Ability abbreviation
+      doc.setFontSize(10);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.darkPurple);
       const abilityText = ABILITY_LABELS[ability].short.toUpperCase();
       const abilityWidth = doc.getTextWidth(abilityText);
       doc.text(abilityText, x + (width - abilityWidth) / 2, yPos + 6);
       
-      // Modifier circle (prominent)
-      const circleY = yPos + 16;
+      // Modifier circle
+      const circleY = yPos + 14;
       doc.setFillColor(...colors.headerBg);
       doc.circle(x + width / 2, circleY, 6, 'F');
-      
       doc.setDrawColor(...colors.gold);
       doc.setLineWidth(0.8);
       doc.circle(x + width / 2, circleY, 6);
       
-      // Modifier text
+      // Modifier value
       const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
       doc.setFontSize(14);
       doc.setFont('times', 'bold');
@@ -5653,8 +5648,8 @@ const ReviewStep = ({
       const modWidth = doc.getTextWidth(modStr);
       doc.text(modStr, x + (width - modWidth) / 2, circleY + 2);
       
-      // Score value
-      doc.setFontSize(12);
+      // Score at bottom
+      doc.setFontSize(11);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       const scoreWidth = doc.getTextWidth(String(score));
@@ -5664,268 +5659,251 @@ const ReviewStep = ({
       if (bonus > 0) {
         doc.setFontSize(7);
         doc.setTextColor(...colors.accentBlue);
-        doc.text(`+${bonus}`, x + width - 4, yPos + height - 2);
+        doc.text(`+${bonus}`, x + width - 5, yPos + height - 2);
       }
     };
 
     const drawSectionHeader = (text, yPos) => {
-      const headerHeight = 6;
+      const headerHeight = 7;
       
-      // Gradient background (simulated)
+      // Purple background
       doc.setFillColor(...colors.headerBg);
       doc.rect(margin, yPos, pageWidth - 2 * margin, headerHeight, 'F');
       
-      // Top gold accent line
+      // Gold accent lines
       doc.setDrawColor(...colors.gold);
       doc.setLineWidth(1.5);
       doc.line(margin, yPos, pageWidth - margin, yPos);
-      
-      // Bottom accent
       doc.setLineWidth(0.5);
       doc.line(margin, yPos + headerHeight, pageWidth - margin, yPos + headerHeight);
       
-      // Section text
-      doc.setFontSize(11);
+      // Section title
+      doc.setFontSize(12);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.lightGold);
-      doc.text(text, margin + 3, yPos + 5.5);
+      doc.text(text, margin + 4, yPos + 5.5);
       
-      // Decorative corner elements
+      // Corner dots
       doc.setFillColor(...colors.gold);
-      const cornerX = [margin, pageWidth - margin];
-      cornerX.forEach(x => {
-        doc.circle(x, yPos, 1, 'F');
-        doc.circle(x, yPos + headerHeight, 1, 'F');
-      });
+      doc.circle(margin, yPos, 1.5, 'F');
+      doc.circle(pageWidth - margin, yPos, 1.5, 'F');
+      doc.circle(margin, yPos + headerHeight, 1.5, 'F');
+      doc.circle(pageWidth - margin, yPos + headerHeight, 1.5, 'F');
       
-      return yPos + headerHeight + 1;
+      return yPos + headerHeight + 2;
     };
 
     addDecorativeBorder();
 
     // ============== HEADER ==============
-    // Ornate header background
+    const headerHeight = 28;
     doc.setFillColor(...colors.darkPurple);
-    doc.rect(margin, margin, pageWidth - 2 * margin, 24, 'F');
+    doc.rect(margin, margin, pageWidth - 2 * margin, headerHeight, 'F');
     
+    // Gold border
     doc.setDrawColor(...colors.gold);
-    doc.setLineWidth(2);
-    doc.rect(margin, margin, pageWidth - 2 * margin, 24);
-    
-    // Inner gold accent
+    doc.setLineWidth(2.5);
+    doc.rect(margin, margin, pageWidth - 2 * margin, headerHeight);
     doc.setLineWidth(0.5);
-    doc.rect(margin + 1, margin + 1, pageWidth - 2 * margin - 2, 22);
+    doc.rect(margin + 1.5, margin + 1.5, pageWidth - 2 * margin - 3, headerHeight - 3);
     
-    // Character name (large, centered)
-    doc.setFontSize(26);
+    // Character name - larger and properly positioned
+    doc.setFontSize(28);
     doc.setFont('times', 'bold');
     doc.setTextColor(...colors.lightGold);
     const charName = character.name || 'Unnamed Character';
     const nameWidth = doc.getTextWidth(charName);
-    doc.text(charName, (pageWidth - nameWidth) / 2, margin + 8);
+    doc.text(charName, (pageWidth - nameWidth) / 2, margin + 11);
     
-    // Class/Level line with multiclass support
+    // Class/Level line - multiclass support
     let classText = '';
     if (character.multiclass && character.multiclass.length > 0) {
-      // Show all classes with levels
       classText = character.multiclass.map(mc => {
         const mcClass = CLASSES[mc.classId];
         const mcSubclass = mc.subclass && SUBCLASSES[mc.classId]?.[mc.subclass];
         return `${mcClass?.name || 'Unknown'} ${mc.level}${mcSubclass ? ` (${mcSubclass.name})` : ''}`;
-      }).join(' • ');
+      }).join(' / ');
     } else {
-      classText = `${classData?.name || 'Unknown'} ${totalLevel}${character.subclass && SUBCLASSES[character.class]?.[character.subclass] ? ` (${SUBCLASSES[character.class][character.subclass].name})` : ''}`;
+      const subclassName = character.subclass && SUBCLASSES[character.class]?.[character.subclass]?.name;
+      classText = `${classData?.name || 'Unknown'} ${totalLevel}${subclassName ? ` (${subclassName})` : ''}`;
     }
-    doc.setFontSize(13);
+    doc.setFontSize(14);
     doc.setFont('times', 'italic');
     doc.setTextColor(255, 255, 255);
     const classWidth = doc.getTextWidth(classText);
-    doc.text(classText, (pageWidth - classWidth) / 2, margin + 15);
+    doc.text(classText, (pageWidth - classWidth) / 2, margin + 18);
     
-    // Race & Background
+    // Race & Background - centered below class
     const raceText = `${race?.name || 'Unknown'}${subrace ? ` (${subrace.name})` : ''}`;
     const bgText = background?.name || 'Unknown';
-    const detailText = `${raceText} • ${bgText}`;
-    doc.setFontSize(9);
+    const detailText = `${raceText}  •  ${bgText}`;
+    doc.setFontSize(11);
+    doc.setFont('times', 'normal');
     doc.setTextColor(...colors.silver);
     const detailWidth = doc.getTextWidth(detailText);
-    doc.text(detailText, (pageWidth - detailWidth) / 2, margin + 20);
+    doc.text(detailText, (pageWidth - detailWidth) / 2, margin + 25);
     
-    // Player & Alignment (corners)
+    // Player name - left corner
     if (character.playerName) {
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('times', 'italic');
       doc.setTextColor(...colors.silver);
-      doc.text(`Player: ${character.playerName}`, margin + 3, margin + 6);
+      doc.text(`Player: ${character.playerName}`, margin + 4, margin + 6);
     }
     
+    // Alignment - right corner
     if (character.alignment && ALIGNMENTS[character.alignment]) {
-      doc.setFontSize(10);
+      doc.setFontSize(9);
+      doc.setFont('times', 'italic');
       doc.setTextColor(...colors.silver);
       const alignText = ALIGNMENTS[character.alignment].name;
       const alignWidth = doc.getTextWidth(alignText);
-      doc.text(alignText, pageWidth - margin - alignWidth - 3, margin + 5);
+      doc.text(alignText, pageWidth - margin - alignWidth - 4, margin + 6);
     }
 
-    y = margin + 26;
+    y = margin + headerHeight + 4;
 
     // ============== CORE STATS ==============
-    y = drawSectionHeader('CORE STATS', y) + 3;
+    y = drawSectionHeader('CORE STATS', y) + 2;
     
-    // Use flexible spacing to fit all stats on page
-    const availableWidth = pageWidth - 2 * margin;
-    const boxWidths = [26, 26, 28, 28, 34, 30, 26]; // AC, INIT, SPEED, PROF, HP MAX, HIT DIE, PERC
-    const totalBoxWidth = boxWidths.reduce((a, b) => a + b, 0);
-    const totalGap = availableWidth - totalBoxWidth;
-    const gap = totalGap / (boxWidths.length - 1);
+    // Evenly spaced stat boxes
+    const statBoxWidth = 25;
+    const statBoxHeight = 22;
+    const statLabels = ['AC', 'INIT', 'SPEED', 'PROF', 'HP', 'HIT DIE', 'PERCEP'];
+    const statValues = [baseAC, initiative >= 0 ? `+${initiative}` : initiative, `${speed}ft`, `+${proficiencyBonus}`, maxHP, `d${hitDie}`, passivePerception];
+    const statColors = [colors.darkPurple, colors.darkPurple, colors.darkPurple, colors.darkPurple, colors.accentBlue, colors.darkPurple, colors.darkPurple];
     
-    let xPos = margin;
-    addStyledBox(xPos, y, boxWidths[0], 22, 'AC', baseAC, 9, 16);
-    xPos += boxWidths[0] + gap;
-    addStyledBox(xPos, y, boxWidths[1], 22, 'INIT', initiative >= 0 ? `+${initiative}` : initiative, 9, 15);
-    xPos += boxWidths[1] + gap;
-    addStyledBox(xPos, y, boxWidths[2], 22, 'SPEED', `${speed}ft`, 9, 14);
-    xPos += boxWidths[2] + gap;
-    addStyledBox(xPos, y, boxWidths[3], 22, 'PROF', `+${proficiencyBonus}`, 9, 16);
-    xPos += boxWidths[3] + gap;
-    addStyledBox(xPos, y, boxWidths[4], 22, 'HP MAX', maxHP, 9, 17, colors.accentBlue);
-    xPos += boxWidths[4] + gap;
-    addStyledBox(xPos, y, boxWidths[5], 22, 'HIT DIE', `d${hitDie}`, 9, 15);
-    xPos += boxWidths[5] + gap;
-    addStyledBox(xPos, y, boxWidths[6], 22, 'PERC', passivePerception, 9, 15);
+    const totalStatWidth = statLabels.length * statBoxWidth;
+    const statGap = (pageWidth - 2 * margin - totalStatWidth) / (statLabels.length - 1);
+    
+    statLabels.forEach((label, idx) => {
+      const x = margin + idx * (statBoxWidth + statGap);
+      addStyledBox(x, y, statBoxWidth, statBoxHeight, label, statValues[idx], 8, 14, statColors[idx]);
+    });
 
-    y += 24;
+    y += statBoxHeight + 4;
 
     // ============== ABILITY SCORES ==============
-    y = drawSectionHeader('ABILITY SCORES', y) + 3;
+    y = drawSectionHeader('ABILITY SCORES', y) + 2;
     
-    const abilitySpacing = 30;
+    const abilityBoxWidth = 28;
+    const totalAbilityWidth = 6 * abilityBoxWidth;
+    const abilityGap = (pageWidth - 2 * margin - totalAbilityWidth) / 5;
     
     ABILITY_NAMES.forEach((ability, idx) => {
       const final = finalAbilities[ability];
       const mod = getModifier(final);
       const bonus = racialBonuses[ability] || 0;
-      
-      const x = margin + idx * abilitySpacing;
+      const x = margin + idx * (abilityBoxWidth + abilityGap);
       addAbilityBox(x, y, ability, final, mod, bonus);
     });
 
-    y += 32;
+    y += 34;
 
     // ============== PROFICIENCIES ==============
-    y = drawSectionHeader('PROFICIENCIES', y) + 1;
+    y = drawSectionHeader('PROFICIENCIES', y) + 3;
     
-    // Two-column layout with decorative bullets
-    const leftColX = margin + 2;
-    const rightColX = margin + 95;
+    // Three-column layout: Saves | Skills (2 cols)
+    const saveColX = margin + 3;
+    const skillCol1X = margin + 55;
+    const skillCol2X = margin + 115;
     
-    // Saving Throws
+    // Saving Throws header
     doc.setFontSize(11);
-    doc.setFont('times', 'bolditalic');
+    doc.setFont('times', 'bold');
     doc.setTextColor(...colors.darkPurple);
-    doc.text('SAVING THROWS', leftColX, y);
-    
+    doc.text('SAVING THROWS', saveColX, y);
     doc.setDrawColor(...colors.gold);
     doc.setLineWidth(0.5);
-    doc.line(leftColX, y + 1, leftColX + 35, y + 1);
+    doc.line(saveColX, y + 1.5, saveColX + 38, y + 1.5);
     
-    y += 5;
-    doc.setFontSize(10);
+    // Skills header
+    doc.text('SKILLS', skillCol1X, y);
+    doc.line(skillCol1X, y + 1.5, skillCol1X + 18, y + 1.5);
+    
+    const profStartY = y + 6;
+    
+    // Saving Throws list
+    doc.setFontSize(11);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textDark);
     
     proficiencies.savingThrows.forEach((save, idx) => {
-      // Gold diamond bullet
       doc.setFillColor(...colors.gold);
-      const bulletY = y + idx * 4;
-      doc.circle(leftColX + 1.5, bulletY + 0.5, 1, 'F');
-      doc.text(save, leftColX + 5, bulletY + 1.5);
+      doc.circle(saveColX + 2, profStartY + idx * 5, 1, 'F');
+      doc.text(save, saveColX + 6, profStartY + idx * 5 + 1.5);
     });
     
-    // Skills
-    doc.setFontSize(11);
-    doc.setFont('times', 'bolditalic');
-    doc.setTextColor(...colors.darkPurple);
-    doc.text('SKILLS', rightColX, y - 5);
-    
-    doc.setDrawColor(...colors.gold);
-    doc.line(rightColX, y - 4, rightColX + 20, y - 4);
-    
-    doc.setFontSize(10);
-    doc.setFont('times', 'normal');
-    doc.setTextColor(...colors.textDark);
-    
-    // Split skills into two columns
+    // Skills - two columns
     const skillsPerCol = Math.ceil(proficiencies.skills.length / 2);
     proficiencies.skills.forEach((skill, idx) => {
       const col = idx < skillsPerCol ? 0 : 1;
       const rowIdx = col === 0 ? idx : idx - skillsPerCol;
-      const skillColX = col === 0 ? rightColX : rightColX + 50;
-      const bulletY = y + rowIdx * 4;
+      const skillX = col === 0 ? skillCol1X : skillCol2X;
+      const bulletY = profStartY + rowIdx * 5;
       
       doc.setFillColor(...colors.accentPurple);
-      doc.circle(skillColX + 1.5, bulletY + 0.5, 1, 'F');
-      doc.text(skill, skillColX + 5, bulletY + 1.5);
+      doc.circle(skillX + 2, bulletY, 1, 'F');
+      doc.text(skill, skillX + 6, bulletY + 1.5);
     });
     
-    y += Math.max(proficiencies.savingThrows.length * 4, skillsPerCol * 4) + 2;
+    y = profStartY + Math.max(proficiencies.savingThrows.length * 5, skillsPerCol * 5) + 2;
     
     // Languages
     if (proficiencies.languages && proficiencies.languages.length > 0) {
       doc.setFontSize(10);
-      doc.setFont('times', 'bolditalic');
+      doc.setFont('times', 'bold');
       doc.setTextColor(...colors.darkPurple);
-      doc.text('LANGUAGES', leftColX, y);
+      doc.text('LANGUAGES', margin + 3, y);
       
       doc.setDrawColor(...colors.gold);
-      doc.line(leftColX, y + 1, leftColX + 28, y + 1);
+      doc.line(margin + 3, y + 1.5, margin + 33, y + 1.5);
       
-      y += 4;
-      doc.setFontSize(10);
+      y += 5;
+      doc.setFontSize(11);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       const langText = proficiencies.languages.join(', ');
-      const langLines = doc.splitTextToSize(langText, pageWidth - 2 * margin - 4);
+      const langLines = doc.splitTextToSize(langText, pageWidth - 2 * margin - 6);
       langLines.forEach((line, idx) => {
-        doc.text(line, leftColX + 2, y + idx * 4);
+        doc.text(line, margin + 5, y + idx * 4);
       });
       y += langLines.length * 4 + 2;
     }
 
-    y += 4;
+    y += 3;
 
     // ============== TWO-COLUMN LAYOUT FOR BOTTOM SECTIONS ==============
-    // Save starting Y position for two columns
     const twoColStartY = y;
     const bottomLeftX = margin;
-    const bottomRightX = pageWidth / 2 + 5;
-    const leftColWidth = pageWidth / 2 - margin - 8;
-    const rightColWidth = pageWidth / 2 - margin - 8;
+    const bottomRightX = pageWidth / 2 + 4;
+    const leftColWidth = pageWidth / 2 - margin - 6;
+    const rightColWidth = pageWidth / 2 - margin - 6;
     
     let leftY = twoColStartY;
     let rightY = twoColStartY;
     
-    // Helper function to draw column-specific headers
+    // Column header helper
     const drawColumnHeader = (text, yPos, xPos, width) => {
-      const headerHeight = 5;
+      const headerHeight = 6;
       doc.setFillColor(...colors.headerBg);
       doc.rect(xPos, yPos, width, headerHeight, 'F');
       doc.setDrawColor(...colors.gold);
-      doc.setLineWidth(1);
+      doc.setLineWidth(1.2);
       doc.line(xPos, yPos, xPos + width, yPos);
-      doc.setLineWidth(0.3);
+      doc.setLineWidth(0.4);
       doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.lightGold);
-      doc.text(text, xPos + 2, yPos + 4);
+      doc.text(text, xPos + 3, yPos + 4.5);
       return yPos + headerHeight + 2;
     };
 
     // ============== LEFT COLUMN: FEATURES & TRAITS ==============
     leftY = drawColumnHeader('FEATURES & TRAITS', leftY, bottomLeftX, leftColWidth);
     
-    doc.setFontSize(8);
+    doc.setFontSize(9);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textDark);
     
@@ -5948,53 +5926,52 @@ const ReviewStep = ({
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
     
     features.forEach((feat, idx) => {
-      // Type label (small badge)
+      // Type badge
       doc.setFillColor(...colors.headerBg);
-      doc.setFontSize(5);
-      const typeWidth = doc.getTextWidth(feat.type) + 2;
-      doc.roundedRect(bottomLeftX, leftY - 1.5, typeWidth, 3, 0.5, 0.5, 'F');
+      doc.setFontSize(6);
+      const typeWidth = doc.getTextWidth(feat.type) + 3;
+      doc.roundedRect(bottomLeftX + 1, leftY - 1, typeWidth, 4, 0.8, 0.8, 'F');
       
       doc.setFont('times', 'bold');
       doc.setTextColor(255, 255, 255);
-      doc.text(feat.type, bottomLeftX + 1, leftY + 0.5);
+      doc.text(feat.type, bottomLeftX + 2.5, leftY + 1.5);
       
-      // Feature text - wrap within column width
-      doc.setFontSize(7);
+      // Feature text
+      doc.setFontSize(9);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
-      const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - typeWidth - 3);
+      const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - typeWidth - 4);
       wrappedText.forEach((line, lineIdx) => {
-        doc.text(line, bottomLeftX + typeWidth + 1, leftY + 0.5 + lineIdx * 2.5);
+        doc.text(line, bottomLeftX + typeWidth + 3, leftY + 1.5 + lineIdx * 3.5);
       });
       
-      leftY += Math.max(2.5, wrappedText.length * 2.5);
+      leftY += Math.max(4, wrappedText.length * 3.5) + 1;
     });
     
-    leftY += 2;
+    leftY += 3;
 
     // ============== LEFT COLUMN: EQUIPMENT ==============
     if (equipment.length > 0) {
       leftY = drawColumnHeader('EQUIPMENT', leftY, bottomLeftX, leftColWidth) + 1;
       
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       
       equipment.forEach((item, idx) => {
-        // Clean up equipment text - remove proficiency notes
         const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
         
         doc.setFillColor(...colors.gold);
-        doc.circle(bottomLeftX + 1.5, leftY + 0.5, 0.8, 'F');
-        doc.text(cleanItem, bottomLeftX + 5, leftY + 1.5);
-        leftY += 3.5;
+        doc.circle(bottomLeftX + 3, leftY + 1, 1, 'F');
+        doc.text(cleanItem, bottomLeftX + 7, leftY + 2);
+        leftY += 4.5;
       });
       
       if (character.gold > 0) {
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.gold);
-        doc.text(`${character.gold} gp`, bottomLeftX, leftY + 2);
+        doc.text(`${character.gold} gp`, bottomLeftX + 3, leftY + 2);
         leftY += 5;
       }
     }
@@ -6025,36 +6002,36 @@ const ReviewStep = ({
     }
     
     if (levelAdvancements.length > 0) {
-      leftY += 2;
+      leftY += 3;
       leftY = drawColumnHeader('LEVEL ADV', leftY, bottomLeftX, leftColWidth) + 1;
       
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       
       levelAdvancements.forEach((adv) => {
         doc.setFillColor(...colors.accentPurple);
-        doc.circle(bottomLeftX + 1.5, leftY + 0.5, 0.7, 'F');
-        doc.text(adv, bottomLeftX + 4, leftY + 1.5);
-        leftY += 3.5;
+        doc.circle(bottomLeftX + 3, leftY + 1, 1, 'F');
+        doc.text(adv, bottomLeftX + 7, leftY + 2);
+        leftY += 4.5;
       });
     }
     
     // ============== LEFT COLUMN: FIGHTING STYLE ==============
     if (character.fightingStyle) {
-      leftY += 2;
-      doc.setFontSize(8);
-      doc.setFont('times', 'bolditalic');
-      doc.setTextColor(...colors.darkPurple);
-      doc.text('FIGHTING STYLE', bottomLeftX, leftY);
       leftY += 3;
+      doc.setFontSize(10);
+      doc.setFont('times', 'bold');
+      doc.setTextColor(...colors.darkPurple);
+      doc.text('FIGHTING STYLE', bottomLeftX + 2, leftY);
+      leftY += 4;
       
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       const styleName = FIGHTING_STYLES[character.fightingStyle]?.name || character.fightingStyle;
-      doc.text(styleName, bottomLeftX + 2, leftY);
-      leftY += 4;
+      doc.text(styleName, bottomLeftX + 5, leftY);
+      leftY += 5;
     }
     
     // ============== LEFT COLUMN: PHYSICAL CHARACTERISTICS ==============
@@ -6062,7 +6039,7 @@ const ReviewStep = ({
                               character.eyes || character.hair || character.skin;
     
     if (hasPhysicalTraits) {
-      leftY += 2;
+      leftY += 3;
       const physicalTraits = [
         { label: 'Age', value: character.age },
         { label: 'Height', value: character.height },
@@ -6072,7 +6049,7 @@ const ReviewStep = ({
         { label: 'Skin', value: character.skin }
       ].filter(t => t.value);
       
-      doc.setFontSize(7);
+      doc.setFontSize(8);
       doc.setFont('times', 'bolditalic');
       doc.setTextColor(...colors.textMuted);
       
@@ -6080,11 +6057,11 @@ const ReviewStep = ({
         if (idx % 2 === 0 && idx > 0) leftY += 6;
         const xPos = bottomLeftX + (idx % 2) * (leftColWidth / 2);
         doc.text(trait.label.toUpperCase(), xPos, leftY);
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         doc.text(String(trait.value), xPos, leftY + 3);
-        doc.setFontSize(7);
+        doc.setFontSize(8);
         doc.setFont('times', 'bolditalic');
         doc.setTextColor(...colors.textMuted);
       });
@@ -6094,7 +6071,7 @@ const ReviewStep = ({
     if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
       rightY = drawColumnHeader('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 1;
       
-      // Multiclass disclaimer (compact)
+      // Multiclass disclaimer
       if (character.multiclass && character.multiclass.length > 1) {
         const hasMultipleCasters = character.multiclass.filter(mc => {
           const mcClass = CLASSES[mc.classId];
@@ -6102,28 +6079,10 @@ const ReviewStep = ({
         }).length > 1;
         
         if (hasMultipleCasters) {
-          doc.setFontSize(7);
+          doc.setFontSize(8);
           doc.setFont('times', 'italic');
           doc.setTextColor(...colors.accentBlue);
-          const disclaimer = 'Multiclass spells: primary class only';
-          doc.text(disclaimer, bottomRightX, rightY);
-          rightY += 4;
-        }
-      }
-      
-      // Multiclass disclaimer (compact)
-      if (character.multiclass && character.multiclass.length > 1) {
-        const hasMultipleCasters = character.multiclass.filter(mc => {
-          const mcClass = CLASSES[mc.classId];
-          return mcClass?.spellcasting;
-        }).length > 1;
-        
-        if (hasMultipleCasters) {
-          doc.setFontSize(7);
-          doc.setFont('times', 'italic');
-          doc.setTextColor(...colors.accentBlue);
-          const disclaimer = 'Multiclass spells: primary class only';
-          doc.text(disclaimer, bottomRightX, rightY);
+          doc.text('Multiclass spells: primary class only', bottomRightX + 2, rightY);
           rightY += 4;
         }
       }
@@ -6131,28 +6090,28 @@ const ReviewStep = ({
       const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       
-      // Spell stats (compact, inline)
-      doc.setFontSize(9);
+      // Spell stats
+      doc.setFontSize(11);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
-      doc.text(`DC ${spellDC}  •  ATK +${spellAttack}  •  ${ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase()}`, bottomRightX, rightY);
+      doc.text(`DC ${spellDC}  •  ATK +${spellAttack}  •  ${ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase()}`, bottomRightX + 2, rightY);
       rightY += 6;
       
       // Spell slots
       const slots = getSpellSlots(character.class, totalLevel);
       if (slots) {
-        doc.setFontSize(8);
-        doc.setFont('times', 'bolditalic');
+        doc.setFontSize(10);
+        doc.setFont('times', 'bold');
         doc.setTextColor(...colors.darkPurple);
-        doc.text('Slots:', bottomRightX, rightY);
-        rightY += 3;
+        doc.text('Slots:', bottomRightX + 2, rightY);
+        rightY += 4;
         
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         
         if (character.class === 'warlock') {
-          doc.text(`${slots.slots} × Lv${slots.level}`, bottomRightX + 2, rightY);
+          doc.text(`${slots.slots} × Lv${slots.level}`, bottomRightX + 4, rightY);
           rightY += 5;
         } else {
           const slotText = Object.entries(slots)
@@ -6160,84 +6119,84 @@ const ReviewStep = ({
             .map(([lvl, count]) => `${lvl}:${count}`)
             .join(' • ');
           if (slotText) {
-            const wrappedSlots = doc.splitTextToSize(slotText, rightColWidth - 4);
+            const wrappedSlots = doc.splitTextToSize(slotText, rightColWidth - 6);
             wrappedSlots.forEach((line, idx) => {
-              doc.text(line, bottomRightX + 2, rightY + idx * 3);
+              doc.text(line, bottomRightX + 4, rightY + idx * 4);
             });
-            rightY += wrappedSlots.length * 3 + 2;
+            rightY += wrappedSlots.length * 4 + 2;
           }
         }
       }
       
       // Cantrips
       if (spellList.cantrips.length > 0) {
-        doc.setFontSize(9);
-        doc.setFont('times', 'bolditalic');
+        doc.setFontSize(10);
+        doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('CANTRIPS', bottomRightX, rightY);
-        rightY += 4;
+        doc.text('CANTRIPS', bottomRightX + 2, rightY);
+        rightY += 5;
         
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         spellList.cantrips.forEach((spell, idx) => {
           doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 1.5, rightY + 0.5, 0.7, 'F');
-          doc.text(spell, bottomRightX + 4, rightY + 1.5);
-          rightY += 3.5;
+          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
+          doc.text(spell, bottomRightX + 8, rightY + 2);
+          rightY += 4.5;
         });
         rightY += 2;
       }
       
       // Prepared/Known Spells
       if (spellList.spells.length > 0) {
-        doc.setFontSize(9);
-        doc.setFont('times', 'bolditalic');
+        doc.setFontSize(10);
+        doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('KNOWN/PREPARED', bottomRightX, rightY);
-        rightY += 4;
+        doc.text('KNOWN/PREPARED', bottomRightX + 2, rightY);
+        rightY += 5;
         
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textDark);
         spellList.spells.forEach((spell, idx) => {
           doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 1.5, rightY + 0.5, 0.7, 'F');
-          doc.text(spell, bottomRightX + 4, rightY + 1.5);
-          rightY += 3.5;
+          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
+          doc.text(spell, bottomRightX + 8, rightY + 2);
+          rightY += 4.5;
         });
       }
     }
     
     // ============== RIGHT COLUMN: ELDRITCH INVOCATIONS ==============
     if (character.warlockInvocations && character.warlockInvocations.length > 0) {
-      rightY += 3;
-      doc.setFontSize(9);
-      doc.setFont('times', 'bolditalic');
-      doc.setTextColor(...colors.accentPurple);
-      doc.text('INVOCATIONS', bottomRightX, rightY);
       rightY += 4;
+      doc.setFontSize(10);
+      doc.setFont('times', 'bold');
+      doc.setTextColor(...colors.accentPurple);
+      doc.text('INVOCATIONS', bottomRightX + 2, rightY);
+      rightY += 5;
       
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textDark);
       character.warlockInvocations.forEach((invKey) => {
         const invocation = WARLOCK_INVOCATIONS[invKey];
         if (invocation) {
           doc.setFillColor(...colors.darkPurple);
-          doc.circle(bottomRightX + 1.5, rightY + 0.5, 0.7, 'F');
-          doc.text(invocation.name, bottomRightX + 4, rightY + 1.5);
-          rightY += 3.5;
+          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
+          doc.text(invocation.name, bottomRightX + 8, rightY + 2);
+          rightY += 4.5;
         }
       });
     }
 
-    // Footer on each page
+    // Footer
     const addFooter = (pageNum) => {
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       doc.setFont('times', 'italic');
       doc.setTextColor(...colors.textMuted);
-      doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 6, { align: 'center' });
+      doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 8, { align: 'center' });
       
       // Decorative footer line
       doc.setDrawColor(...colors.gold);
