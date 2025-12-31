@@ -6299,6 +6299,19 @@ const ReviewStep = ({
 
     // ============== RIGHT COLUMN: SPELLCASTING ==============
     if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
+      // Helper to check page break for right column
+      const checkRightColumnPageBreak = (requiredSpace) => {
+        if (rightY + requiredSpace > maxY) {
+          addFooter(currentPage);
+          doc.addPage();
+          currentPage++;
+          rightY = margin;
+          addDecorativeBorder();
+          return true;
+        }
+        return false;
+      };
+      
       rightY = drawColumnHeader('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 2;
       
       // Multiclass disclaimer
@@ -6360,6 +6373,7 @@ const ReviewStep = ({
       
       // Cantrips
       if (spellList.cantrips.length > 0) {
+        checkRightColumnPageBreak(10);
         doc.setFontSize(10);
         doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
@@ -6370,6 +6384,16 @@ const ReviewStep = ({
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
         spellList.cantrips.forEach((spell, idx) => {
+          if (checkRightColumnPageBreak(5)) {
+            doc.setFontSize(10);
+            doc.setFont('times', 'bold');
+            doc.setTextColor(...colors.accentPurple);
+            doc.text('CANTRIPS (cont.)', bottomRightX + 2, rightY);
+            rightY += 5;
+            doc.setFontSize(10);
+            doc.setFont('times', 'normal');
+            doc.setTextColor(...colors.textLight);
+          }
           doc.setFillColor(...colors.accentPurple);
           doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
           doc.text(spell, bottomRightX + 8, rightY + 2);
@@ -6380,6 +6404,7 @@ const ReviewStep = ({
       
       // Prepared/Known Spells
       if (spellList.spells.length > 0) {
+        checkRightColumnPageBreak(10);
         doc.setFontSize(10);
         doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
@@ -6390,6 +6415,16 @@ const ReviewStep = ({
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
         spellList.spells.forEach((spell, idx) => {
+          if (checkRightColumnPageBreak(5)) {
+            doc.setFontSize(10);
+            doc.setFont('times', 'bold');
+            doc.setTextColor(...colors.accentPurple);
+            doc.text('KNOWN/PREPARED (cont.)', bottomRightX + 2, rightY);
+            rightY += 5;
+            doc.setFontSize(10);
+            doc.setFont('times', 'normal');
+            doc.setTextColor(...colors.textLight);
+          }
           doc.setFillColor(...colors.accentPurple);
           doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
           doc.text(spell, bottomRightX + 8, rightY + 2);
@@ -6400,7 +6435,21 @@ const ReviewStep = ({
     
     // ============== RIGHT COLUMN: ELDRITCH INVOCATIONS ==============
     if (character.warlockInvocations && character.warlockInvocations.length > 0) {
+      // Helper to check page break for right column (define again if spellcasting section didn't run)
+      const checkRightColumnPageBreak = (requiredSpace) => {
+        if (rightY + requiredSpace > maxY) {
+          addFooter(currentPage);
+          doc.addPage();
+          currentPage++;
+          rightY = margin;
+          addDecorativeBorder();
+          return true;
+        }
+        return false;
+      };
+      
       rightY += 4;
+      checkRightColumnPageBreak(10);
       doc.setFontSize(10);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
@@ -6413,6 +6462,16 @@ const ReviewStep = ({
       character.warlockInvocations.forEach((invKey) => {
         const invocation = WARLOCK_INVOCATIONS[invKey];
         if (invocation) {
+          if (checkRightColumnPageBreak(5)) {
+            doc.setFontSize(10);
+            doc.setFont('times', 'bold');
+            doc.setTextColor(...colors.accentPurple);
+            doc.text('INVOCATIONS (cont.)', bottomRightX + 2, rightY);
+            rightY += 5;
+            doc.setFontSize(10);
+            doc.setFont('times', 'normal');
+            doc.setTextColor(...colors.textLight);
+          }
           doc.setFillColor(...colors.accentPurple);
           doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
           doc.text(invocation.name, bottomRightX + 8, rightY + 2);
