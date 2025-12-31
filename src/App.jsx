@@ -821,7 +821,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   const step = TOUR_STEPS[currentStep];
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
   
-  // Update target element position and scroll to it
+  // Update target element position (no scroll since body is locked)
   useEffect(() => {
     if (!isOpen || !step?.target) {
       setTargetRect(null);
@@ -831,31 +831,6 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     const updatePosition = () => {
       const el = document.getElementById(step.target);
       if (el) {
-        // Scroll element into view smoothly
-        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-        
-        // Update position after scroll completes
-        setTimeout(() => {
-          const rect = el.getBoundingClientRect();
-          setTargetRect({
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height,
-          });
-        }, 300);
-      } else {
-        setTargetRect(null);
-      }
-    };
-    
-    // Small delay to let page render
-    const timer = setTimeout(updatePosition, 150);
-    
-    // Also update on scroll/resize
-    const handleUpdate = () => {
-      const el = document.getElementById(step.target);
-      if (el) {
         const rect = el.getBoundingClientRect();
         setTargetRect({
           top: rect.top,
@@ -863,16 +838,20 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
           width: rect.width,
           height: rect.height,
         });
+      } else {
+        setTargetRect(null);
       }
     };
     
-    window.addEventListener('resize', handleUpdate);
-    window.addEventListener('scroll', handleUpdate);
+    // Small delay to let page render
+    const timer = setTimeout(updatePosition, 100);
+    
+    // Update on resize
+    window.addEventListener('resize', updatePosition);
     
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', handleUpdate);
-      window.removeEventListener('scroll', handleUpdate);
+      window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, step, currentStep, currentPage]);
   
@@ -883,6 +862,27 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
       setCurrentPage(step.page);
     }
   }, [isOpen, step, currentPage, setCurrentPage]);
+  
+  // Lock body scroll when tour is open
+  useEffect(() => {
+    if (isOpen) {
+      // Save current scroll position and lock scroll
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore scroll position when tour closes
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
   
   // Auto-advance when user generates names (only on step 4)
   useEffect(() => {
@@ -972,8 +972,8 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none">
-      {/* Spotlight overlay with cutout */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-auto" onClick={handleSkip}>
+      {/* Spotlight overlay with cutout - blocks all clicks */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-auto">
         <defs>
           <mask id="spotlight-mask">
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
