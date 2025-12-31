@@ -6008,6 +6008,30 @@ const ReviewStep = ({
 
     y += 34;
 
+    // ============== PHYSICAL CHARACTERISTICS (compact row) ==============
+    const physChars = character.physicalCharacteristics || {};
+    const hasPhysChars = physChars.age || physChars.height || physChars.weight || physChars.eyes || physChars.hair || physChars.skin;
+    
+    if (hasPhysChars) {
+      // Compact inline display
+      doc.setFontSize(8);
+      doc.setFont('times', 'bold');
+      doc.setTextColor(...colors.textMuted);
+      
+      const physItems = [];
+      if (physChars.age) physItems.push(`Age: ${physChars.age}`);
+      if (physChars.height) physItems.push(`Ht: ${physChars.height}`);
+      if (physChars.weight) physItems.push(`Wt: ${physChars.weight}`);
+      if (physChars.eyes) physItems.push(`Eyes: ${physChars.eyes}`);
+      if (physChars.hair) physItems.push(`Hair: ${physChars.hair}`);
+      if (physChars.skin) physItems.push(`Skin: ${physChars.skin}`);
+      
+      const physText = physItems.join('  •  ');
+      const physWidth = doc.getTextWidth(physText);
+      doc.text(physText, (pageWidth - physWidth) / 2, y);
+      y += 5;
+    }
+
     // ============== PROFICIENCIES ==============
     y = drawSectionHeader('PROFICIENCIES', y) + 3;
     
