@@ -5785,7 +5785,6 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     updateCharacter('abilities', defaultAbilities);
     setAssignments({});
     setSelectedIndex(null);
-    setUnassignedIndices([]);
     setRolls([]);
     setPointBuyScores({
       strength: 8, dexterity: 8, constitution: 8,
@@ -5931,39 +5930,37 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-white mb-1">Ability Scores</h3>
-          {(primaryClassData || multiclassData.length > 0) && (
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-slate-500">Saving Throws:</span>
-              {savingThrowOrder.map((st) => (
-                <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
-                  {ABILITY_LABELS[st]?.short}
-                </span>
-              ))}
-              {primaryAbilityOrder.length > 0 && (
-                <span className="text-slate-600 text-xs ml-2">
-                  Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
-                </span>
-              )}
-              {multiclassData.length > 0 && (
-                <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-full">
-                  Multiclass active
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <button
-          onClick={smartAssignAbilities}
-          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap shrink-0"
-          title="Automatically assign a strong array based on your class priorities"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">Choose for me</span>
-          <span className="sm:hidden">Auto</span>
-        </button>
+      <div>
+        <h3 className="text-xl font-bold text-white mb-1">Ability Scores</h3>
+        {(primaryClassData || multiclassData.length > 0) && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            {primaryAbilityOrder.length > 0 && (
+              <>
+                <span className="text-slate-500">Primary:</span>
+                {primaryAbilityOrder.map((a) => (
+                  <span key={a} className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs">
+                    {ABILITY_LABELS[a]?.short}
+                  </span>
+                ))}
+              </>
+            )}
+            {savingThrowOrder.length > 0 && (
+              <>
+                <span className="text-slate-500 ml-2">Saves:</span>
+                {savingThrowOrder.map((st) => (
+                  <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
+                    {ABILITY_LABELS[st]?.short}
+                  </span>
+                ))}
+              </>
+            )}
+            {multiclassData.length > 0 && (
+              <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-full ml-2">
+                Multiclass active
+              </span>
+            )}
+          </div>
+        )}
       </div>
       
       {/* Method Selection */}
@@ -6278,12 +6275,58 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
   const smartFillASI = () => {
     const primaryTargets = [...primaryAbilityOrder, ...savingThrowOrder, ...ABILITY_NAMES].filter((v, i, arr) => v && arr.indexOf(v) === i);
     const updated = { ...asiChoices };
+    
+    // Analyze build to determine feat vs ASI strategy
+    const classLowerCase = character.class?.toLowerCase() || '';
+    const hasFightingStyle = character.fightingStyle !== undefined;
+    const isMartial = ['fighter', 'paladin', 'ranger', 'barbarian', 'monk'].includes(classLowerCase);
+    const isCaster = ['wizard', 'sorcerer', 'warlock', 'cleric', 'druid', 'bard'].includes(classLowerCase);
+    const primaryAbility = primaryTargets[0] || 'constitution';
+    const currentPrimaryScore = character.abilityScores?.[primaryAbility] || 10;
+    
+    // Build-aware feat selection
+    const getBestFeat = (level) => {
+      // If primary ability is below 18, prioritize ASI
+      if (currentPrimaryScore < 18) return null;
+      
+      // Level-based feat recommendations
+      if (level === 4) {
+        // Early game: focus on core combat feats
+        if (isMartial) {
+          if (classLowerCase === 'fighter' || classLowerCase === 'paladin') return 'Great Weapon Master';
+          if (classLowerCase === 'ranger') return 'Sharpshooter';
+          if (classLowerCase === 'barbarian') return 'Great Weapon Master';
+          if (classLowerCase === 'monk') return 'Mobile';
+        }
+        if (isCaster) return 'War Caster';
+      }
+      
+      if (level === 8) {
+        // Mid game: specialization feats
+        if (isMartial && !isCaster) return 'Sentinel';
+        if (isCaster) return 'Resilient (Constitution)';
+      }
+      
+      return null; // Default to ASI
+    };
+    
     asiLevels.forEach(level => {
-      const topAbility = primaryTargets[0] || 'constitution';
-      updated[level] = {
-        type: 'asi',
-        abilityIncreases: { [topAbility]: 2 }
-      };
+      const recommendedFeat = getBestFeat(level);
+      
+      if (recommendedFeat && currentPrimaryScore >= 16) {
+        // Choose feat if primary is strong enough
+        updated[level] = {
+          type: 'feat',
+          feat: recommendedFeat
+        };
+      } else {
+        // Prioritize primary ability, then secondary
+        const topAbility = primaryTargets[0] || 'constitution';
+        updated[level] = {
+          type: 'asi',
+          abilityIncreases: { [topAbility]: 2 }
+        };
+      }
     });
     updateCharacter('asiChoices', updated);
   };
@@ -10981,6 +11024,91 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
     setPurchasedItems([]);
   };
 
+  const selectIdealEquipment = () => {
+    if (!classEquipment) return;
+    const choices = {};
+    const classLower = character.class?.toLowerCase() || '';
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
+    const primaryAbility = character.abilityScores ? 
+      Object.entries(character.abilityScores).sort((a, b) => b[1] - a[1])[0]?.[0] : 'strength';
+    
+    // Build-aware equipment selection logic
+    classEquipment.choices.forEach((choice, idx) => {
+      const options = choice.options || [];
+      let selectedIdx = 0;
+      
+      // Weapon choices based on fighting style and abilities
+      if (choice.name?.toLowerCase().includes('weapon')) {
+        if (fightingStyle === 'great weapon fighting') {
+          // Prefer two-handed weapons
+          selectedIdx = options.findIndex(opt => 
+            opt?.toLowerCase().includes('greatsword') || 
+            opt?.toLowerCase().includes('greataxe') ||
+            opt?.toLowerCase().includes('maul')
+          );
+        } else if (fightingStyle === 'archery') {
+          // Prefer ranged weapons
+          selectedIdx = options.findIndex(opt => 
+            opt?.toLowerCase().includes('longbow') ||
+            opt?.toLowerCase().includes('crossbow')
+          );
+        } else if (fightingStyle === 'dueling' || fightingStyle === 'defense') {
+          // Prefer one-handed weapon and shield
+          selectedIdx = options.findIndex(opt => 
+            opt?.toLowerCase().includes('shield') ||
+            (opt?.toLowerCase().includes('sword') && !opt?.toLowerCase().includes('greatsword'))
+          );
+        } else if (primaryAbility === 'dexterity') {
+          // Dex-based: prefer finesse/ranged
+          selectedIdx = options.findIndex(opt => 
+            opt?.toLowerCase().includes('rapier') ||
+            opt?.toLowerCase().includes('shortbow') ||
+            opt?.toLowerCase().includes('dagger')
+          );
+        }
+      }
+      
+      // Armor choices based on class and dex
+      if (choice.name?.toLowerCase().includes('armor')) {
+        const dexScore = character.abilityScores?.dexterity || 10;
+        if (dexScore >= 14 && (classLower === 'rogue' || classLower === 'ranger' || classLower === 'monk')) {
+          // High dex classes: prefer light armor
+          selectedIdx = options.findIndex(opt => 
+            opt?.toLowerCase().includes('leather') ||
+            opt?.toLowerCase().includes('studded')
+          );
+        } else if (classLower === 'paladin' || classLower === 'fighter') {
+          // Heavy armor classes: prefer chain mail or better
+          selectedIdx = options.findIndex(opt => 
+            opt?.toLowerCase().includes('chain') ||
+            opt?.toLowerCase().includes('scale')
+          );
+        }
+      }
+      
+      // Pack choices based on class role
+      if (choice.name?.toLowerCase().includes('pack')) {
+        if (classLower === 'wizard' || classLower === 'cleric') {
+          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('scholar'));
+        } else if (classLower === 'ranger' || classLower === 'druid') {
+          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('explorer'));
+        } else if (classLower === 'rogue') {
+          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('burglar'));
+        } else if (classLower === 'fighter' || classLower === 'paladin' || classLower === 'barbarian') {
+          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('dungeon'));
+        }
+      }
+      
+      // Default to first option if no match found
+      choices[idx] = selectedIdx >= 0 ? selectedIdx : 0;
+    });
+    
+    setMethod('ideal');
+    setEquipmentChoices(choices);
+    setGoldRolled(false);
+    setPurchasedItems([]);
+  };
+
   // Update character when equipment changes
   useEffect(() => {
     updateCharacter('equipmentMethod', method);
@@ -11041,24 +11169,36 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         <div>
           <h3 className="text-xl font-bold text-white mb-1">Choose Your Equipment</h3>
           <p className="text-sm text-slate-500">
-            Take your class starting equipment or roll for gold to buy your own.
+            Take your class starting equipment, roll for gold, or auto-select ideal gear.
           </p>
         </div>
-        <button
-          onClick={autoSelectEquipment}
-          className="px-4 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={!classEquipment}
-        >
-          Choose for me
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={autoSelectEquipment}
+            className="px-4 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!classEquipment}
+            title="Select first option for each choice"
+          >
+            Choose for me
+          </button>
+          <button
+            onClick={selectIdealEquipment}
+            className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={!classEquipment}
+            title="Intelligently select gear based on your build"
+          >
+            <Sparkles className="w-4 h-4" />
+            Choose ideal
+          </button>
+        </div>
       </div>
 
       {/* Method Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
           onClick={() => { setMethod('starting'); setGoldRolled(false); }}
           className={`p-4 rounded-xl border text-left transition-all ${
-            method === 'starting'
+            method === 'starting' || method === 'ideal'
               ? 'bg-indigo-500/20 border-indigo-500/50'
               : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
           }`}
@@ -11066,14 +11206,14 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
           <div className="flex items-center gap-3">
             <div className="text-2xl">📦</div>
             <div>
-              <div className={`font-semibold ${method === 'starting' ? 'text-indigo-300' : 'text-slate-200'}`}>
+              <div className={`font-semibold ${method === 'starting' || method === 'ideal' ? 'text-indigo-300' : 'text-slate-200'}`}>
                 Starting Equipment
               </div>
               <div className="text-xs text-slate-500">
                 Take your {CLASSES[classId]?.name}'s default gear with choices
               </div>
             </div>
-            {method === 'starting' && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
+            {(method === 'starting' || method === 'ideal') && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
           </div>
         </button>
 
@@ -11098,10 +11238,32 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
             {method === 'gold' && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
           </div>
         </button>
+        
+        <button
+          onClick={selectIdealEquipment}
+          className={`p-4 rounded-xl border text-left transition-all ${
+            method === 'ideal'
+              ? 'bg-cyan-500/20 border-cyan-500/50'
+              : 'bg-slate-800/50 border-slate-700/50 hover:border-cyan-500/30'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-6 h-6 text-cyan-400" />
+            <div>
+              <div className={`font-semibold ${method === 'ideal' ? 'text-cyan-300' : 'text-slate-200'}`}>
+                Ideal Gear
+              </div>
+              <div className="text-xs text-slate-500">
+                Auto-select based on your build and fighting style
+              </div>
+            </div>
+            {method === 'ideal' && <Check className="w-5 h-5 text-cyan-400 ml-auto" />}
+          </div>
+        </button>
       </div>
 
       {/* Starting Equipment */}
-      {method === 'starting' && classEquipment && (
+      {(method === 'starting' || method === 'ideal') && classEquipment && (
         <div className="space-y-4">
           {/* Equipment Choices */}
           {classEquipment.choices.map((choice, choiceIndex) => (
@@ -11691,7 +11853,7 @@ const ClassSelectionStep = ({ character, updateCharacter, onShowCompare }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="flex-1">
           <h3 className="text-xl font-bold text-white mb-1">Choose Your Class</h3>
           <p className="text-sm text-slate-500">
@@ -11704,20 +11866,44 @@ const ClassSelectionStep = ({ character, updateCharacter, onShowCompare }) => {
             Note: multiclassing splits your total character level across classes.
           </p>
         </div>
-        <button
-          onClick={() => {
-            const { class: classId, subclass } = smartChooseClass(character);
-            updateCharacter('class', classId);
-            if (subclass) updateCharacter('subclass', subclass);
-            setShowAllClasses(false);
-          }}
-          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ml-4"
-          title="Automatically select a synergistic class based on your ability scores"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">Choose for me</span>
-          <span className="sm:hidden">Auto</span>
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => {
+              const result = smartChooseClass(character);
+              updateCharacter('class', result.class);
+              if (result.subclass) updateCharacter('subclass', result.subclass);
+              if (result.fightingStyle) updateCharacter('fightingStyle', result.fightingStyle);
+              if (result.classSkills) updateCharacter('classSkills', result.classSkills);
+              if (result.expertise) updateCharacter('expertise', result.expertise);
+              if (result.cantripChoices) updateCharacter('cantripChoices', result.cantripChoices);
+              setShowAllClasses(false);
+            }}
+            className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+            title="Automatically select a synergistic class with all choices made"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Choose for me</span>
+            <span className="sm:hidden">Auto</span>
+          </button>
+          <label className="flex items-center gap-2 text-xs text-slate-400 px-2">
+            <input
+              type="checkbox"
+              checked={multiclassExpanded}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setMulticlassExpanded(checked);
+                if (checked && (character.level || 1) < 2) {
+                  updateCharacter('level', 2);
+                }
+                if (!checked) {
+                  updateCharacter('multiclass', []);
+                }
+              }}
+              className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+            />
+            Include multiclass
+          </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -13188,7 +13374,7 @@ const smartChooseClass = (character) => {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   
   if (!character.abilities) {
-    return { class: pick(Object.keys(CLASSES)), subclass: null };
+    return { class: pick(Object.keys(CLASSES)), subclass: null, fightingStyle: null, classSkills: [], expertise: [], cantripChoices: [] };
   }
   
   // Find top 2 ability scores
@@ -13205,6 +13391,7 @@ const smartChooseClass = (character) => {
   const classId = compatibleClasses.length > 0 ? pick(compatibleClasses) : pick(Object.keys(CLASSES));
   const classData = CLASSES[classId];
   
+  // Pick subclass if level is high enough
   let subclassId = null;
   if (character.level >= classData.subclassLevel) {
     const subclasses = SUBCLASSES[classId];
@@ -13213,7 +13400,49 @@ const smartChooseClass = (character) => {
     }
   }
   
-  return { class: classId, subclass: subclassId };
+  // Pick class skills
+  const skillChoices = classData.skillChoices || { count: 0, from: [] };
+  const allSkills = ['Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History', 'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception', 'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'];
+  const availableSkills = skillChoices.from === 'any' ? allSkills : skillChoices.from;
+  const classSkills = [];
+  const skillPool = [...availableSkills];
+  for (let i = 0; i < skillChoices.count && skillPool.length > 0; i++) {
+    const idx = Math.floor(Math.random() * skillPool.length);
+    classSkills.push(skillPool[idx]);
+    skillPool.splice(idx, 1);
+  }
+  
+  // Pick fighting style for classes that have it (Fighter, Paladin, Ranger)
+  let fightingStyle = null;
+  if (['fighter', 'paladin', 'ranger'].includes(classId)) {
+    const styles = Object.keys(FIGHTING_STYLES);
+    fightingStyle = pick(styles);
+  }
+  
+  // Pick expertise for Bard and Rogue
+  const expertise = [];
+  if (classId === 'bard' || classId === 'rogue') {
+    const expertiseCount = classId === 'bard' ? 2 : 2;
+    const expertisePool = [...classSkills];
+    for (let i = 0; i < expertiseCount && expertisePool.length > 0; i++) {
+      const idx = Math.floor(Math.random() * expertisePool.length);
+      expertise.push(expertisePool[idx]);
+      expertisePool.splice(idx, 1);
+    }
+  }
+  
+  // Pick cantrip choices for classes that get to choose (Wizard, Sorcerer, etc.)
+  const cantripChoices = [];
+  // This would need to be implemented based on class spellcasting rules
+  
+  return { 
+    class: classId, 
+    subclass: subclassId,
+    fightingStyle,
+    classSkills,
+    expertise,
+    cantripChoices
+  };
 };
 
 // Smart background selection based on class
@@ -13240,7 +13469,35 @@ const smartChooseBackground = (character) => {
     wizard: ['sage', 'hermit', 'noble']
   };
   
-  const synergies = backgroundSynergies[character.class] || [];
+  // Consider multiclass synergies
+  let synergies = [...(backgroundSynergies[character.class] || [])];
+  if (character.multiclass && character.multiclass.length > 0) {
+    character.multiclass.forEach(mc => {
+      const mcSynergies = backgroundSynergies[mc.class] || [];
+      synergies.push(...mcSynergies);
+    });
+  }
+  
+  // Consider ability scores for skill synergies
+  const abilityScores = character.abilityScores || {};
+  const highestAbility = Object.entries(abilityScores).sort((a, b) => b[1] - a[1])[0]?.[0];
+  
+  // Add ability-based background preferences
+  const abilityBackgrounds = {
+    strength: ['soldier', 'folkHero'],
+    dexterity: ['criminal', 'urchin', 'entertainer'],
+    constitution: ['outlander', 'soldier'],
+    intelligence: ['sage', 'guildArtisan'],
+    wisdom: ['hermit', 'acolyte', 'outlander'],
+    charisma: ['noble', 'entertainer', 'charlatan']
+  };
+  
+  if (highestAbility && abilityBackgrounds[highestAbility]) {
+    synergies.push(...abilityBackgrounds[highestAbility]);
+  }
+  
+  // Remove duplicates and filter existing backgrounds
+  synergies = [...new Set(synergies)];
   const compatible = synergies.filter(bg => BACKGROUNDS[bg]);
   
   return compatible.length > 0 ? pick(compatible) : pick(Object.keys(BACKGROUNDS));
