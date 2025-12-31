@@ -6547,11 +6547,27 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Race</h3>
-        <p className="text-sm text-slate-500">
-          Racial bonuses are shown as a preview here. Your base ability scores stay unchanged.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Race</h3>
+          <p className="text-sm text-slate-500">
+            Racial bonuses are shown as a preview here. Your base ability scores stay unchanged.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            const { race, subrace } = smartChooseRace(character);
+            updateCharacter('race', race);
+            updateCharacter('subrace', subrace);
+            setShowAllRaces(false);
+          }}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+          title="Automatically select a synergistic race based on your class"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -6897,8 +6913,6 @@ const ReviewStep = ({
   onRandomize,
   onUndo,
   canUndo,
-  randomWithMulticlass,
-  setRandomWithMulticlass,
   onGoToStep,
   resetCharacter
 }) => {
@@ -8467,32 +8481,10 @@ INT: ${finalAbilities?.intelligence || 10} | WIS: ${finalAbilities?.wisdom || 10
             {completionCount}/{totalRequired} Complete
           </div>
 
-          <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
-            <input
-              type="checkbox"
-              checked={!!randomWithMulticlass}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                if (typeof setRandomWithMulticlass === 'function') {
-                  setRandomWithMulticlass(checked);
-                }
-                if (checked && (character.level || 1) < 2) {
-                  updateCharacter('level', 2);
-                }
-              }}
-              className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-            />
-            <span>Multiclass (Random)</span>
-          </label>
-          <button
-            onClick={onRandomize}
-            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
-            title="Generate a new random character"
-          >
-            <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
-            <span className="hidden xs:inline">Randomize</span>
-            <span className="xs:hidden">Random</span>
-          </button>
+          <RandomizerPopover 
+            onRandomize={(level, multiclass) => onRandomize(level, multiclass)}
+            currentLevel={character.level || 1}
+          />
           {/* Undo */}
           <button
             onClick={onUndo}
@@ -11145,11 +11137,26 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Background</h3>
-        <p className="text-sm text-slate-500">
-          Your background reveals where you came from and your place in the world.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Background</h3>
+          <p className="text-sm text-slate-500">
+            Your background reveals where you came from and your place in the world.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            const bgId = smartChooseBackground(character);
+            updateCharacter('background', bgId);
+            setShowAllBackgrounds(false);
+          }}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+          title="Automatically select a synergistic background based on your class"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -11460,9 +11467,9 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
 // CLASS SELECTION STEP (PHASE 4)
 // ============================================================================
 
-const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, setRandomWithMulticlass, onShowCompare }) => {
+const ClassSelectionStep = ({ character, updateCharacter, onShowCompare }) => {
   const [showAllClasses, setShowAllClasses] = useState(!character.class);
-  const [multiclassExpanded, setMulticlassExpanded] = useState(randomWithMulticlass || (character.multiclass?.length > 0));
+  const [multiclassExpanded, setMulticlassExpanded] = useState(character.multiclass?.length > 0);
   const selectedClassId = character.class;
   const selectedClass = selectedClassId ? CLASSES[selectedClassId] : null;
 
@@ -11480,7 +11487,6 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                 onChange={(e) => {
                   const checked = e.target.checked;
                   setMulticlassExpanded(checked);
-                  setRandomWithMulticlass(checked);
                   if (checked && (character.level || 1) < 2) {
                     updateCharacter('level', 2);
                   }
@@ -11547,17 +11553,33 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Class</h3>
-        <p className="text-sm text-slate-500">
-          Your class determines your abilities, features, and role in the party.
-        </p>
-        <p className="text-xs text-slate-500 mt-2">
-          Multiclass options appear after selecting a primary class (below the class grid, or below on small screens).
-        </p>
-        <p className="text-xs text-slate-500 mt-1">
-          Note: multiclassing splits your total character level across classes.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Class</h3>
+          <p className="text-sm text-slate-500">
+            Your class determines your abilities, features, and role in the party.
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            Multiclass options appear after selecting a primary class (below the class grid, or below on small screens).
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            Note: multiclassing splits your total character level across classes.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            const { class: classId, subclass } = smartChooseClass(character);
+            updateCharacter('class', classId);
+            if (subclass) updateCharacter('subclass', subclass);
+            setShowAllClasses(false);
+          }}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ml-4"
+          title="Automatically select a synergistic class based on your ability scores"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -12975,6 +12997,120 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
 };
 
 // ============================================================================
+// SMART "CHOOSE FOR ME" HELPER FUNCTIONS
+// ============================================================================
+
+// Smart race selection based on class
+const smartChooseRace = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  if (!character.class) {
+    // No class selected yet, pick a popular versatile race
+    return { race: pick(['human', 'halfElf', 'variantHuman']), subrace: null };
+  }
+  
+  const classData = CLASSES[character.class];
+  const primaryAbilities = classData.primaryAbility;
+  
+  // Map races to ability synergies
+  const raceAbilityMap = {
+    mountainDwarf: ['strength', 'constitution'],
+    hillDwarf: ['constitution', 'wisdom'],
+    highElf: ['dexterity', 'intelligence'],
+    woodElf: ['dexterity', 'wisdom'],
+    darkElf: ['dexterity', 'charisma'],
+    lightfootHalfling: ['dexterity', 'charisma'],
+    stoutHalfling: ['dexterity', 'constitution'],
+    human: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
+    variantHuman: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
+    dragonborn: ['strength', 'charisma'],
+    gnome: ['intelligence', 'constitution'],
+    halfElf: ['charisma', 'dexterity', 'wisdom'],
+    halfOrc: ['strength', 'constitution'],
+    tiefling: ['charisma', 'intelligence']
+  };
+  
+  // Find races that boost primary abilities
+  const compatibleRaces = Object.keys(RACES).filter(raceId => {
+    const raceAbilities = raceAbilityMap[raceId] || [];
+    return primaryAbilities.some(ability => raceAbilities.includes(ability));
+  });
+  
+  const raceId = compatibleRaces.length > 0 ? pick(compatibleRaces) : pick(Object.keys(RACES));
+  const race = RACES[raceId];
+  
+  let subraceId = null;
+  if (race.subraces && race.subraces.length > 0) {
+    subraceId = pick(race.subraces);
+  }
+  
+  return { race: raceId, subrace: subraceId };
+};
+
+// Smart class selection based on ability scores
+const smartChooseClass = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  if (!character.abilities) {
+    return { class: pick(Object.keys(CLASSES)), subclass: null };
+  }
+  
+  // Find top 2 ability scores
+  const abilities = character.abilities;
+  const sorted = Object.entries(abilities).sort((a, b) => b[1] - a[1]);
+  const topAbilities = sorted.slice(0, 2).map(([ability]) => ability);
+  
+  // Find classes that use these abilities
+  const compatibleClasses = Object.keys(CLASSES).filter(classId => {
+    const classData = CLASSES[classId];
+    return classData.primaryAbility.some(ability => topAbilities.includes(ability));
+  });
+  
+  const classId = compatibleClasses.length > 0 ? pick(compatibleClasses) : pick(Object.keys(CLASSES));
+  const classData = CLASSES[classId];
+  
+  let subclassId = null;
+  if (character.level >= classData.subclassLevel) {
+    const subclasses = SUBCLASSES[classId];
+    if (subclasses) {
+      subclassId = pick(Object.keys(subclasses));
+    }
+  }
+  
+  return { class: classId, subclass: subclassId };
+};
+
+// Smart background selection based on class
+const smartChooseBackground = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  if (!character.class) {
+    return pick(Object.keys(BACKGROUNDS));
+  }
+  
+  // Background synergies with classes
+  const backgroundSynergies = {
+    barbarian: ['outlander', 'folkHero', 'urchin'],
+    bard: ['entertainer', 'charlatan', 'guildArtisan'],
+    cleric: ['acolyte', 'hermit', 'sage'],
+    druid: ['hermit', 'outlander', 'sage'],
+    fighter: ['soldier', 'folkHero', 'noble'],
+    monk: ['hermit', 'outlander', 'sage'],
+    paladin: ['noble', 'soldier', 'acolyte'],
+    ranger: ['outlander', 'folkHero', 'hermit'],
+    rogue: ['criminal', 'charlatan', 'urchin'],
+    sorcerer: ['noble', 'hermit', 'charlatan'],
+    warlock: ['charlatan', 'hermit', 'sage'],
+    wizard: ['sage', 'hermit', 'noble']
+  };
+  
+  const synergies = backgroundSynergies[character.class] || [];
+  const compatible = synergies.filter(bg => BACKGROUNDS[bg]);
+  
+  return compatible.length > 0 ? pick(compatible) : pick(Object.keys(BACKGROUNDS));
+};
+
+// ============================================================================
 // CHARACTER CREATOR COMPONENT (SKELETON)
 // ============================================================================
 
@@ -13313,11 +13449,12 @@ const CharacterCreator = ({
 
   // One-level undo snapshot for randomize on Review step
   const [lastRandomSnapshot, setLastRandomSnapshot] = useState(null);
-  const [randomWithMulticlass, setRandomWithMulticlass] = useState(false);
 
-  const randomizeFromReview = () => {
+  const randomizeFromReview = (level = null, multiclass = false) => {
     const prev = character;
-    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
+    // Use existing name, or imported name, fallback to generated
+    const nameToUse = prev.name || importedName || '';
+    const randomChar = generateRandomCharacter(nameToUse, multiclass, level);
     // Preserve playerName from previous character
     randomChar.playerName = prev.playerName || '';
     setLastRandomSnapshot(prev);
@@ -13519,7 +13656,9 @@ const CharacterCreator = ({
               <h3 className="text-xl font-bold text-white">Basic Information</h3>
               <RandomizerPopover 
                 onRandomize={(level, multiclass) => {
-                  const randomChar = generateRandomCharacter(importedName, multiclass, level);
+                  // Preserve existing character name, or use imported name
+                  const nameToUse = character.name || importedName || '';
+                  const randomChar = generateRandomCharacter(nameToUse, multiclass, level);
                   randomChar.playerName = character.playerName || '';
                   setCharacter(randomChar);
                   setCurrentStep(steps.length - 1);
@@ -13579,7 +13718,7 @@ const CharacterCreator = ({
                 Character Level (Total)
               </label>
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(level => (
                   <button
                     key={level}
                     onClick={() => updateCharacter('level', level)}
@@ -13594,7 +13733,7 @@ const CharacterCreator = ({
                 ))}
               </div>
               <p className="text-xs text-slate-500 mt-2">
-                This is your total character level. If you multiclass, levels are split across classes (e.g., Level 5 total = Barbarian 3 / Warlock 2). Levels 4 and 8 grant Ability Score Improvements or Feats.
+                This is your total character level. If you multiclass, levels are split across classes (e.g., Level 5 total = Barbarian 3 / Warlock 2). Levels 4, 8, 12, 16, and 19 grant Ability Score Improvements or Feats.
               </p>
             </div>
 
@@ -13734,8 +13873,6 @@ const CharacterCreator = ({
           <ClassSelectionStep 
             character={character}
             updateCharacter={updateCharacter}
-            randomWithMulticlass={randomWithMulticlass}
-            setRandomWithMulticlass={setRandomWithMulticlass}
             onShowCompare={() => setShowSubclassCompare(true)}
           />
         )}
@@ -13782,8 +13919,6 @@ const CharacterCreator = ({
             onRandomize={randomizeFromReview}
             onUndo={undoRandomizeFromReview}
             canUndo={!!lastRandomSnapshot}
-            randomWithMulticlass={randomWithMulticlass}
-            setRandomWithMulticlass={setRandomWithMulticlass}
             onGoToStep={setCurrentStep}
             resetCharacter={resetCharacter}
           />
