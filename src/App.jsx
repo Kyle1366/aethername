@@ -6157,7 +6157,7 @@ const ReviewStep = ({
       return yPos + headerHeight + 2;
     };
 
-    // ============== COLUMN 1: FEATURES & TRAITS ==============
+    // ============== COLUMN 1: FEATURES + CLASS OPTIONS ==============
     const features = [];
     if (race?.traits) features.push(...race.traits.map(t => ({ text: t, type: 'Racial' })));
     
@@ -6184,16 +6184,11 @@ const ReviewStep = ({
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textLight);
     
-    features.forEach((feat, idx) => {
-      // Calculate required space for this feature
+    features.forEach((feat) => {
       const wrappedText = doc.splitTextToSize(feat.text, colWidth - 15);
       const requiredSpace = Math.max(4, wrappedText.length * 3) + 1;
       
-      // Check if we need a page break
-      if (col1Y + requiredSpace > maxY) {
-        // Content overflow - we'll handle this at the end
-        return;
-      }
+      if (col1Y + requiredSpace > maxY) return;
       
       // Type badge
       doc.setFillColor(...colors.headerBg);
@@ -6205,7 +6200,6 @@ const ReviewStep = ({
       doc.setTextColor(255, 255, 255);
       doc.text(feat.type, col1X + 2, col1Y + 1);
       
-      // Feature text
       doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
@@ -6215,8 +6209,95 @@ const ReviewStep = ({
       
       col1Y += requiredSpace;
     });
+    
+    // Level Advancements in column 1
+    const levelAdvancements = [];
+    if (character.asiChoices && Object.keys(character.asiChoices).length > 0) {
+      Object.entries(character.asiChoices).forEach(([level, choice]) => {
+        if (!choice) return;
+        if (choice.type === 'feat' && choice.feat) {
+          const featData = FEATS[choice.feat];
+          if (featData) levelAdvancements.push(`Lv${level}: ${featData.name}`);
+        } else if (choice.type === 'asi') {
+          if (choice.asiType === 'single' && choice.singleAbility) {
+            levelAdvancements.push(`Lv${level}: ${ABILITY_LABELS[choice.singleAbility]?.short || choice.singleAbility} +2`);
+          } else if (choice.asiType === 'double' && Array.isArray(choice.doubleAbilities)) {
+            const asiText = choice.doubleAbilities.map(a => `${ABILITY_LABELS[a]?.short || a} +1`).join(', ');
+            if (asiText) levelAdvancements.push(`Lv${level}: ${asiText}`);
+          }
+        }
+      });
+    }
+    
+    if (levelAdvancements.length > 0 && col1Y + 10 < maxY) {
+      col1Y += 2;
+      col1Y = drawColumnHeader('LEVEL ADV', col1Y, col1X, colWidth);
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      levelAdvancements.forEach((adv) => {
+        if (col1Y + 4 > maxY) return;
+        doc.setFillColor(...colors.accentPurple);
+        doc.circle(col1X + 2, col1Y + 1, 0.8, 'F');
+        doc.text(adv, col1X + 5, col1Y + 2);
+        col1Y += 4;
+      });
+    }
+    
+    // Battle Master Maneuvers in column 1
+    if (character.battleMasterManeuvers && character.battleMasterManeuvers.length > 0 && col1Y + 10 < maxY) {
+      col1Y += 2;
+      col1Y = drawColumnHeader('MANEUVERS', col1Y, col1X, colWidth);
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      character.battleMasterManeuvers.forEach((manKey) => {
+        if (col1Y + 4 > maxY) return;
+        const man = BATTLE_MASTER_MANEUVERS[manKey];
+        if (man) {
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(col1X + 2, col1Y + 1, 0.8, 'F');
+          doc.text(man.name, col1X + 5, col1Y + 2);
+          col1Y += 4;
+        }
+      });
+    }
+    
+    // Fighting Style in column 1 (compact)
+    if (character.fightingStyle && col1Y + 6 < maxY) {
+      const fs = FIGHTING_STYLES[character.fightingStyle];
+      if (fs) {
+        col1Y += 2;
+        doc.setFontSize(7);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.textMuted);
+        doc.text('STYLE:', col1X + 2, col1Y + 1);
+        doc.setTextColor(...colors.textGold);
+        doc.text(fs.name, col1X + 16, col1Y + 1);
+        col1Y += 4;
+      }
+    }
+    
+    // Metamagic in column 1
+    if (character.metamagicOptions && character.metamagicOptions.length > 0 && col1Y + 10 < maxY) {
+      col1Y += 2;
+      col1Y = drawColumnHeader('METAMAGIC', col1Y, col1X, colWidth);
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      character.metamagicOptions.forEach((metaKey) => {
+        if (col1Y + 4 > maxY) return;
+        const meta = METAMAGIC_OPTIONS[metaKey];
+        if (meta) {
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(col1X + 2, col1Y + 1, 0.8, 'F');
+          doc.text(`${meta.name} (${meta.cost}SP)`, col1X + 5, col1Y + 2);
+          col1Y += 4;
+        }
+      });
+    }
 
-    // ============== COLUMN 2: EQUIPMENT + LEVEL ADV ==============
+    // ============== COLUMN 2: EQUIPMENT ONLY ==============
     if (equipment.length > 0) {
       // Calculate total GP from equipment items (background gold) + character.gold
       let totalGP = character.gold || 0;
@@ -6271,104 +6352,6 @@ const ReviewStep = ({
       });
       
       col2Y = Math.max(equipCol1Y, equipCol2Y) + 1;
-    }
-    
-    // Level Advancements in column 2
-    const levelAdvancements = [];
-    if (character.asiChoices && Object.keys(character.asiChoices).length > 0) {
-      Object.entries(character.asiChoices).forEach(([level, choice]) => {
-        if (!choice) return;
-        
-        if (choice.type === 'feat' && choice.feat) {
-          const featData = FEATS[choice.feat];
-          if (featData) {
-            levelAdvancements.push(`Lv${level}: ${featData.name}`);
-          }
-        } else if (choice.type === 'asi') {
-          if (choice.asiType === 'single' && choice.singleAbility) {
-            levelAdvancements.push(`Lv${level}: ${ABILITY_LABELS[choice.singleAbility]?.short || choice.singleAbility} +2`);
-          } else if (choice.asiType === 'double' && Array.isArray(choice.doubleAbilities)) {
-            const asiText = choice.doubleAbilities.map(a => `${ABILITY_LABELS[a]?.short || a} +1`).join(', ');
-            if (asiText) {
-              levelAdvancements.push(`Lv${level}: ${asiText}`);
-            }
-          }
-        }
-      });
-    }
-    
-    if (levelAdvancements.length > 0 && col2Y + 10 < maxY) {
-      col2Y += 3;
-      col2Y = drawColumnHeader('LEVEL ADV', col2Y, col2X, colWidth);
-      
-      doc.setFontSize(8);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      
-      levelAdvancements.forEach((adv) => {
-        if (col2Y + 4 > maxY) return;
-        doc.setFillColor(...colors.accentPurple);
-        doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
-        doc.text(adv, col2X + 5, col2Y + 2);
-        col2Y += 4;
-      });
-    }
-    
-    // Battle Master Maneuvers in column 2 (before Fighting Style for priority)
-    if (character.battleMasterManeuvers && character.battleMasterManeuvers.length > 0 && col2Y + 10 < maxY) {
-      col2Y += 3;
-      col2Y = drawColumnHeader('MANEUVERS', col2Y, col2X, colWidth);
-      
-      doc.setFontSize(8);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      
-      character.battleMasterManeuvers.forEach((manKey) => {
-        if (col2Y + 4 > maxY) return;
-        const man = BATTLE_MASTER_MANEUVERS[manKey];
-        if (man) {
-          doc.setFillColor(...colors.accentPurple);
-          doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
-          doc.text(man.name, col2X + 5, col2Y + 2);
-          col2Y += 4;
-        }
-      });
-    }
-    
-    // Fighting Style in column 2 (compact - just name)
-    if (character.fightingStyle && col2Y + 8 < maxY) {
-      const fs = FIGHTING_STYLES[character.fightingStyle];
-      if (fs) {
-        col2Y += 3;
-        doc.setFontSize(8);
-        doc.setFont('times', 'bold');
-        doc.setTextColor(...colors.textMuted);
-        doc.text('FIGHTING STYLE:', col2X + 2, col2Y);
-        doc.setTextColor(...colors.textGold);
-        doc.text(fs.name, col2X + 36, col2Y);
-        col2Y += 4;
-      }
-    }
-    
-    // Metamagic in column 2
-    if (character.metamagicOptions && character.metamagicOptions.length > 0 && col2Y + 10 < maxY) {
-      col2Y += 3;
-      col2Y = drawColumnHeader('METAMAGIC', col2Y, col2X, colWidth);
-      
-      doc.setFontSize(8);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      
-      character.metamagicOptions.forEach((metaKey) => {
-        if (col2Y + 4 > maxY) return;
-        const meta = METAMAGIC_OPTIONS[metaKey];
-        if (meta) {
-          doc.setFillColor(...colors.accentPurple);
-          doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
-          doc.text(`${meta.name} (${meta.cost}SP)`, col2X + 5, col2Y + 2);
-          col2Y += 4;
-        }
-      });
     }
 
     // ============== COLUMN 3: SPELLCASTING ==============
