@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight, AlertCircle, FileText } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight, AlertCircle, FileText, Share2, Dices, Info, Lightbulb, BookOpen, Scale } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 // ============================================================================
@@ -76,6 +76,1156 @@ const LocalStorageUtil = {
       return false;
     }
   }
+};
+
+// ============================================================================
+// DICE ROLLER COMPONENT
+// ============================================================================
+
+const DiceRoller = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [result, setResult] = useState(null);
+  const [diceType, setDiceType] = useState(20);
+  const [rolling, setRolling] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [diceRotation, setDiceRotation] = useState({ x: 0, y: 0, z: 0 });
+  
+  const roll = (sides) => {
+    setDiceType(sides);
+    setRolling(true);
+    setResult(null);
+    
+    // Animate dice tumbling
+    let rotationCount = 0;
+    const rotationInterval = setInterval(() => {
+      setDiceRotation({
+        x: Math.random() * 720 - 360,
+        y: Math.random() * 720 - 360,
+        z: Math.random() * 360
+      });
+      setResult(Math.floor(Math.random() * sides) + 1);
+      rotationCount++;
+      
+      if (rotationCount > 12) {
+        clearInterval(rotationInterval);
+        const finalResult = Math.floor(Math.random() * sides) + 1;
+        setResult(finalResult);
+        setDiceRotation({ x: 0, y: 0, z: 0 });
+        setRolling(false);
+        setHistory(prev => [{sides, result: finalResult, time: Date.now()}, ...prev.slice(0, 4)]);
+      }
+    }, 80);
+  };
+  
+  const getResultColor = () => {
+    if (rolling) return 'text-white';
+    if (diceType === 20) {
+      if (result === 20) return 'text-yellow-400'; // Nat 20
+      if (result === 1) return 'text-red-400'; // Nat 1
+    }
+    return 'text-white';
+  };
+
+  // Get dice face shape based on type
+  const getDiceShape = () => {
+    switch(diceType) {
+      case 4: return 'polygon(50% 0%, 0% 100%, 100% 100%)'; // Triangle
+      case 6: return 'none'; // Square (default)
+      case 8: return 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'; // Diamond
+      case 10: return 'polygon(50% 0%, 90% 35%, 75% 100%, 25% 100%, 10% 35%)'; // Pentagon-ish
+      case 12: return 'polygon(50% 0%, 85% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 15% 20%)'; // Heptagon
+      case 20: return 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)'; // Hexagon (icosahedron face)
+      case 100: return 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'; // Octagon
+      default: return 'none';
+    }
+  };
+
+  const getDiceColor = () => {
+    if (result === 20 && diceType === 20 && !rolling) return 'from-yellow-500 to-amber-600';
+    if (result === 1 && diceType === 20 && !rolling) return 'from-red-600 to-red-800';
+    return 'from-indigo-500 to-purple-600';
+  };
+  
+  return (
+    <div className="fixed top-20 right-4 z-40">
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-all ${
+          isOpen 
+            ? 'bg-indigo-600 scale-110' 
+            : 'bg-slate-800/90 hover:bg-slate-700 border border-slate-600 hover:scale-105'
+        }`}
+        title="Dice Roller"
+      >
+        <Dices className={`w-5 h-5 text-white ${isOpen ? 'animate-pulse' : ''}`} />
+      </button>
+      
+      {/* Dice Panel */}
+      {isOpen && (
+        <div className="absolute top-14 right-0 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+              <Dices className="w-4 h-4 text-indigo-400" />
+              Dice Roller
+            </h3>
+            <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-slate-300 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* 3D Dice Display */}
+          <div className="relative h-32 flex items-center justify-center mb-3 overflow-hidden rounded-lg bg-slate-800/50 border border-slate-700/30">
+            {/* Dice shadow */}
+            <div 
+              className={`absolute bottom-2 w-16 h-4 bg-black/30 rounded-full blur-md transition-all duration-300 ${
+                rolling ? 'scale-75 opacity-50' : 'scale-100 opacity-100'
+              }`}
+            />
+            
+            {/* Animated Dice */}
+            <div
+              className={`relative transition-all duration-100 ${rolling ? 'scale-90' : 'scale-100'}`}
+              style={{
+                transform: `perspective(200px) rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg) rotateZ(${diceRotation.z}deg)`,
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              <div 
+                className={`w-20 h-20 bg-gradient-to-br ${getDiceColor()} rounded-lg flex items-center justify-center shadow-xl border-2 border-white/20 transition-colors duration-300`}
+                style={{
+                  clipPath: getDiceShape(),
+                  boxShadow: rolling 
+                    ? '0 0 30px rgba(99, 102, 241, 0.5), inset 0 0 20px rgba(255,255,255,0.1)' 
+                    : result === 20 && diceType === 20 
+                      ? '0 0 40px rgba(234, 179, 8, 0.6), inset 0 0 20px rgba(255,255,255,0.2)'
+                      : result === 1 && diceType === 20
+                        ? '0 0 40px rgba(239, 68, 68, 0.6)'
+                        : '0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.1)'
+                }}
+              >
+                <span className={`text-3xl font-bold text-white drop-shadow-lg ${rolling ? 'blur-[1px]' : ''}`}>
+                  {result || '?'}
+                </span>
+              </div>
+            </div>
+            
+            {/* Sparkles for nat 20 */}
+            {result === 20 && diceType === 20 && !rolling && (
+              <>
+                <div className="absolute top-2 left-4 text-yellow-400 animate-ping">✦</div>
+                <div className="absolute top-4 right-6 text-yellow-400 animate-ping animation-delay-100">✦</div>
+                <div className="absolute bottom-4 left-8 text-yellow-400 animate-ping animation-delay-200">✦</div>
+                <div className="absolute bottom-6 right-4 text-yellow-400 animate-ping animation-delay-300">✦</div>
+              </>
+            )}
+          </div>
+          
+          {/* Result Text */}
+          {result && !rolling && (
+            <div className={`text-center mb-3 ${getResultColor()}`}>
+              {result === 20 && diceType === 20 && (
+                <div className="text-yellow-400 font-bold text-sm animate-pulse">✨ NATURAL 20! ✨</div>
+              )}
+              {result === 1 && diceType === 20 && (
+                <div className="text-red-400 font-bold text-sm">💀 Critical Fail!</div>
+              )}
+              <div className="text-xs text-slate-500 mt-1">d{diceType} → {result}</div>
+            </div>
+          )}
+          
+          {/* Dice Buttons */}
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            {[4, 6, 8, 10, 12, 20, 100].map(d => (
+              <button
+                key={d}
+                onClick={() => roll(d)}
+                disabled={rolling}
+                className={`py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  diceType === d && !rolling
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-105'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-600 hover:border-indigo-500/50'
+                } ${rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'} ${d === 100 ? 'col-span-1' : ''}`}
+              >
+                d{d}
+              </button>
+            ))}
+            {/* Roll Again Button */}
+            <button
+              onClick={() => roll(diceType)}
+              disabled={rolling}
+              className={`py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-all ${
+                rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+              }`}
+            >
+              🎲
+            </button>
+          </div>
+          
+          {/* History */}
+          {history.length > 0 && (
+            <div className="border-t border-slate-700/50 pt-2">
+              <div className="text-xs text-slate-500 mb-1.5">Recent Rolls</div>
+              <div className="flex gap-1.5 flex-wrap">
+                {history.map((h, i) => (
+                  <span 
+                    key={i} 
+                    className={`text-xs px-2 py-1 rounded-md border ${
+                      h.result === h.sides 
+                        ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400' 
+                        : h.result === 1 
+                          ? 'bg-red-500/20 border-red-500/30 text-red-400'
+                          : 'bg-slate-800 border-slate-700 text-slate-400'
+                    }`}
+                  >
+                    d{h.sides}: <span className="font-semibold">{h.result}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// SMART SUGGESTIONS DATA
+// ============================================================================
+
+const CLASS_SYNERGIES = {
+  barbarian: {
+    primaryAbility: 'strength',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['halfOrc', 'goliath', 'dragonborn', 'human', 'dwarf'],
+    recommendedBackgrounds: ['outlander', 'soldier', 'folkHero'],
+    raceSynergies: {
+      halfOrc: "Savage Attacks + Relentless Endurance synergize with Rage",
+      dwarf: "Dwarven Toughness + resistance to poison",
+      goliath: "Stone's Endurance stacks with Rage damage reduction"
+    }
+  },
+  bard: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['dexterity', 'constitution'],
+    recommendedRaces: ['halfElf', 'human', 'tiefling', 'lightfoot'],
+    recommendedBackgrounds: ['entertainer', 'charlatan', 'noble'],
+    raceSynergies: {
+      halfElf: "+2 CHA and +1 to two others, extra skills",
+      tiefling: "+2 CHA, free spells enhance versatility"
+    }
+  },
+  cleric: {
+    primaryAbility: 'wisdom',
+    secondaryAbilities: ['constitution', 'strength'],
+    recommendedRaces: ['hillDwarf', 'human', 'firbolg', 'woodElf'],
+    recommendedBackgrounds: ['acolyte', 'hermit', 'sage'],
+    raceSynergies: {
+      hillDwarf: "+2 CON, +1 WIS, extra HP, armor proficiency",
+      human: "Flexible stats, bonus feat options"
+    }
+  },
+  druid: {
+    primaryAbility: 'wisdom',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['woodElf', 'firbolg', 'human', 'hillDwarf'],
+    recommendedBackgrounds: ['hermit', 'outlander', 'sage'],
+    raceSynergies: {
+      woodElf: "+2 DEX, +1 WIS, Mask of the Wild for stealth",
+      firbolg: "Hidden Step + Speech of Beast and Leaf"
+    }
+  },
+  fighter: {
+    primaryAbility: 'strength',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['human', 'halfOrc', 'dragonborn', 'dwarf', 'hobgoblin'],
+    recommendedBackgrounds: ['soldier', 'gladiator', 'outlander'],
+    raceSynergies: {
+      human: "Bonus feat at level 1 (variant)",
+      halfOrc: "Savage Attacks for critical hit damage"
+    }
+  },
+  monk: {
+    primaryAbility: 'dexterity',
+    secondaryAbilities: ['wisdom', 'constitution'],
+    recommendedRaces: ['woodElf', 'human', 'aarakocra', 'tabaxi'],
+    recommendedBackgrounds: ['hermit', 'outlander', 'acolyte'],
+    raceSynergies: {
+      woodElf: "+2 DEX, +1 WIS, increased speed (35 ft)",
+      aarakocra: "Flight + DEX bonus + 50 ft fly speed"
+    }
+  },
+  paladin: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['strength', 'constitution'],
+    recommendedRaces: ['human', 'halfElf', 'dragonborn', 'aasimar'],
+    recommendedBackgrounds: ['soldier', 'noble', 'acolyte'],
+    raceSynergies: {
+      halfElf: "+2 CHA, flexible +1s, extra skills",
+      dragonborn: "Breath weapon + STR/CHA bonuses"
+    }
+  },
+  ranger: {
+    primaryAbility: 'dexterity',
+    secondaryAbilities: ['wisdom', 'constitution'],
+    recommendedRaces: ['woodElf', 'human', 'halfling', 'firbolg'],
+    recommendedBackgrounds: ['outlander', 'folkHero', 'hermit'],
+    raceSynergies: {
+      woodElf: "+2 DEX, +1 WIS, Mask of the Wild",
+      human: "Variant human for Sharpshooter at level 1"
+    }
+  },
+  rogue: {
+    primaryAbility: 'dexterity',
+    secondaryAbilities: ['intelligence', 'charisma'],
+    recommendedRaces: ['lightfoot', 'halfElf', 'human', 'highElf'],
+    recommendedBackgrounds: ['criminal', 'urchin', 'charlatan'],
+    raceSynergies: {
+      lightfoot: "Naturally Stealthy lets you hide behind allies",
+      halfElf: "Extra skills + CHA for face skills"
+    }
+  },
+  sorcerer: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['halfElf', 'dragonborn', 'tiefling', 'human'],
+    recommendedBackgrounds: ['noble', 'hermit', 'sage'],
+    raceSynergies: {
+      dragonborn: "Draconic ancestry matches Draconic Bloodline",
+      halfElf: "+2 CHA and extra skills"
+    }
+  },
+  warlock: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['halfElf', 'tiefling', 'human', 'aasimar'],
+    recommendedBackgrounds: ['charlatan', 'criminal', 'sage', 'noble'],
+    raceSynergies: {
+      tiefling: "+2 CHA, Infernal Legacy spells",
+      halfElf: "+2 CHA, Fey Ancestry for charm resistance"
+    }
+  },
+  wizard: {
+    primaryAbility: 'intelligence',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['highElf', 'gnome', 'human', 'tiefling'],
+    recommendedBackgrounds: ['sage', 'acolyte', 'hermit'],
+    raceSynergies: {
+      highElf: "+1 INT, free wizard cantrip",
+      gnome: "Gnome Cunning: Advantage on INT/WIS/CHA saves vs magic"
+    }
+  }
+};
+
+// Helper function to get synergy info
+const getClassSynergy = (classId, raceId) => {
+  const synergies = CLASS_SYNERGIES[classId];
+  if (!synergies) return null;
+  
+  // Check direct race match
+  if (synergies.raceSynergies?.[raceId]) {
+    return { type: 'synergy', text: synergies.raceSynergies[raceId] };
+  }
+  
+  // Check if recommended
+  if (synergies.recommendedRaces?.includes(raceId)) {
+    return { type: 'recommended', text: 'Good stat match for this class' };
+  }
+  
+  return null;
+};
+
+const getBackgroundSynergy = (classId, backgroundId) => {
+  const synergies = CLASS_SYNERGIES[classId];
+  if (!synergies) return null;
+  
+  if (synergies.recommendedBackgrounds?.includes(backgroundId)) {
+    return { type: 'recommended', text: 'Thematic fit with useful skills' };
+  }
+  
+  return null;
+};
+
+// ============================================================================
+// ICONIC BUILD TEMPLATES
+// ============================================================================
+
+const ICONIC_BUILDS = {
+  holyAvenger: {
+    id: 'holyAvenger',
+    name: "The Holy Avenger",
+    description: "Classic Oath of Devotion Paladin. Heavy armor, divine smites, party auras.",
+    difficulty: "Beginner",
+    tags: ["Tank", "Support", "Melee"],
+    icon: "⚔️",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'paladin',
+      subclass: 'devotion',
+      level: 5,
+      race: 'human',
+      subrace: 'variant',
+      background: 'soldier',
+      alignment: 'lawfulGood',
+      abilities: { strength: 16, dexterity: 10, constitution: 14, intelligence: 8, wisdom: 12, charisma: 14 },
+      fightingStyle: 'defense',
+      asiChoices: { 4: { type: 'asi', asiType: 'double', doubleAbilities: ['strength', 'charisma'] } },
+      cantrips: [],
+      spells: ['bless', 'cureWounds', 'shieldOfFaith', 'divineFavor'],
+      equipment: ['Chain Mail', 'Longsword', 'Shield', 'Javelin (5)', 'Holy Symbol'],
+      gold: 10
+    }
+  },
+  blasterSorcerer: {
+    id: 'blasterSorcerer',
+    name: "The Inferno",
+    description: "Draconic Bloodline Sorcerer. Metamagic + Fireball = devastating AoE.",
+    difficulty: "Intermediate",
+    tags: ["Damage", "AoE", "Ranged"],
+    icon: "🔥",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'sorcerer',
+      subclass: 'draconicBloodline',
+      level: 5,
+      race: 'dragonborn',
+      subrace: null,
+      background: 'sage',
+      alignment: 'chaoticNeutral',
+      abilities: { strength: 8, dexterity: 14, constitution: 14, intelligence: 10, wisdom: 10, charisma: 16 },
+      metamagicOptions: ['quickenedSpell', 'twinnedSpell'],
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'charisma' } },
+      cantrips: ['fireBolt', 'prestidigitation', 'light', 'mageHand'],
+      spells: ['shield', 'magicMissile', 'scorchingRay', 'fireball'],
+      equipment: ['Quarterstaff', 'Component Pouch', 'Dungeoneer\'s Pack'],
+      gold: 15
+    }
+  },
+  sneakyRogue: {
+    id: 'sneakyRogue',
+    name: "The Shadow",
+    description: "Assassin Rogue. Stealth, surprise attacks, and devastating criticals.",
+    difficulty: "Beginner",
+    tags: ["Stealth", "Damage", "Utility"],
+    icon: "🗡️",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'rogue',
+      subclass: 'assassin',
+      level: 5,
+      race: 'lightfoot',
+      subrace: null,
+      background: 'criminal',
+      alignment: 'chaoticNeutral',
+      abilities: { strength: 8, dexterity: 16, constitution: 12, intelligence: 14, wisdom: 10, charisma: 12 },
+      asiChoices: { 4: { type: 'asi', asiType: 'double', doubleAbilities: ['dexterity', 'constitution'] } },
+      cantrips: [],
+      spells: [],
+      equipment: ['Rapier', 'Shortbow', 'Arrows (20)', 'Leather Armor', 'Thieves\' Tools', 'Burglar\'s Pack'],
+      gold: 25
+    }
+  },
+  battleWizard: {
+    id: 'battleWizard',
+    name: "The War Mage",
+    description: "School of Evocation Wizard. Tactical spellcasting, protecting allies from friendly fire.",
+    difficulty: "Intermediate",
+    tags: ["Damage", "Control", "Ranged"],
+    icon: "📘",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'wizard',
+      subclass: 'evocation',
+      level: 5,
+      race: 'highElf',
+      subrace: null,
+      background: 'sage',
+      alignment: 'lawfulNeutral',
+      abilities: { strength: 8, dexterity: 14, constitution: 14, intelligence: 16, wisdom: 10, charisma: 10 },
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'intelligence' } },
+      cantrips: ['fireBolt', 'mageHand', 'prestidigitation', 'light'],
+      spells: ['shield', 'magicMissile', 'mistyStep', 'fireball', 'counterspell'],
+      equipment: ['Quarterstaff', 'Spellbook', 'Component Pouch', 'Scholar\'s Pack'],
+      gold: 10
+    }
+  },
+  natureDruid: {
+    id: 'natureDruid',
+    name: "The Wildshaper",
+    description: "Circle of the Moon Druid. Transform into powerful beasts, nature magic.",
+    difficulty: "Intermediate",
+    tags: ["Tank", "Versatile", "Magic"],
+    icon: "🐻",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'druid',
+      subclass: 'moon',
+      level: 5,
+      race: 'woodElf',
+      subrace: null,
+      background: 'hermit',
+      alignment: 'trueNeutral',
+      abilities: { strength: 10, dexterity: 14, constitution: 14, intelligence: 10, wisdom: 16, charisma: 8 },
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'wisdom' } },
+      cantrips: ['produceFlame', 'shillelagh'],
+      spells: ['healingWord', 'entangle', 'moonbeam', 'callLightning'],
+      equipment: ['Wooden Shield', 'Scimitar', 'Leather Armor', 'Druidic Focus', 'Explorer\'s Pack'],
+      gold: 5
+    }
+  },
+  tankFighter: {
+    id: 'tankFighter',
+    name: "The Bulwark",
+    description: "Champion Fighter. Simple but effective. High HP, multiple attacks, reliable crits.",
+    difficulty: "Beginner",
+    tags: ["Tank", "Damage", "Melee"],
+    icon: "🛡️",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'fighter',
+      subclass: 'champion',
+      level: 5,
+      race: 'human',
+      subrace: 'variant',
+      background: 'soldier',
+      alignment: 'lawfulNeutral',
+      abilities: { strength: 16, dexterity: 12, constitution: 16, intelligence: 8, wisdom: 10, charisma: 10 },
+      fightingStyle: 'defense',
+      asiChoices: { 4: { type: 'feat', feat: 'sentinel' } },
+      cantrips: [],
+      spells: [],
+      equipment: ['Chain Mail', 'Longsword', 'Shield', 'Handaxe (2)', 'Javelin (4)'],
+      gold: 15
+    }
+  },
+  hexblade: {
+    id: 'hexblade',
+    name: "The Curseblade",
+    description: "Hexblade Warlock. CHA-based melee, Hexblade's Curse, Eldritch Smite.",
+    difficulty: "Intermediate",
+    tags: ["Damage", "Melee", "Magic"],
+    icon: "⚫",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'warlock',
+      subclass: 'hexblade',
+      level: 5,
+      race: 'halfElf',
+      subrace: null,
+      background: 'noble',
+      alignment: 'lawfulEvil',
+      abilities: { strength: 8, dexterity: 14, constitution: 14, intelligence: 10, wisdom: 10, charisma: 16 },
+      warlockInvocations: ['agonizingBlast', 'thirstingBlade'],
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'charisma' } },
+      cantrips: ['eldritchBlast', 'prestidigitation'],
+      spells: ['hex', 'armorOfAgathys', 'darkness', 'mistyStep'],
+      equipment: ['Longsword', 'Leather Armor', 'Shield', 'Component Pouch'],
+      gold: 20
+    }
+  },
+  healerCleric: {
+    id: 'healerCleric',
+    name: "The Divine Light",
+    description: "Life Domain Cleric. Ultimate healer, heavy armor, protective spells.",
+    difficulty: "Beginner",
+    tags: ["Healer", "Support", "Tank"],
+    icon: "✨",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'cleric',
+      subclass: 'life',
+      level: 5,
+      race: 'hillDwarf',
+      subrace: null,
+      background: 'acolyte',
+      alignment: 'lawfulGood',
+      abilities: { strength: 14, dexterity: 8, constitution: 14, intelligence: 10, wisdom: 16, charisma: 10 },
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'wisdom' } },
+      cantrips: ['sacredFlame', 'guidance', 'light'],
+      spells: ['healingWord', 'cureWounds', 'bless', 'spiritGuardians', 'revivify'],
+      equipment: ['Chain Mail', 'Mace', 'Shield', 'Holy Symbol', 'Priest\'s Pack'],
+      gold: 15
+    }
+  }
+};
+
+// ============================================================================
+// ONBOARDING TOUR DATA
+// ============================================================================
+
+const TOUR_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Welcome to AetherNames! 👋',
+    content: 'Create unique fantasy names and complete D&D 5e characters. This quick tour will show you around.',
+    target: null, // Full screen modal
+  },
+  {
+    id: 'generator',
+    title: 'Name Generator',
+    content: 'Generate linguistically authentic names for any fantasy or sci-fi setting. Choose a genre and click Generate!',
+    target: 'generator-tab',
+  },
+  {
+    id: 'creator',
+    title: 'Character Creator',
+    content: 'Build complete D&D 5e characters step-by-step. Race, class, abilities, spells, and equipment.',
+    target: 'creator-tab',
+  },
+  {
+    id: 'export',
+    title: 'Export Your Work',
+    content: 'Download characters as beautiful PDF sheets, or export as text/JSON. Share your creations!',
+    target: null,
+  }
+];
+
+const DID_YOU_KNOW_TIPS = [
+  "Half-Elves get +2 CHA and +1 to two other abilities of your choice!",
+  "Variant Humans can start with a feat at level 1.",
+  "Fighters get more ASIs than any other class (7 total by level 20).",
+  "Rogues can use Sneak Attack once per turn, not once per round!",
+  "Paladins can use Divine Smite after seeing if an attack hits.",
+  "Warlocks recover spell slots on a short rest, not just long rests.",
+  "The Lucky feat is often considered one of the strongest in the game.",
+  "Multiclassing requires 13 in both your current class's primary ability AND the new class's.",
+  "Druids can't wear metal armor—it's a class restriction, not a mechanical one.",
+  "The Sentinel feat can reduce an enemy's speed to 0, even on a reaction attack!",
+];
+
+// ============================================================================
+// ONBOARDING TOUR COMPONENT
+// ============================================================================
+
+const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [showTip, setShowTip] = useState(false);
+  
+  // Random tip for the end
+  const randomTip = useMemo(() => 
+    DID_YOU_KNOW_TIPS[Math.floor(Math.random() * DID_YOU_KNOW_TIPS.length)], 
+    []
+  );
+  
+  if (!isOpen) return null;
+  
+  const step = TOUR_STEPS[currentStep];
+  const isLastStep = currentStep === TOUR_STEPS.length - 1;
+  
+  const handleNext = () => {
+    if (isLastStep) {
+      if (!showTip) {
+        setShowTip(true);
+      } else {
+        LocalStorageUtil.setItem('aethernames_tour_complete', true);
+        onComplete?.();
+        onClose();
+      }
+    } else {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+  
+  const handleSkip = () => {
+    LocalStorageUtil.setItem('aethernames_tour_complete', true);
+    onClose();
+  };
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleSkip} />
+      
+      {/* Tour Card */}
+      <div className="relative bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        {/* Progress */}
+        <div className="flex gap-1 p-3 bg-slate-800/50">
+          {TOUR_STEPS.map((_, idx) => (
+            <div 
+              key={idx}
+              className={`h-1 flex-1 rounded-full transition-all ${
+                idx <= currentStep ? 'bg-indigo-500' : 'bg-slate-700'
+              }`}
+            />
+          ))}
+        </div>
+        
+        <div className="p-6">
+          {!showTip ? (
+            <>
+              <div className="text-3xl mb-3">{step.id === 'welcome' ? '🎲' : step.id === 'generator' ? '✨' : step.id === 'creator' ? '⚔️' : '📄'}</div>
+              <h2 className="text-xl font-bold text-white mb-2">{step.title}</h2>
+              <p className="text-slate-400 mb-6">{step.content}</p>
+            </>
+          ) : (
+            <>
+              <div className="text-3xl mb-3">💡</div>
+              <h2 className="text-xl font-bold text-white mb-2">Did You Know?</h2>
+              <p className="text-slate-400 mb-6">{randomTip}</p>
+            </>
+          )}
+          
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleSkip}
+              className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              Skip tour
+            </button>
+            <button
+              onClick={handleNext}
+              className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-2"
+            >
+              {showTip ? 'Get Started!' : isLastStep ? 'One More Thing...' : 'Next'}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// TEMPLATES MODAL COMPONENT
+// ============================================================================
+
+const TemplatesModal = ({ isOpen, onClose, onSelectTemplate, currentCharacter, onSaveAsTemplate }) => {
+  const [tab, setTab] = useState('iconic'); // 'iconic', 'saved', 'import'
+  const [savedTemplates, setSavedTemplates] = useState([]);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [importJson, setImportJson] = useState('');
+  const [importError, setImportError] = useState('');
+  
+  // Load saved templates on mount
+  useEffect(() => {
+    if (isOpen) {
+      const saved = LocalStorageUtil.getItem('aethernames_templates', []);
+      setSavedTemplates(saved);
+    }
+  }, [isOpen]);
+  
+  const handleSaveTemplate = () => {
+    if (!newTemplateName.trim()) return;
+    
+    const template = {
+      id: `custom_${Date.now()}`,
+      name: newTemplateName.trim(),
+      description: `Custom ${currentCharacter.class ? CLASSES[currentCharacter.class]?.name : 'character'} build`,
+      difficulty: 'Custom',
+      tags: ['Custom'],
+      icon: '📝',
+      character: { ...currentCharacter, name: '', playerName: '' },
+      createdAt: Date.now()
+    };
+    
+    const updated = [...savedTemplates, template];
+    setSavedTemplates(updated);
+    LocalStorageUtil.setItem('aethernames_templates', updated);
+    setNewTemplateName('');
+  };
+  
+  const handleDeleteTemplate = (templateId) => {
+    const updated = savedTemplates.filter(t => t.id !== templateId);
+    setSavedTemplates(updated);
+    LocalStorageUtil.setItem('aethernames_templates', updated);
+  };
+  
+  const handleImport = () => {
+    try {
+      const data = JSON.parse(importJson);
+      if (data.character && typeof data.character === 'object') {
+        onSelectTemplate(data.character);
+        onClose();
+      } else {
+        setImportError('Invalid template format');
+      }
+    } catch (e) {
+      setImportError('Invalid JSON format');
+    }
+  };
+  
+  const handleExportTemplate = (template) => {
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_template.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Modal */}
+      <div className="relative bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-indigo-400" />
+            Build Templates
+          </h2>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex border-b border-slate-700/50">
+          {[
+            { id: 'iconic', label: 'Iconic Builds', icon: '⚔️' },
+            { id: 'saved', label: 'My Templates', icon: '📁' },
+            { id: 'import', label: 'Import', icon: '📥' }
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-all ${
+                tab === t.id
+                  ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <span className="mr-1.5">{t.icon}</span>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Content */}
+        <div className="p-4 overflow-y-auto max-h-[50vh]">
+          {tab === 'iconic' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {Object.values(ICONIC_BUILDS).map(build => (
+                <button
+                  key={build.id}
+                  onClick={() => {
+                    onSelectTemplate(build.character);
+                    onClose();
+                  }}
+                  className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800 transition-all text-left group"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{build.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                        {build.name}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5 line-clamp-2">{build.description}</div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                          build.difficulty === 'Beginner' ? 'bg-green-500/20 text-green-400' :
+                          build.difficulty === 'Intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>
+                          {build.difficulty}
+                        </span>
+                        {build.tags.slice(0, 2).map(tag => (
+                          <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {tab === 'saved' && (
+            <div className="space-y-4">
+              {/* Save Current */}
+              {currentCharacter?.class && (
+                <div className="p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/30">
+                  <div className="text-sm text-indigo-300 mb-2">Save current character as template:</div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newTemplateName}
+                      onChange={(e) => setNewTemplateName(e.target.value)}
+                      placeholder="Template name..."
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                    />
+                    <button
+                      onClick={handleSaveTemplate}
+                      disabled={!newTemplateName.trim()}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {savedTemplates.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No saved templates yet.</p>
+                  <p className="text-xs mt-1">Create a character and save it as a template!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {savedTemplates.map(template => (
+                    <div
+                      key={template.id}
+                      className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 flex items-center gap-3"
+                    >
+                      <span className="text-xl">{template.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-white truncate">{template.name}</div>
+                        <div className="text-xs text-slate-500">{template.description}</div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => {
+                            onSelectTemplate(template.character);
+                            onClose();
+                          }}
+                          className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors"
+                          title="Load template"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleExportTemplate(template)}
+                          className="p-1.5 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600/50 transition-colors"
+                          title="Export as JSON"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTemplate(template.id)}
+                          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                          title="Delete template"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {tab === 'import' && (
+            <div className="space-y-4">
+              <div className="text-sm text-slate-400 mb-2">
+                Paste a template JSON to import a character build:
+              </div>
+              <textarea
+                value={importJson}
+                onChange={(e) => { setImportJson(e.target.value); setImportError(''); }}
+                placeholder='{"character": {...}}'
+                className="w-full h-40 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-600/50 text-white text-sm font-mono focus:outline-none focus:border-indigo-500/50 resize-none"
+              />
+              {importError && (
+                <div className="text-sm text-red-400">{importError}</div>
+              )}
+              <button
+                onClick={handleImport}
+                disabled={!importJson.trim()}
+                className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Import Template
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// SUBCLASS COMPARISON MODAL
+// ============================================================================
+
+const SubclassCompareModal = ({ isOpen, onClose, classId, onSelectSubclass }) => {
+  const [selectedSubclasses, setSelectedSubclasses] = useState([]);
+  
+  if (!isOpen || !classId) return null;
+  
+  const classData = CLASSES[classId];
+  if (!classData?.subclasses) return null;
+  
+  const subclassEntries = Object.entries(classData.subclasses);
+  
+  const toggleSubclass = (subclassId) => {
+    setSelectedSubclasses(prev => {
+      if (prev.includes(subclassId)) {
+        return prev.filter(id => id !== subclassId);
+      }
+      if (prev.length >= 3) {
+        return [...prev.slice(1), subclassId];
+      }
+      return [...prev, subclassId];
+    });
+  };
+  
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Modal */}
+      <div className="relative bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <Scale className="w-5 h-5 text-indigo-400" />
+            Compare {classData.name} Subclasses
+          </h2>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-4 overflow-y-auto max-h-[70vh]">
+          {/* Selection */}
+          <div className="mb-4">
+            <div className="text-sm text-slate-400 mb-2">Select up to 3 subclasses to compare:</div>
+            <div className="flex flex-wrap gap-2">
+              {subclassEntries.map(([id, sub]) => (
+                <button
+                  key={id}
+                  onClick={() => toggleSubclass(id)}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                    selectedSubclasses.includes(id)
+                      ? 'bg-indigo-500/30 border border-indigo-500/50 text-indigo-300'
+                      : 'bg-slate-800/50 border border-slate-600/50 text-slate-300 hover:border-slate-500'
+                  }`}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Comparison Table */}
+          {selectedSubclasses.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="p-3 text-left text-sm font-semibold text-slate-400 bg-slate-800/50 border-b border-slate-700/50 sticky left-0">
+                      Feature
+                    </th>
+                    {selectedSubclasses.map(id => (
+                      <th key={id} className="p-3 text-left text-sm font-semibold text-indigo-300 bg-slate-800/50 border-b border-slate-700/50 min-w-[200px]">
+                        {classData.subclasses[id].name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="p-3 text-sm text-slate-500 border-b border-slate-700/30 sticky left-0 bg-slate-900/95">
+                      Description
+                    </td>
+                    {selectedSubclasses.map(id => (
+                      <td key={id} className="p-3 text-sm text-slate-300 border-b border-slate-700/30">
+                        {classData.subclasses[id].description || 'No description available.'}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 text-sm text-slate-500 border-b border-slate-700/30 sticky left-0 bg-slate-900/95">
+                      Features
+                    </td>
+                    {selectedSubclasses.map(id => {
+                      const sub = classData.subclasses[id];
+                      const features = sub.features || [];
+                      return (
+                        <td key={id} className="p-3 text-sm text-slate-300 border-b border-slate-700/30 align-top">
+                          {features.length > 0 ? (
+                            <ul className="space-y-1">
+                              {features.slice(0, 5).map((f, i) => (
+                                <li key={i} className="text-xs">
+                                  • <span className="text-indigo-300">{f.name}</span> (Lv {f.level})
+                                </li>
+                              ))}
+                              {features.length > 5 && (
+                                <li className="text-xs text-slate-500">+{features.length - 5} more...</li>
+                              )}
+                            </ul>
+                          ) : (
+                            <span className="text-slate-500">See class description</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  {/* Bonus Spells if applicable */}
+                  {selectedSubclasses.some(id => classData.subclasses[id].bonusSpells?.length > 0) && (
+                    <tr>
+                      <td className="p-3 text-sm text-slate-500 border-b border-slate-700/30 sticky left-0 bg-slate-900/95">
+                        Bonus Spells
+                      </td>
+                      {selectedSubclasses.map(id => {
+                        const spells = classData.subclasses[id].bonusSpells || [];
+                        return (
+                          <td key={id} className="p-3 text-sm text-slate-300 border-b border-slate-700/30 align-top">
+                            {spells.length > 0 ? (
+                              <div className="text-xs text-purple-300">
+                                {spells.slice(0, 4).join(', ')}
+                                {spells.length > 4 && ` +${spells.length - 4} more`}
+                              </div>
+                            ) : (
+                              <span className="text-slate-500">None</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+          
+          {selectedSubclasses.length === 0 && (
+            <div className="text-center py-12 text-slate-500">
+              <Scale className="w-10 h-10 mx-auto mb-3 opacity-50" />
+              <p>Select subclasses above to compare them side-by-side</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Footer with Select Button */}
+        {selectedSubclasses.length === 1 && (
+          <div className="p-4 border-t border-slate-700/50 bg-slate-800/30">
+            <button
+              onClick={() => {
+                onSelectSubclass(selectedSubclasses[0]);
+                onClose();
+              }}
+              className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-all"
+            >
+              Select {classData.subclasses[selectedSubclasses[0]].name}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 // ============================================================================
@@ -4840,6 +5990,7 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
           <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 ${character.race && !showAllRaces ? 'hidden md:grid' : ''}`}>
             {Object.entries(RACES).map(([id, race]) => {
               const isSelected = selectedRaceId === id;
+              const synergy = character.class ? getClassSynergy(character.class, id) : null;
               return (
                 <button
                   key={id}
@@ -4847,15 +5998,31 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
                   className={`p-4 rounded-xl border text-left transition-all ${
                     isSelected
                       ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
-                      : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                      : synergy?.type === 'synergy'
+                        ? 'bg-green-500/10 border-green-500/30 hover:border-green-500/50'
+                        : synergy?.type === 'recommended'
+                          ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
+                          : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
                   }`}
                 >
-                  <Tooltip content={race.description}>
+                  <Tooltip content={synergy ? `${race.description}\n\n💡 ${synergy.text}` : race.description}>
                     <div className="flex items-start gap-3">
                       <div className="text-2xl">{RACE_ICONS[id] || '🧙'}</div>
-                      <div className="min-w-0">
-                        <div className={`font-semibold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
-                          {race.name}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-semibold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
+                            {race.name}
+                          </span>
+                          {synergy?.type === 'synergy' && (
+                            <span className="px-1 py-0.5 rounded text-[9px] bg-green-500/20 text-green-400 font-medium flex items-center gap-0.5">
+                              <Lightbulb className="w-2.5 h-2.5" /> Synergy
+                            </span>
+                          )}
+                          {synergy?.type === 'recommended' && (
+                            <span className="px-1 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-400 font-medium">
+                              ✓ Good
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10px] text-slate-500 mt-0.5">
                           Hover for details
@@ -6548,6 +7715,53 @@ const ReviewStep = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Generate share text (condensed version)
+  const generateShareText = () => {
+    const charName = character.name || 'Unnamed';
+    const raceName = character.race ? (character.subrace && RACES[character.race]?.subraces?.[character.subrace]?.name 
+      ? RACES[character.race].subraces[character.subrace].name 
+      : RACES[character.race]?.name) : 'Unknown';
+    const className = character.class ? CLASSES[character.class]?.name : 'Unknown';
+    const subclassName = character.subclass && classData?.subclasses?.[character.subclass] 
+      ? classData.subclasses[character.subclass].name : '';
+    const level = character.level || 1;
+    
+    return `⚔️ ${charName}\n📜 Level ${level} ${raceName} ${className}${subclassName ? ` (${subclassName})` : ''}\n\nCreated with AetherNames Character Creator`;
+  };
+
+  // Share to Twitter
+  const shareToTwitter = () => {
+    const text = encodeURIComponent(generateShareText() + '\n\nhttps://aethernames.com');
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+  };
+
+  // Share to Discord (copy formatted text)
+  const [discordCopied, setDiscordCopied] = useState(false);
+  const shareToDiscord = () => {
+    const charName = character.name || 'Unnamed';
+    const raceName = character.race ? (character.subrace && RACES[character.race]?.subraces?.[character.subrace]?.name 
+      ? RACES[character.race].subraces[character.subrace].name 
+      : RACES[character.race]?.name) : 'Unknown';
+    const className = character.class ? CLASSES[character.class]?.name : 'Unknown';
+    const subclassName = character.subclass && classData?.subclasses?.[character.subclass] 
+      ? classData.subclasses[character.subclass].name : '';
+    const level = character.level || 1;
+    
+    // Discord markdown formatted
+    const discordText = `**${charName}**
+Level ${level} ${raceName} ${className}${subclassName ? ` (${subclassName})` : ''}
+
+__Ability Scores__
+STR: ${finalAbilities?.strength || 10} | DEX: ${finalAbilities?.dexterity || 10} | CON: ${finalAbilities?.constitution || 10}
+INT: ${finalAbilities?.intelligence || 10} | WIS: ${finalAbilities?.wisdom || 10} | CHA: ${finalAbilities?.charisma || 10}
+
+*Created with AetherNames* • https://aethernames.com`;
+    
+    navigator.clipboard.writeText(discordText);
+    setDiscordCopied(true);
+    setTimeout(() => setDiscordCopied(false), 2000);
+  };
+
   // Check completion status
   const raceLanguageChoices = getRaceLanguageChoices(character.race, character.subrace);
   const bgLanguageChoices = getBackgroundLanguageChoices(character.background);
@@ -7724,6 +8938,35 @@ const ReviewStep = ({
             {copied ? 'Copied!' : 'Copy to Clipboard'}
           </button>
         </div>
+        
+        {/* Share Section */}
+        <div className="mt-3 pt-3 border-t border-slate-700/50">
+          <h5 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+            <Share2 className="w-3.5 h-3.5" />
+            Share Your Character
+          </h5>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={shareToTwitter}
+              className="px-3 py-1.5 rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-300 hover:bg-sky-500/30 transition-colors flex items-center gap-2 text-sm"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Twitter/X
+            </button>
+            <button
+              onClick={shareToDiscord}
+              className={`px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-2 text-sm ${
+                discordCopied
+                  ? 'bg-green-500/20 border-green-500/50 text-green-300'
+                  : 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/30'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              {discordCopied ? 'Copied for Discord!' : 'Discord'}
+            </button>
+          </div>
+        </div>
+        
         <div className="mt-3 pt-3 border-t border-slate-700/50">
           <button
             onClick={resetCharacter}
@@ -9537,7 +10780,7 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
 // CLASS SELECTION STEP (PHASE 4)
 // ============================================================================
 
-const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, setRandomWithMulticlass }) => {
+const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, setRandomWithMulticlass, onShowCompare }) => {
   const [showAllClasses, setShowAllClasses] = useState(!character.class);
   const [multiclassExpanded, setMulticlassExpanded] = useState(randomWithMulticlass || (character.multiclass?.length > 0));
   const selectedClassId = character.class;
@@ -9888,11 +11131,22 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                 {/* Subclass Selection */}
                 {character.level >= selectedClass.subclassLevel && SUBCLASSES[selectedClassId] && (
                   <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Star className="w-4 h-4 text-amber-400" />
-                      <div className="text-xs text-amber-300 font-semibold">
-                        Choose Your {selectedClass.subclassName}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-amber-400" />
+                        <div className="text-xs text-amber-300 font-semibold">
+                          Choose Your {selectedClass.subclassName}
+                        </div>
                       </div>
+                      {Object.keys(SUBCLASSES[selectedClassId]).length > 2 && onShowCompare && (
+                        <button
+                          onClick={onShowCompare}
+                          className="px-2 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[10px] font-medium hover:bg-indigo-500/30 transition-all flex items-center gap-1"
+                        >
+                          <Scale className="w-3 h-3" />
+                          Compare
+                        </button>
+                      )}
                     </div>
                     <div className="space-y-2">
                       {Object.entries(SUBCLASSES[selectedClassId]).map(([subId, sub]) => {
@@ -11128,6 +12382,14 @@ const CharacterCreator = ({
     }
     return defaultCharacter;
   });
+  
+  // Modal states
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showSubclassCompare, setShowSubclassCompare] = useState(false);
+  const [showTour, setShowTour] = useState(() => {
+    // Show tour on first visit
+    return !LocalStorageUtil.getItem('aethernames_tour_complete', false);
+  });
 
   // Save character state to localStorage whenever it changes
   useEffect(() => {
@@ -11426,8 +12688,42 @@ const CharacterCreator = ({
     }
   };
 
+  // Load template into character
+  const loadTemplate = (templateCharacter) => {
+    setCharacter(prev => ({
+      ...defaultCharacter,
+      ...templateCharacter,
+      name: prev.name || '', // Keep current name if set
+      playerName: prev.playerName || '' // Keep current player name
+    }));
+    setCurrentStep(0); // Go to first step
+  };
+
   return (
     <div ref={containerRef} className="space-y-4 md:space-y-6 overflow-x-hidden">
+      {/* Onboarding Tour */}
+      <OnboardingTour 
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={() => setShowTour(false)}
+      />
+      
+      {/* Templates Modal */}
+      <TemplatesModal
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onSelectTemplate={loadTemplate}
+        currentCharacter={character}
+      />
+      
+      {/* Subclass Compare Modal */}
+      <SubclassCompareModal
+        isOpen={showSubclassCompare}
+        onClose={() => setShowSubclassCompare(false)}
+        classId={character.class}
+        onSelectSubclass={(subclassId) => updateCharacter('subclass', subclassId)}
+      />
+      
       {/* Step Progress Bar */}
       <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-4 border border-slate-800/50 relative z-10">
         <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -11436,9 +12732,26 @@ const CharacterCreator = ({
             <span className="md:hidden">5e CC</span>
             <span className="hidden md:inline">5e-Compatible Character Creator</span>
           </h2>
-          <span className="text-xs md:text-sm text-slate-400">
-            Step {currentStep + 1} of {steps.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowTemplates(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-medium hover:bg-indigo-500/30 transition-all flex items-center gap-1.5"
+              title="Build Templates"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Templates</span>
+            </button>
+            <button
+              onClick={() => setShowTour(true)}
+              className="p-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all"
+              title="Show Tour"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+            <span className="text-xs md:text-sm text-slate-400 ml-1">
+              Step {currentStep + 1} of {steps.length}
+            </span>
+          </div>
         </div>
         
         {/* Mobile: Compact Progress Dots + Current Step Name */}
@@ -11764,6 +13077,7 @@ const CharacterCreator = ({
             updateCharacter={updateCharacter}
             randomWithMulticlass={randomWithMulticlass}
             setRandomWithMulticlass={setRandomWithMulticlass}
+            onShowCompare={() => setShowSubclassCompare(true)}
           />
         )}
 
@@ -13525,6 +14839,9 @@ export default function AetherNames() {
           setCharacterImportName(`DEV_TEST:${testType}`);
         }}
       />
+      
+      {/* Floating Dice Roller - Available on all pages */}
+      <DiceRoller />
     </div>
   );
 }
