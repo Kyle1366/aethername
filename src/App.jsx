@@ -5637,7 +5637,7 @@ const ReviewStep = ({
   };
 
   // Generate beautiful PDF character sheet
-  const generatePDFExport = () => {
+  const generatePDFExport = (printerFriendly = false) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -5646,8 +5646,24 @@ const ReviewStep = ({
     let y = margin;
     let currentPage = 1;
 
-    // Color palette - Dark Fantasy RPG theme
-    const colors = {
+    // Color palette - Dark Fantasy RPG theme OR Printer-Friendly B&W
+    const colors = printerFriendly ? {
+      // Printer-friendly black & white
+      pageBg: [255, 255, 255],
+      cardBg: [250, 250, 250],
+      gold: [60, 60, 60],
+      lightGold: [30, 30, 30],
+      bronze: [80, 80, 80],
+      darkPurple: [200, 200, 200],
+      headerBg: [230, 230, 230],
+      accentPurple: [80, 80, 80],
+      textLight: [20, 20, 20],
+      textMuted: [100, 100, 100],
+      textGold: [40, 40, 40],
+      silver: [60, 60, 60],
+      accentBlue: [60, 60, 60],
+      accentRed: [60, 60, 60]
+    } : {
       // Background colors
       pageBg: [35, 32, 45],           // Dark slate purple
       cardBg: [45, 42, 58],           // Slightly lighter card background
@@ -6326,14 +6342,23 @@ const ReviewStep = ({
       let equipCol2Y = col2Y;
       
       equipmentNoGP.forEach((item, idx) => {
-        const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
-        // Truncate long items
+        let cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
+        // Shorten long items - remove parenthetical details first
         const maxItemWidth = equipColWidth - 4;
         let displayItem = cleanItem;
+        // If too long, try removing parenthetical content
+        if (doc.getTextWidth(displayItem) > maxItemWidth && displayItem.includes('(')) {
+          displayItem = displayItem.replace(/\s*\([^)]+\)/g, '').trim();
+        }
+        // If still too long, truncate
         while (doc.getTextWidth(displayItem) > maxItemWidth && displayItem.length > 5) {
           displayItem = displayItem.slice(0, -1);
         }
-        if (displayItem !== cleanItem) displayItem += '…';
+        if (displayItem !== cleanItem && !cleanItem.startsWith(displayItem.replace('…', ''))) {
+          displayItem = displayItem.trim();
+        } else if (displayItem.length < cleanItem.length && !displayItem.endsWith('…')) {
+          displayItem = displayItem.trim() + '…';
+        }
         
         // Alternate between columns
         if (idx % 2 === 0) {
@@ -6474,8 +6499,15 @@ const ReviewStep = ({
       
       if (format === 'pdf') {
         // Generate and download PDF
-        const doc = generatePDFExport();
+        const doc = generatePDFExport(false);
         doc.save(`${character.name || 'character'}.pdf`);
+        return;
+      }
+      
+      if (format === 'pdf-print') {
+        // Generate and download printer-friendly PDF
+        const doc = generatePDFExport(true);
+        doc.save(`${character.name || 'character'}-printable.pdf`);
         return;
       }
       
@@ -7654,6 +7686,13 @@ const ReviewStep = ({
           >
             <FileText className="w-4 h-4" />
             Download PDF
+          </button>
+          <button
+            onClick={() => handleExport('pdf-print')}
+            className="px-4 py-2 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 hover:bg-white transition-colors flex items-center gap-2 font-medium"
+          >
+            <FileText className="w-4 h-4" />
+            Print-Friendly
           </button>
           <button
             onClick={() => handleExport('txt')}
