@@ -5916,11 +5916,31 @@ const ReviewStep = ({
     } else {
       classText = primaryClassText;
     }
-    doc.setFontSize(14);
+    
+    // Auto-size class text to fit within margins
+    let classFontSize = 14;
     doc.setFont('times', 'italic');
+    doc.setFontSize(classFontSize);
+    let classWidth = doc.getTextWidth(classText);
+    const maxClassWidth = pageWidth - 2 * margin - 20; // Leave some padding
+    
+    while (classWidth > maxClassWidth && classFontSize > 8) {
+      classFontSize -= 1;
+      doc.setFontSize(classFontSize);
+      classWidth = doc.getTextWidth(classText);
+    }
+    
+    // If still too long, wrap to multiple lines
     doc.setTextColor(255, 255, 255);
-    const classWidth = doc.getTextWidth(classText);
-    doc.text(classText, (pageWidth - classWidth) / 2, margin + 18);
+    if (classWidth > maxClassWidth) {
+      const classLines = doc.splitTextToSize(classText, maxClassWidth);
+      classLines.forEach((line, idx) => {
+        const lineWidth = doc.getTextWidth(line);
+        doc.text(line, (pageWidth - lineWidth) / 2, margin + 18 + idx * 4);
+      });
+    } else {
+      doc.text(classText, (pageWidth - classWidth) / 2, margin + 18);
+    }
     
     // Race & Background - centered below class
     const raceText = `${race?.name || 'Unknown'}${subrace ? ` (${subrace.name})` : ''}`;
@@ -6176,20 +6196,44 @@ const ReviewStep = ({
       const gpText = totalGP > 0 ? `${totalGP} GP` : null;
       col2Y = drawColumnHeader('EQUIPMENT', col2Y, col2X, colWidth, gpText);
       
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
       
+      // 2-column layout for equipment within column 2
+      const equipColWidth = (colWidth - 4) / 2;
+      const equipCol1X = col2X + 1;
+      const equipCol2X = col2X + equipColWidth + 3;
+      let equipCol1Y = col2Y;
+      let equipCol2Y = col2Y;
+      
       equipmentNoGP.forEach((item, idx) => {
-        if (col2Y + 4 > maxY) return; // Stop if overflow
-        
         const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
+        // Truncate long items
+        const maxItemWidth = equipColWidth - 4;
+        let displayItem = cleanItem;
+        while (doc.getTextWidth(displayItem) > maxItemWidth && displayItem.length > 5) {
+          displayItem = displayItem.slice(0, -1);
+        }
+        if (displayItem !== cleanItem) displayItem += '…';
         
-        doc.setFillColor(...colors.gold);
-        doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
-        doc.text(cleanItem, col2X + 5, col2Y + 2);
-        col2Y += 4;
+        // Alternate between columns
+        if (idx % 2 === 0) {
+          if (equipCol1Y + 3.5 > maxY) return;
+          doc.setFillColor(...colors.gold);
+          doc.circle(equipCol1X + 1, equipCol1Y + 0.8, 0.6, 'F');
+          doc.text(displayItem, equipCol1X + 3, equipCol1Y + 1.5);
+          equipCol1Y += 3.5;
+        } else {
+          if (equipCol2Y + 3.5 > maxY) return;
+          doc.setFillColor(...colors.gold);
+          doc.circle(equipCol2X + 1, equipCol2Y + 0.8, 0.6, 'F');
+          doc.text(displayItem, equipCol2X + 3, equipCol2Y + 1.5);
+          equipCol2Y += 3.5;
+        }
       });
+      
+      col2Y = Math.max(equipCol1Y, equipCol2Y) + 1;
     }
     
     // Level Advancements in column 2
@@ -6302,12 +6346,13 @@ const ReviewStep = ({
     // ============== COLUMN 3: SPELLCASTING ==============
     if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
       col3Y = drawColumnHeader('SPELLCASTING', col3Y, col3X, colWidth);
+      col3Y += 1; // Extra space after header
       
       const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       
       // Spell stats
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
       doc.text(`DC ${spellDC} • ATK +${spellAttack}`, col3X + 2, col3Y);
@@ -11143,15 +11188,19 @@ const CharacterCreator = ({
         break;
         
       case 'allFeatures':
-        // Fighter with many features at level 10
-        testCharacter = generateRandomCharacter('Test Features', false);
+        // Battle Master Fighter with maneuvers at level 10
+        testCharacter = generateRandomCharacter('Battle Master Test', false);
         testCharacter.class = 'fighter';
         testCharacter.level = 10;
-        testCharacter.subclass = 'champion';
+        testCharacter.subclass = 'battleMaster';
         testCharacter.fightingStyle = 'dueling';
+        testCharacter.battleMasterManeuvers = [
+          'commandersStrike', 'maneuveringAttack', 'rally', 
+          'sweepingAttack', 'disarmingAttack', 'distractingStrike', 'evasiveFootwork'
+        ];
         testCharacter.asiChoices = {
-          4: { type: 'feat', feat: 'great-weapon-master' },
-          6: { type: 'feat', feat: 'sentinel' },
+          4: { type: 'feat', feat: 'sentinel' },
+          6: { type: 'feat', feat: 'polearmMaster' },
           8: { type: 'asi', asiType: 'single', singleAbility: 'strength' }
         };
         break;
@@ -11191,7 +11240,7 @@ const CharacterCreator = ({
         ];
         testCharacter.fightingStyle = 'defense';
         testCharacter.warlockInvocations = ['agonizingBlast', 'repellingBlast', 'devilsSight'];
-        testCharacter.metamagicOptions = ['quickened', 'twinned'];
+        testCharacter.metamagicOptions = ['quickenedSpell', 'twinnedSpell'];
         testCharacter.equipment = [
           'Plate Armor', 'Greatsword', 'Shield', 'Javelin (5)', 'Backpack',
           'Bedroll', 'Mess Kit', 'Tinderbox', '10 torches', 'Rations (10 days)',
