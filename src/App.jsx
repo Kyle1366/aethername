@@ -5206,7 +5206,21 @@ const ReviewStep = ({
     return out;
   })();
 
-  const spellcastingInfo = character.class ? getSpellcastingInfo(character.class, totalLevel) : null;
+  // Get spellcasting info - check primary class and all multiclass entries
+  const spellcastingInfo = (() => {
+    // Check primary class first
+    const primaryInfo = character.class ? getSpellcastingInfo(character.class, primaryLevel) : null;
+    if (primaryInfo?.available) return primaryInfo;
+    
+    // Check multiclass entries
+    if (character.multiclass && character.multiclass.length > 0) {
+      for (const mc of character.multiclass) {
+        const mcInfo = getSpellcastingInfo(mc.classId, mc.level);
+        if (mcInfo?.available) return mcInfo;
+      }
+    }
+    return primaryInfo; // Return primary even if null/not available
+  })();
 
   // Calculate derived stats
   const proficiencyBonus = Math.ceil(totalLevel / 4) + 1; // +2 at level 1
@@ -6008,103 +6022,102 @@ const ReviewStep = ({
 
     y += 34;
 
-    // ============== PHYSICAL CHARACTERISTICS (compact row) ==============
-    const physChars = character.physicalCharacteristics || {};
-    const hasPhysChars = physChars.age || physChars.height || physChars.weight || physChars.eyes || physChars.hair || physChars.skin;
+    // ============== PROFICIENCIES (4-column compact layout) ==============
+    y = drawSectionHeader('PROFICIENCIES', y) + 2;
     
-    if (hasPhysChars) {
-      // Compact inline display
-      doc.setFontSize(8);
-      doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.textMuted);
-      
-      const physItems = [];
-      if (physChars.age) physItems.push(`Age: ${physChars.age}`);
-      if (physChars.height) physItems.push(`Ht: ${physChars.height}`);
-      if (physChars.weight) physItems.push(`Wt: ${physChars.weight}`);
-      if (physChars.eyes) physItems.push(`Eyes: ${physChars.eyes}`);
-      if (physChars.hair) physItems.push(`Hair: ${physChars.hair}`);
-      if (physChars.skin) physItems.push(`Skin: ${physChars.skin}`);
-      
-      const physText = physItems.join('  •  ');
-      const physWidth = doc.getTextWidth(physText);
-      doc.text(physText, (pageWidth - physWidth) / 2, y);
-      y += 5;
-    }
-
-    // ============== PROFICIENCIES ==============
-    y = drawSectionHeader('PROFICIENCIES', y) + 3;
+    // 4 columns: Saves | Skills | Languages | Physical
+    const profColWidth = (pageWidth - 2 * margin - 9) / 4;
+    const profCol1X = margin + 2;  // Saves
+    const profCol2X = margin + 2 + profColWidth + 3;  // Skills
+    const profCol3X = margin + 2 + 2 * (profColWidth + 3);  // Languages
+    const profCol4X = margin + 2 + 3 * (profColWidth + 3);  // Physical
     
-    // Three-column layout: Saves | Skills (2 cols)
-    const saveColX = margin + 3;
-    const skillCol1X = margin + 55;
-    const skillCol2X = margin + 115;
+    const profStartY = y;
+    let maxProfY = profStartY;
     
-    // Saving Throws header
-    doc.setFontSize(11);
+    // Column 1: Saving Throws
+    doc.setFontSize(8);
     doc.setFont('times', 'bold');
     doc.setTextColor(...colors.accentPurple);
-    doc.text('SAVING THROWS', saveColX, y);
-    doc.setDrawColor(...colors.gold);
-    doc.setLineWidth(0.5);
-    doc.line(saveColX, y + 1.5, saveColX + 38, y + 1.5);
+    doc.text('SAVES', profCol1X, profStartY);
     
-    // Skills header
-    doc.setTextColor(...colors.accentPurple);
-    doc.text('SKILLS', skillCol1X, y);
-    doc.line(skillCol1X, y + 1.5, skillCol1X + 18, y + 1.5);
-    
-    const profStartY = y + 6;
-    
-    // Saving Throws list
-    doc.setFontSize(11);
+    let saveY = profStartY + 4;
+    doc.setFontSize(8);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textLight);
-    
-    proficiencies.savingThrows.forEach((save, idx) => {
+    proficiencies.savingThrows.forEach((save) => {
       doc.setFillColor(...colors.gold);
-      doc.circle(saveColX + 2, profStartY + idx * 5, 1, 'F');
-      doc.text(save, saveColX + 6, profStartY + idx * 5 + 1.5);
+      doc.circle(profCol1X + 1, saveY, 0.8, 'F');
+      doc.text(save, profCol1X + 4, saveY + 1);
+      saveY += 3.5;
     });
+    maxProfY = Math.max(maxProfY, saveY);
     
-    // Skills - two columns
-    const skillsPerCol = Math.ceil(proficiencies.skills.length / 2);
-    proficiencies.skills.forEach((skill, idx) => {
-      const col = idx < skillsPerCol ? 0 : 1;
-      const rowIdx = col === 0 ? idx : idx - skillsPerCol;
-      const skillX = col === 0 ? skillCol1X : skillCol2X;
-      const bulletY = profStartY + rowIdx * 5;
-      
+    // Column 2: Skills
+    doc.setFontSize(8);
+    doc.setFont('times', 'bold');
+    doc.setTextColor(...colors.accentPurple);
+    doc.text('SKILLS', profCol2X, profStartY);
+    
+    let skillY = profStartY + 4;
+    doc.setFontSize(8);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...colors.textLight);
+    proficiencies.skills.forEach((skill) => {
       doc.setFillColor(...colors.accentPurple);
-      doc.circle(skillX + 2, bulletY, 1, 'F');
-      doc.text(skill, skillX + 6, bulletY + 1.5);
+      doc.circle(profCol2X + 1, skillY, 0.8, 'F');
+      doc.text(skill, profCol2X + 4, skillY + 1);
+      skillY += 3.5;
     });
+    maxProfY = Math.max(maxProfY, skillY);
     
-    y = profStartY + Math.max(proficiencies.savingThrows.length * 5, skillsPerCol * 5) + 2;
+    // Column 3: Languages
+    doc.setFontSize(8);
+    doc.setFont('times', 'bold');
+    doc.setTextColor(...colors.accentPurple);
+    doc.text('LANGUAGES', profCol3X, profStartY);
     
-    // Languages
-    if (proficiencies.languages && proficiencies.languages.length > 0) {
-      doc.setFontSize(10);
+    let langY = profStartY + 4;
+    doc.setFontSize(8);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...colors.textLight);
+    (proficiencies.languages || []).forEach((lang) => {
+      doc.setFillColor(...colors.gold);
+      doc.circle(profCol3X + 1, langY, 0.8, 'F');
+      doc.text(lang, profCol3X + 4, langY + 1);
+      langY += 3.5;
+    });
+    maxProfY = Math.max(maxProfY, langY);
+    
+    // Column 4: Physical Characteristics
+    const physCharsLocal = character.physicalCharacteristics || {};
+    const physTraits = [
+      physCharsLocal.age ? `Age: ${physCharsLocal.age}` : null,
+      physCharsLocal.height ? `Ht: ${physCharsLocal.height}` : null,
+      physCharsLocal.weight ? `Wt: ${physCharsLocal.weight}` : null,
+      physCharsLocal.eyes ? `Eyes: ${physCharsLocal.eyes}` : null,
+      physCharsLocal.hair ? `Hair: ${physCharsLocal.hair}` : null,
+      physCharsLocal.skin ? `Skin: ${physCharsLocal.skin}` : null
+    ].filter(Boolean);
+    
+    if (physTraits.length > 0) {
+      doc.setFontSize(8);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
-      doc.text('LANGUAGES', margin + 3, y);
+      doc.text('PHYSICAL', profCol4X, profStartY);
       
-      doc.setDrawColor(...colors.gold);
-      doc.line(margin + 3, y + 1.5, margin + 33, y + 1.5);
-      
-      y += 5;
-      doc.setFontSize(11);
+      let physY = profStartY + 4;
+      doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
-      const langText = proficiencies.languages.join(', ');
-      const langLines = doc.splitTextToSize(langText, pageWidth - 2 * margin - 6);
-      langLines.forEach((line, idx) => {
-        doc.text(line, margin + 5, y + idx * 4);
+      physTraits.forEach((trait) => {
+        doc.text(trait, profCol4X + 1, physY + 1);
+        physY += 3.5;
       });
-      y += langLines.length * 4 + 2;
+      maxProfY = Math.max(maxProfY, physY);
     }
-
-    y += 3;
+    
+    y = maxProfY + 3;
 
     // ============== THREE-COLUMN LAYOUT FOR BOTTOM SECTIONS ==============
     const threeColStartY = y;
@@ -6475,38 +6488,6 @@ const ReviewStep = ({
       }
     }
     
-    // Physical characteristics in column 3 if space
-    if (character.physicalCharacteristics && col3Y + 20 < maxY) {
-      const physicalTraits = [
-        { label: 'Age', value: character.physicalCharacteristics.age },
-        { label: 'Height', value: character.physicalCharacteristics.height },
-        { label: 'Weight', value: character.physicalCharacteristics.weight },
-        { label: 'Eyes', value: character.physicalCharacteristics.eyes },
-        { label: 'Hair', value: character.physicalCharacteristics.hair },
-        { label: 'Skin', value: character.physicalCharacteristics.skin }
-      ].filter(t => t.value);
-      
-      if (physicalTraits.length > 0) {
-        col3Y += 3;
-        doc.setFontSize(8);
-        doc.setFont('times', 'bold');
-        doc.setTextColor(...colors.accentPurple);
-        doc.text('Physical', col3X + 2, col3Y);
-        col3Y += 4;
-        
-        doc.setFontSize(7);
-        doc.setFont('times', 'normal');
-        physicalTraits.forEach((trait) => {
-          if (col3Y + 3 > maxY) return;
-          doc.setTextColor(...colors.textMuted);
-          doc.text(`${trait.label}:`, col3X + 2, col3Y);
-          doc.setTextColor(...colors.textLight);
-          doc.text(String(trait.value), col3X + 18, col3Y);
-          col3Y += 3;
-        });
-      }
-    }
-
     // Add footer to current page
     addFooter(currentPage);
     
