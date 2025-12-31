@@ -8737,6 +8737,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                   <div className="text-xs text-purple-400 font-medium mb-2">Cantrips</div>
                   {selectedCantrips.map(spellId => {
                     const spell = SPELLS[spellId];
+                    if (!spell) return null; // Skip invalid spell IDs
                     return (
                       <div
                         key={spellId}
@@ -8758,9 +8759,10 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
               )}
               {selectedSpells.length > 0 && (
                 <div>
-                  <div className="text-xs text-indigo-400 font-medium mb-2">1st Level Spells</div>
+                  <div className="text-xs text-indigo-400 font-medium mb-2">Spells</div>
                   {selectedSpells.map(spellId => {
                     const spell = SPELLS[spellId];
+                    if (!spell) return null; // Skip invalid spell IDs
                     return (
                       <div
                         key={spellId}
