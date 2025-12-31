@@ -126,18 +126,48 @@ const DiceRoller = () => {
     return 'text-white';
   };
 
-  // Get dice face shape based on type
-  const getDiceShape = () => {
-    switch(diceType) {
-      case 4: return 'polygon(50% 0%, 0% 100%, 100% 100%)'; // Triangle
-      case 6: return 'none'; // Square (default)
-      case 8: return 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'; // Diamond
-      case 10: return 'polygon(50% 0%, 90% 35%, 75% 100%, 25% 100%, 10% 35%)'; // Pentagon-ish
-      case 12: return 'polygon(50% 0%, 85% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 15% 20%)'; // Heptagon
-      case 20: return 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)'; // Hexagon (icosahedron face)
-      case 100: return 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)'; // Octagon
-      default: return 'none';
-    }
+  // SVG dice icons from game-icons.net (CC BY 3.0 - Skoll & Delapouite)
+  const DiceIcons = {
+    d4: (
+      <svg viewBox="0 0 512 512" className="w-full h-full">
+        <path d="M248.5 22.63L18.75 489.4h459.5L248.5 22.63zm0 89.77l124.6 252.3h-51.5l-22.8-46.4H200.1l-23.5 46.4h-51.4l123.3-252.3zm0 74.7l-51.6 104.6h102.4l-50.8-104.6z" fill="currentColor"/>
+      </svg>
+    ),
+    d6: (
+      <svg viewBox="0 0 512 512" className="w-full h-full">
+        <path d="M255.76 44.764c-6.176 0-12.353 1.384-17.137 4.152L85.87 137.276c-9.57 5.536-9.57 14.29 0 19.826l152.753 88.36c9.57 5.536 24.703 5.536 34.272 0l152.753-88.36c9.57-5.535 9.57-14.29 0-19.825l-152.753-88.36c-4.785-2.77-10.96-4.153-17.136-4.153zm-.824 44.653c5.594 0 10.135 4.54 10.135 10.135 0 5.593-4.54 10.134-10.135 10.134-5.594 0-10.135-4.54-10.135-10.134 0-5.594 4.54-10.135 10.135-10.135zm-82.538 47.67c5.594 0 10.135 4.54 10.135 10.135 0 5.593-4.54 10.134-10.135 10.134-5.594 0-10.135-4.54-10.135-10.134 0-5.594 4.54-10.134 10.135-10.134zm165.622 0c5.594 0 10.135 4.54 10.135 10.135 0 5.593-4.54 10.134-10.135 10.134-5.593 0-10.135-4.54-10.135-10.134 0-5.594 4.542-10.134 10.135-10.134zM67.26 176.008c-5.09 0-9.21 4.09-9.21 9.18v141.3c0 5.09 4.12 9.18 9.21 9.18h72.01l60.6-35.016c-1.44-.49-2.87-.997-4.26-1.55-3.11-1.23-6.1-2.62-8.91-4.24-3.33-1.92-6.42-4.12-9.22-6.63-3.7-3.31-6.95-7.11-9.66-11.37-1.84-2.91-3.42-6.03-4.72-9.32-.64-1.62-1.22-3.28-1.73-4.98-.5-1.7-.92-3.45-1.27-5.24-.48-2.4-.82-4.86-1.02-7.38-.23-2.52-.32-5.1-.27-7.75.04-2.64.2-5.35.48-8.12.16-1.59.37-3.2.63-4.84H67.26zm377.48 0c5.09 0 9.21 4.09 9.21 9.18v141.3c0 5.09-4.12 9.18-9.21 9.18h-72.01l-60.6-35.016c1.44-.49 2.87-.997 4.26-1.55 3.11-1.23 6.1-2.62 8.91-4.24 3.33-1.92 6.42-4.12 9.22-6.63 3.7-3.31 6.95-7.11 9.66-11.37 1.84-2.91 3.42-6.03 4.72-9.32.64-1.62 1.22-3.28 1.73-4.98.5-1.7.92-3.45 1.27-5.24.48-2.4.82-4.86 1.02-7.38.23-2.52.32-5.1.27-7.75-.04-2.64-.2-5.35-.48-8.12-.16-1.59-.37-3.2-.63-4.84h91.89zM255.76 264.408c-5.593 0-10.134 4.54-10.134 10.135 0 5.594 4.54 10.135 10.134 10.135 5.594 0 10.135-4.54 10.135-10.135 0-5.594-4.54-10.135-10.135-10.135zM85.87 354.896c-9.57 5.537-9.57 14.29 0 19.826l152.753 88.36c9.57 5.536 24.703 5.536 34.272 0l152.753-88.36c9.57-5.537 9.57-14.29 0-19.826l-152.753-88.36c-9.57-5.536-24.703-5.536-34.272 0l-152.753 88.36zm169.89 19.69c5.594 0 10.135 4.54 10.135 10.134 0 5.594-4.54 10.135-10.135 10.135-5.593 0-10.134-4.54-10.134-10.135 0-5.594 4.54-10.135 10.134-10.135zm-82.538 47.67c5.594 0 10.135 4.54 10.135 10.134 0 5.594-4.54 10.134-10.135 10.134-5.594 0-10.135-4.54-10.135-10.134 0-5.594 4.54-10.135 10.135-10.135zm165.622 0c5.594 0 10.135 4.54 10.135 10.134 0 5.594-4.54 10.134-10.135 10.134-5.593 0-10.135-4.54-10.135-10.134 0-5.594 4.542-10.135 10.135-10.135z" fill="currentColor"/>
+      </svg>
+    ),
+    d8: (
+      <svg viewBox="0 0 512 512" className="w-full h-full">
+        <path d="M256 23L89 256l167 233 167-233L256 23zm0 79l100 154-100 130-100-130 100-154z" fill="currentColor"/>
+      </svg>
+    ),
+    d10: (
+      <svg viewBox="0 0 512 512" className="w-full h-full">
+        <path d="M250.97 21.69L52.03 184.1 250.97 490.3V21.69zm10.06 0V490.3l198.94-306.2L261.03 21.69zM256 150.8l-88.2 99.1 88.2 135.8 88.2-135.8-88.2-99.1z" fill="currentColor"/>
+      </svg>
+    ),
+    d12: (
+      <svg viewBox="0 0 512 512" className="w-full h-full">
+        <path d="M256 18.4L62.87 119.9V358L256 493.6 449.1 358V119.9L256 18.4zm0 39.2l156.3 82.5H99.7L256 57.6zm-176 94.9h352V337L256 449.4 80 337V152.5zm176 2.1l-86.4 62.8 33 101.5h106.8l33-101.5L256 154.6z" fill="currentColor"/>
+      </svg>
+    ),
+    d20: (
+      <svg viewBox="0 0 512 512" className="w-full h-full">
+        <path d="M256 18.56L20.11 164.13V350.1L256 493.44l235.89-143.34V164.13L256 18.56zm0 37.56l188.57 114.7L256 243.25 67.43 170.82 256 56.12zm-204.63 139.7L236.3 259v181.88L51.37 328V195.82zm409.26 0V328l-184.93 112.88V259l184.93-63.18z" fill="currentColor"/>
+      </svg>
+    ),
+    d100: (
+      <svg viewBox="0 0 512 512" className="w-full h-full">
+        <path d="M256 26c-127 0-230 103-230 230s103 230 230 230 230-103 230-230S383 26 256 26zm0 30c110.5 0 200 89.5 200 200s-89.5 200-200 200S56 366.5 56 256 145.5 56 256 56zm0 50c-82.8 0-150 67.2-150 150s67.2 150 150 150 150-67.2 150-150-67.2-150-150-150zm0 30c66.3 0 120 53.7 120 120s-53.7 120-120 120-120-53.7-120-120 53.7-120 120-120z" fill="currentColor"/>
+      </svg>
+    ),
+  };
+
+  const getDiceIcon = () => {
+    const iconKey = `d${diceType}`;
+    return DiceIcons[iconKey] || DiceIcons.d20;
   };
 
   const getDiceColor = () => {
@@ -175,49 +205,66 @@ const DiceRoller = () => {
           </div>
           
           {/* 3D Dice Display */}
-          <div className="relative h-32 flex items-center justify-center mb-3 overflow-hidden rounded-lg bg-slate-800/50 border border-slate-700/30">
+          <div className="relative h-36 flex items-center justify-center mb-3 overflow-hidden rounded-lg bg-slate-800/50 border border-slate-700/30">
             {/* Dice shadow */}
             <div 
-              className={`absolute bottom-2 w-16 h-4 bg-black/30 rounded-full blur-md transition-all duration-300 ${
-                rolling ? 'scale-75 opacity-50' : 'scale-100 opacity-100'
+              className={`absolute bottom-3 w-20 h-5 bg-black/40 rounded-full blur-lg transition-all duration-300 ${
+                rolling ? 'scale-50 opacity-30' : 'scale-100 opacity-100'
               }`}
             />
             
             {/* Animated Dice */}
             <div
-              className={`relative transition-all duration-100 ${rolling ? 'scale-90' : 'scale-100'}`}
+              className={`relative transition-all ${rolling ? 'duration-75' : 'duration-300'}`}
               style={{
-                transform: `perspective(200px) rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg) rotateZ(${diceRotation.z}deg)`,
+                transform: `perspective(200px) rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg) rotateZ(${diceRotation.z}deg) ${rolling ? 'scale(0.85)' : 'scale(1)'}`,
                 transformStyle: 'preserve-3d',
               }}
             >
               <div 
-                className={`w-20 h-20 bg-gradient-to-br ${getDiceColor()} rounded-lg flex items-center justify-center shadow-xl border-2 border-white/20 transition-colors duration-300`}
+                className={`w-24 h-24 bg-gradient-to-br ${getDiceColor()} rounded-xl flex items-center justify-center shadow-2xl transition-all duration-300 relative overflow-hidden`}
                 style={{
-                  clipPath: getDiceShape(),
                   boxShadow: rolling 
-                    ? '0 0 30px rgba(99, 102, 241, 0.5), inset 0 0 20px rgba(255,255,255,0.1)' 
+                    ? '0 0 40px rgba(99, 102, 241, 0.6), inset 0 0 30px rgba(255,255,255,0.15)' 
                     : result === 20 && diceType === 20 
-                      ? '0 0 40px rgba(234, 179, 8, 0.6), inset 0 0 20px rgba(255,255,255,0.2)'
+                      ? '0 0 50px rgba(234, 179, 8, 0.7), 0 0 100px rgba(234, 179, 8, 0.3), inset 0 0 30px rgba(255,255,255,0.2)'
                       : result === 1 && diceType === 20
-                        ? '0 0 40px rgba(239, 68, 68, 0.6)'
-                        : '0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.1)'
+                        ? '0 0 50px rgba(239, 68, 68, 0.7), inset 0 0 20px rgba(0,0,0,0.3)'
+                        : '0 15px 40px rgba(0,0,0,0.4), inset 0 0 30px rgba(255,255,255,0.1)'
                 }}
               >
-                <span className={`text-3xl font-bold text-white drop-shadow-lg ${rolling ? 'blur-[1px]' : ''}`}>
+                {/* Dice shape outline */}
+                <div className="absolute inset-2 text-white/20">
+                  {getDiceIcon()}
+                </div>
+                
+                {/* Result number */}
+                <span className={`text-4xl font-bold text-white drop-shadow-lg relative z-10 ${rolling ? 'blur-[2px] animate-pulse' : ''}`}>
                   {result || '?'}
                 </span>
+                
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none" />
               </div>
             </div>
             
             {/* Sparkles for nat 20 */}
             {result === 20 && diceType === 20 && !rolling && (
               <>
-                <div className="absolute top-2 left-4 text-yellow-400 animate-ping">✦</div>
-                <div className="absolute top-4 right-6 text-yellow-400 animate-ping animation-delay-100">✦</div>
-                <div className="absolute bottom-4 left-8 text-yellow-400 animate-ping animation-delay-200">✦</div>
-                <div className="absolute bottom-6 right-4 text-yellow-400 animate-ping animation-delay-300">✦</div>
+                <div className="absolute top-3 left-6 text-xl text-yellow-400 animate-ping">✦</div>
+                <div className="absolute top-5 right-8 text-lg text-yellow-400 animate-ping" style={{animationDelay: '0.1s'}}>✦</div>
+                <div className="absolute bottom-5 left-10 text-lg text-yellow-400 animate-ping" style={{animationDelay: '0.2s'}}>✦</div>
+                <div className="absolute bottom-3 right-6 text-xl text-yellow-400 animate-ping" style={{animationDelay: '0.3s'}}>✦</div>
+                <div className="absolute top-1/2 left-3 text-sm text-yellow-300 animate-bounce">⭐</div>
+                <div className="absolute top-1/2 right-3 text-sm text-yellow-300 animate-bounce" style={{animationDelay: '0.15s'}}>⭐</div>
               </>
+            )}
+            
+            {/* Skull for nat 1 */}
+            {result === 1 && diceType === 20 && !rolling && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 bg-red-900/20 animate-pulse" />
+              </div>
             )}
           </div>
           
@@ -241,24 +288,28 @@ const DiceRoller = () => {
                 key={d}
                 onClick={() => roll(d)}
                 disabled={rolling}
-                className={`py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`py-2.5 rounded-lg text-sm font-medium transition-all flex flex-col items-center justify-center gap-0.5 ${
                   diceType === d && !rolling
                     ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-105'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-600 hover:border-indigo-500/50'
-                } ${rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'} ${d === 100 ? 'col-span-1' : ''}`}
+                } ${rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
               >
-                d{d}
+                <div className="w-4 h-4 text-current">
+                  {DiceIcons[`d${d}`]}
+                </div>
+                <span className="text-[10px]">d{d}</span>
               </button>
             ))}
             {/* Roll Again Button */}
             <button
               onClick={() => roll(diceType)}
               disabled={rolling}
-              className={`py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-all ${
+              className={`py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center justify-center ${
                 rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
               }`}
+              title="Roll Again"
             >
-              🎲
+              <RefreshCw className={`w-4 h-4 ${rolling ? 'animate-spin' : ''}`} />
             </button>
           </div>
           
@@ -284,6 +335,11 @@ const DiceRoller = () => {
               </div>
             </div>
           )}
+          
+          {/* Attribution */}
+          <div className="mt-2 pt-2 border-t border-slate-700/30 text-[9px] text-slate-600 text-center">
+            Dice icons by <a href="https://game-icons.net" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-400">game-icons.net</a> (CC BY 3.0)
+          </div>
         </div>
       )}
     </div>
