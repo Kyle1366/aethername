@@ -11017,12 +11017,12 @@ const CharacterCreator = ({
         testCharacter = generateRandomCharacter('Test Spellcaster', false);
         testCharacter.class = 'wizard';
         testCharacter.level = 20;
-        testCharacter.cantrips = ['Fire Bolt', 'Mage Hand', 'Prestidigitation', 'Light', 'Minor Illusion'];
+        testCharacter.cantrips = ['fire-bolt', 'mage-hand', 'prestidigitation', 'light', 'minor-illusion'];
         testCharacter.spells = [
-          'Shield', 'Magic Missile', 'Detect Magic', 'Identify', 'Fireball',
-          'Counterspell', 'Haste', 'Lightning Bolt', 'Polymorph', 'Greater Invisibility',
-          'Wall of Force', 'Cone of Cold', 'Disintegrate', 'Chain Lightning',
-          'Teleport', 'Power Word Stun', 'Meteor Swarm', 'Wish', 'Time Stop'
+          'shield', 'magic-missile', 'detect-magic', 'identify', 'fireball',
+          'counterspell', 'haste', 'lightning-bolt', 'polymorph', 'greater-invisibility',
+          'wall-of-force', 'cone-of-cold', 'disintegrate', 'chain-lightning',
+          'teleport', 'power-word-stun', 'meteor-swarm', 'wish', 'time-stop'
         ];
         break;
         
@@ -11082,10 +11082,11 @@ const CharacterCreator = ({
           'Incense', 'Vestments', 'Common Clothes', 'Belt Pouch', 'Healing Potion (10)',
           'Antitoxin (2)', 'Crowbar', 'Hammer', 'Pitons (10)', 'Oil Flask (5)'
         ];
-        testCharacter.cantrips = ['Sacred Flame', 'Light', 'Eldritch Blast', 'Mage Hand'];
+        testCharacter.cantrips = ['sacred-flame', 'light', 'eldritch-blast', 'mage-hand'];
         testCharacter.spells = [
-          'Bless', 'Cure Wounds', 'Shield of Faith', 'Hex', 'Armor of Agathys',
-          'Aid', 'Lesser Restoration', 'Hold Person', 'Mirror Image', 'Scorching Ray'
+          'bless', 'cure-wounds', 'shield-of-faith', 'hex', 'armor-of-agathys',
+          'aid', 'lesser-restoration', 'hold-person', 'mirror-image', 'scorching-ray',
+          'dispel-magic', 'spirit-guardians', 'revivify', 'counterspell', 'fireball'
         ];
         testCharacter.gold = 500;
         testCharacter.feats = [
