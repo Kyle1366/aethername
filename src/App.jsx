@@ -5630,13 +5630,16 @@ const ReviewStep = ({
     };
     
     // Check if section should move to next page (prevents orphaned content)
+    // Only moves the ENTIRE section if there's not enough room
     const checkSectionBreak = (estimatedHeight, sectionName) => {
-      if (y + estimatedHeight > maxY - 20) { // Leave more buffer
+      const remainingSpace = maxY - y;
+      // If we can't fit at least 40% of the content, move to next page
+      if (remainingSpace < Math.min(estimatedHeight * 0.4, 40)) {
         // Add "continued on next page" note
         doc.setFontSize(9);
         doc.setFont('times', 'italic');
         doc.setTextColor(...colors.textMuted);
-        doc.text(`${sectionName} continued on next page...`, margin + 3, y + 5);
+        doc.text(`${sectionName} on next page...`, margin + 3, maxY - 5);
         
         addFooter(currentPage);
         doc.addPage();
@@ -5667,6 +5670,10 @@ const ReviewStep = ({
 
     // Helper functions
     const addDecorativeBorder = () => {
+      // Dark background for new pages
+      doc.setFillColor(...colors.pageBg);
+      doc.rect(0, 0, pageWidth, pageHeight, 'F');
+      
       // Outer decorative border
       doc.setDrawColor(...colors.gold);
       doc.setLineWidth(2);
@@ -5682,9 +5689,9 @@ const ReviewStep = ({
       [
         [8, 8], [pageWidth - 8, 8], 
         [8, pageHeight - 8], [pageWidth - 8, pageHeight - 8]
-      ].forEach(([x, y]) => {
+      ].forEach(([x, yPos]) => {
         doc.setFillColor(...colors.gold);
-        doc.circle(x, y, 1.5, 'F');
+        doc.circle(x, yPos, 1.5, 'F');
       });
     };
 
@@ -6158,25 +6165,26 @@ const ReviewStep = ({
     
     // ============== LEFT COLUMN: LEVEL ADVANCEMENTS ==============
     const levelAdvancements = [];
-    if (character.feats && character.feats.length > 0) {
-      character.feats.forEach(feat => {
-        if (feat.choices && feat.choices.length > 0) {
-          feat.choices.forEach(choice => {
-            if (choice.type === 'feat' && choice.featId) {
-              const featData = FEATS[choice.featId];
-              if (featData) {
-                levelAdvancements.push(`Lv${feat.level}: ${featData.name}`);
-              }
-            } else if (choice.type === 'asi') {
-              const asiText = Object.entries(choice.abilities || {})
-                .filter(([_, val]) => val > 0)
-                .map(([ability, val]) => `${ABILITY_LABELS[ability].short} +${val}`)
-                .join(', ');
-              if (asiText) {
-                levelAdvancements.push(`Lv${feat.level}: ${asiText}`);
-              }
+    
+    // Read from asiChoices (the actual storage format)
+    if (character.asiChoices && Object.keys(character.asiChoices).length > 0) {
+      Object.entries(character.asiChoices).forEach(([level, choice]) => {
+        if (!choice) return;
+        
+        if (choice.type === 'feat' && choice.feat) {
+          const featData = FEATS[choice.feat];
+          if (featData) {
+            levelAdvancements.push(`Lv${level}: ${featData.name}`);
+          }
+        } else if (choice.type === 'asi') {
+          if (choice.asiType === 'single' && choice.singleAbility) {
+            levelAdvancements.push(`Lv${level}: ${ABILITY_LABELS[choice.singleAbility]?.short || choice.singleAbility} +2`);
+          } else if (choice.asiType === 'double' && Array.isArray(choice.doubleAbilities)) {
+            const asiText = choice.doubleAbilities.map(a => `${ABILITY_LABELS[a]?.short || a} +1`).join(', ');
+            if (asiText) {
+              levelAdvancements.push(`Lv${level}: ${asiText}`);
             }
-          });
+          }
         }
       });
     }
@@ -11089,10 +11097,14 @@ const CharacterCreator = ({
           'dispel-magic', 'spirit-guardians', 'revivify', 'counterspell', 'fireball'
         ];
         testCharacter.gold = 500;
-        testCharacter.feats = [
-          { level: 4, choices: [{ type: 'feat', featId: 'war-caster' }] },
-          { level: 8, choices: [{ type: 'feat', featId: 'resilient' }] }
-        ];
+        // Use asiChoices format (the actual storage format)
+        testCharacter.asiChoices = {
+          4: { type: 'feat', feat: 'war-caster' },
+          8: { type: 'asi', asiType: 'single', singleAbility: 'charisma' },
+          12: { type: 'feat', feat: 'sentinel' },
+          16: { type: 'asi', asiType: 'double', doubleAbilities: ['strength', 'constitution'] },
+          19: { type: 'feat', feat: 'lucky' }
+        };
         break;
         
       default:
