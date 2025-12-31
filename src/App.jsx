@@ -761,14 +761,15 @@ const TOUR_STEPS = [
     target: 'tour-results-area',
     page: 'generator',
     position: 'left',
+    interactive: true,
   },
   {
-    id: 'nav-creator',
-    title: 'Character Creator Tab',
-    content: 'Build complete D&D 5e characters! Click the menu to switch to the Character Creator.',
-    target: 'tour-nav-generator',
+    id: 'send-to-character',
+    title: 'Create a Character!',
+    content: 'Like a name? Click the person icon 👤 to send it to the Character Creator and build a full D&D character!',
+    target: 'tour-send-to-character',
     page: 'generator',
-    position: 'bottom',
+    position: 'left',
     interactive: true,
     waitForAction: 'navigate-creator',
   },
@@ -834,8 +835,14 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     document.body.style.width = '';
     document.body.style.overflow = '';
     
+    const findElement = (target) => {
+      if (!target) return null;
+      // Try ID first, then class selector
+      return document.getElementById(target) || document.querySelector(`.${target}`);
+    };
+    
     const scrollAndPosition = () => {
-      const el = step?.target ? document.getElementById(step.target) : null;
+      const el = findElement(step?.target);
       
       if (el) {
         // Scroll element into view
@@ -874,7 +881,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     
     // Update position on resize
     const handleResize = () => {
-      const el = step?.target ? document.getElementById(step.target) : null;
+      const el = findElement(step?.target);
       if (el) {
         const rect = el.getBoundingClientRect();
         setTargetRect({
@@ -3319,7 +3326,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, met
               {onSendToCharacter ? (
                 <button 
                   onClick={onSendToCharacter} 
-                  className="p-1.5 rounded text-slate-600 hover:text-indigo-400 hover:scale-110 hover:bg-indigo-400/10 transition-all duration-200"
+                  className="tour-send-to-character p-1.5 rounded text-slate-600 hover:text-indigo-400 hover:scale-110 hover:bg-indigo-400/10 transition-all duration-200"
                   title="Send to Character Creator"
                 >
                   <User className="w-4 h-4" />
