@@ -6314,27 +6314,39 @@ const ReviewStep = ({
       });
     }
     
-    // Fighting Style in column 2
-    if (character.fightingStyle && col2Y + 15 < maxY) {
+    // Battle Master Maneuvers in column 2 (before Fighting Style for priority)
+    if (character.battleMasterManeuvers && character.battleMasterManeuvers.length > 0 && col2Y + 10 < maxY) {
+      col2Y += 3;
+      col2Y = drawColumnHeader('MANEUVERS', col2Y, col2X, colWidth);
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      
+      character.battleMasterManeuvers.forEach((manKey) => {
+        if (col2Y + 4 > maxY) return;
+        const man = BATTLE_MASTER_MANEUVERS[manKey];
+        if (man) {
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
+          doc.text(man.name, col2X + 5, col2Y + 2);
+          col2Y += 4;
+        }
+      });
+    }
+    
+    // Fighting Style in column 2 (compact - just name)
+    if (character.fightingStyle && col2Y + 8 < maxY) {
       const fs = FIGHTING_STYLES[character.fightingStyle];
       if (fs) {
         col2Y += 3;
-        col2Y = drawColumnHeader('FIGHTING STYLE', col2Y, col2X, colWidth);
-        
         doc.setFontSize(8);
         doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.textMuted);
+        doc.text('FIGHTING STYLE:', col2X + 2, col2Y);
         doc.setTextColor(...colors.textGold);
-        doc.text(fs.name, col2X + 2, col2Y + 1);
+        doc.text(fs.name, col2X + 36, col2Y);
         col2Y += 4;
-        
-        doc.setFont('times', 'normal');
-        doc.setTextColor(...colors.textLight);
-        const fsDesc = doc.splitTextToSize(fs.description, colWidth - 4);
-        fsDesc.forEach((line, idx) => {
-          if (col2Y + 3 > maxY) return;
-          doc.text(line, col2X + 2, col2Y + 1 + idx * 3);
-        });
-        col2Y += fsDesc.length * 3;
       }
     }
     
@@ -6354,27 +6366,6 @@ const ReviewStep = ({
           doc.setFillColor(...colors.accentPurple);
           doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
           doc.text(`${meta.name} (${meta.cost}SP)`, col2X + 5, col2Y + 2);
-          col2Y += 4;
-        }
-      });
-    }
-    
-    // Battle Master Maneuvers in column 2
-    if (character.battleMasterManeuvers && character.battleMasterManeuvers.length > 0 && col2Y + 10 < maxY) {
-      col2Y += 3;
-      col2Y = drawColumnHeader('MANEUVERS', col2Y, col2X, colWidth);
-      
-      doc.setFontSize(8);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      
-      character.battleMasterManeuvers.forEach((manKey) => {
-        if (col2Y + 4 > maxY) return;
-        const man = BATTLE_MASTER_MANEUVERS[manKey];
-        if (man) {
-          doc.setFillColor(...colors.accentPurple);
-          doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
-          doc.text(man.name, col2X + 5, col2Y + 2);
           col2Y += 4;
         }
       });
