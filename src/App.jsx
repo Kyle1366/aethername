@@ -2579,10 +2579,32 @@ const SPELL_SLOTS = {
   }
 };
 
+// ============================================================================
+// CANTRIPS KNOWN BY LEVEL (D&D 5e PHB)
+// ============================================================================
+const CANTRIPS_KNOWN = {
+  bard:     { 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4 },
+  cleric:   { 1: 3, 2: 3, 3: 3, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 5 },
+  druid:    { 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4 },
+  sorcerer: { 1: 4, 2: 4, 3: 4, 4: 5, 5: 5, 6: 5, 7: 5, 8: 5, 9: 5, 10: 6 },
+  warlock:  { 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4 },
+  wizard:   { 1: 3, 2: 3, 3: 3, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 5 }
+};
+
+// ============================================================================
+// SPELLS KNOWN BY LEVEL (D&D 5e PHB) - For 'known' casters only
+// ============================================================================
+const SPELLS_KNOWN = {
+  bard:     { 1: 4, 2: 5, 3: 6, 4: 7, 5: 8, 6: 9, 7: 10, 8: 11, 9: 12, 10: 14 },
+  ranger:   { 1: 0, 2: 2, 3: 3, 4: 3, 5: 4, 6: 4, 7: 5, 8: 5, 9: 6, 10: 6 },
+  sorcerer: { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11 },
+  warlock:  { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 10 }
+};
+
 const getSpellSlots = (classId, level) => {
   const fullCasters = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard'];
   const halfCasters = ['paladin', 'ranger'];
-  const cappedLevel = Math.min(level, 20);
+  const cappedLevel = Math.min(level, 10);
   
   if (classId === 'warlock') return SPELL_SLOTS.warlock[cappedLevel];
   if (fullCasters.includes(classId)) return SPELL_SLOTS.full[cappedLevel];
@@ -2641,8 +2663,8 @@ const getMulticlassSpellSlots = (character) => {
     }
   });
   
-  // Cap at 20
-  totalCasterLevel = Math.min(totalCasterLevel, 20);
+  // Cap at 10
+  totalCasterLevel = Math.min(totalCasterLevel, 10);
   
   // If no caster levels, return null
   if (totalCasterLevel === 0) {
@@ -2661,13 +2683,13 @@ const getWarlockPactSlots = (character) => {
   if (character.class === 'warlock') {
     const multiclassLevelSum = multiclassEntries.reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
     const warlockLevel = Math.max(1, (character.level || 1) - multiclassLevelSum);
-    return SPELL_SLOTS.warlock[Math.min(warlockLevel, 20)];
+    return SPELL_SLOTS.warlock[Math.min(warlockLevel, 10)];
   }
   
   // Check if any multiclass is warlock
   const warlockMulticlass = multiclassEntries.find(mc => mc.classId === 'warlock');
   if (warlockMulticlass) {
-    return SPELL_SLOTS.warlock[Math.min(warlockMulticlass.level, 20)];
+    return SPELL_SLOTS.warlock[Math.min(warlockMulticlass.level, 10)];
   }
   
   return null;
@@ -3396,19 +3418,37 @@ const getSpellsForClass = (classId, spellLevel) => {
     .map(([id, spell]) => ({ id, ...spell }));
 };
 
-// Get spellcasting info for a class
+// Get spellcasting info for a class (with level-scaled cantrips/spells known)
 const getSpellcastingInfo = (classId, characterLevel = 1) => {
   const classData = CLASSES[classId];
   if (!classData?.spellcasting) return null;
   
   const sc = classData.spellcasting;
+  const cappedLevel = Math.min(characterLevel, 10);
   
   // Check if spellcasting starts at higher level
   if (sc.startsAtLevel && characterLevel < sc.startsAtLevel) {
     return { ...sc, available: false, startsAt: sc.startsAtLevel };
   }
   
-  return { ...sc, available: true };
+  // Calculate effective level for half-casters (Paladin, Ranger start at level 2)
+  const effectiveLevel = sc.startsAtLevel ? Math.max(1, cappedLevel - sc.startsAtLevel + 1) : cappedLevel;
+  
+  // Get scaled cantrips from table
+  const cantrips = CANTRIPS_KNOWN[classId]?.[cappedLevel] || sc.cantrips || 0;
+  
+  // Get scaled spells known from table (for 'known' and 'pact' casters)
+  let spellsKnown = 0;
+  if (sc.type === 'known' || sc.type === 'pact') {
+    spellsKnown = SPELLS_KNOWN[classId]?.[cappedLevel] || sc.spellsKnown || 0;
+  }
+  
+  return { 
+    ...sc, 
+    available: true,
+    cantrips,
+    spellsKnown
+  };
 };
 
 // ============================================================================
@@ -11011,41 +11051,42 @@ const CharacterCreator = ({
     
     switch (testType) {
       case 'multiclass':
-        // Level 20 with 3-way multiclass
+        // Level 10 with 2-way multiclass
         testCharacter = generateRandomCharacter('Test Multiclass', true);
-        testCharacter.level = 20;
+        testCharacter.level = 10;
         testCharacter.multiclass = [
-          { classId: 'wizard', level: 7, subclass: null },
-          { classId: 'cleric', level: 5, subclass: null }
+          { classId: 'wizard', level: 4, subclass: null }
         ];
         break;
         
       case 'maxSpells':
-        // Wizard with lots of spells
+        // Wizard at level 10 with full spells
         testCharacter = generateRandomCharacter('Test Spellcaster', false);
         testCharacter.class = 'wizard';
-        testCharacter.level = 20;
+        testCharacter.level = 10;
+        // Level 10 wizard: 5 cantrips, up to 5th level spells
         testCharacter.cantrips = ['fire-bolt', 'mage-hand', 'prestidigitation', 'light', 'minor-illusion'];
         testCharacter.spells = [
-          'shield', 'magic-missile', 'detect-magic', 'identify', 'fireball',
-          'counterspell', 'haste', 'lightning-bolt', 'polymorph', 'greater-invisibility',
-          'wall-of-force', 'cone-of-cold', 'disintegrate', 'chain-lightning',
-          'teleport', 'power-word-stun', 'meteor-swarm', 'wish', 'time-stop'
+          'shield', 'magic-missile', 'detect-magic', 'identify', 'mage-armor',
+          'misty-step', 'hold-person', 'invisibility', 'scorching-ray',
+          'fireball', 'counterspell', 'haste', 'lightning-bolt',
+          'greater-invisibility', 'polymorph', 'dimension-door',
+          'wall-of-force', 'cone-of-cold'
         ];
         break;
         
       case 'allFeatures':
-        // Character with many features
+        // Fighter with many features at level 10
         testCharacter = generateRandomCharacter('Test Features', false);
         testCharacter.class = 'fighter';
-        testCharacter.level = 20;
+        testCharacter.level = 10;
+        testCharacter.subclass = 'champion';
         testCharacter.fightingStyle = 'dueling';
-        testCharacter.battleMasterManeuvers = ['Riposte', 'Precision Attack', 'Menacing Attack'];
-        testCharacter.feats = [
-          { level: 4, choices: [{ type: 'feat', featId: 'great-weapon-master' }] },
-          { level: 6, choices: [{ type: 'feat', featId: 'sentinel' }] },
-          { level: 8, choices: [{ type: 'feat', featId: 'polearm-master' }] }
-        ];
+        testCharacter.asiChoices = {
+          4: { type: 'feat', feat: 'great-weapon-master' },
+          6: { type: 'feat', feat: 'sentinel' },
+          8: { type: 'asi', asiType: 'single', singleAbility: 'strength' }
+        };
         break;
         
       case 'longEquipment':
@@ -11072,38 +11113,53 @@ const CharacterCreator = ({
         break;
         
       case 'pdfStress':
-        // Kitchen sink character
+        // Kitchen sink character - level 10 multiclass
         testCharacter = generateRandomCharacter('PDF Stress Test', true);
-        testCharacter.level = 20;
+        testCharacter.level = 10;
         testCharacter.class = 'paladin';
         testCharacter.multiclass = [
-          { classId: 'warlock', level: 5, subclass: 'fiend' },
-          { classId: 'sorcerer', level: 3, subclass: null }
+          { classId: 'warlock', level: 3, subclass: 'fiend' }
         ];
         testCharacter.fightingStyle = 'defense';
-        testCharacter.warlockInvocations = ['agonizing-blast', 'repelling-blast', 'devils-sight'];
-        testCharacter.metamagicOptions = ['quickened', 'twinned'];
+        testCharacter.warlockInvocations = ['agonizing-blast', 'repelling-blast'];
         testCharacter.equipment = [
           'Plate Armor', 'Greatsword', 'Shield', 'Javelin (5)', 'Backpack',
           'Bedroll', 'Mess Kit', 'Tinderbox', '10 torches', 'Rations (10 days)',
           'Waterskin', 'Hemp rope (50 ft)', 'Holy Symbol', 'Prayer Book',
-          'Incense', 'Vestments', 'Common Clothes', 'Belt Pouch', 'Healing Potion (10)',
-          'Antitoxin (2)', 'Crowbar', 'Hammer', 'Pitons (10)', 'Oil Flask (5)'
+          'Incense', 'Vestments', 'Common Clothes', 'Belt Pouch', 'Healing Potion (5)',
+          'Antitoxin', 'Crowbar', 'Hammer', 'Pitons (10)', 'Oil Flask (5)'
         ];
+        // Level 10 Paladin 7 / Warlock 3: 4 cantrips, ~8 spells
         testCharacter.cantrips = ['sacred-flame', 'light', 'eldritch-blast', 'mage-hand'];
         testCharacter.spells = [
           'bless', 'cure-wounds', 'shield-of-faith', 'hex', 'armor-of-agathys',
-          'aid', 'lesser-restoration', 'hold-person', 'mirror-image', 'scorching-ray',
-          'dispel-magic', 'spirit-guardians', 'revivify', 'counterspell', 'fireball'
+          'aid', 'lesser-restoration', 'hold-person'
         ];
-        testCharacter.gold = 500;
-        // Use asiChoices format (the actual storage format)
+        testCharacter.gold = 150;
         testCharacter.asiChoices = {
           4: { type: 'feat', feat: 'war-caster' },
-          8: { type: 'asi', asiType: 'single', singleAbility: 'charisma' },
-          12: { type: 'feat', feat: 'sentinel' },
-          16: { type: 'asi', asiType: 'double', doubleAbilities: ['strength', 'constitution'] },
-          19: { type: 'feat', feat: 'lucky' }
+          8: { type: 'asi', asiType: 'single', singleAbility: 'charisma' }
+        };
+        break;
+      
+      case 'fullCaster':
+        // Full caster with max cantrips and spells
+        testCharacter = generateRandomCharacter('Full Caster Test', false);
+        testCharacter.class = 'sorcerer';
+        testCharacter.level = 10;
+        testCharacter.subclass = 'draconicBloodline';
+        // Level 10 sorcerer: 6 cantrips, 11 spells known
+        testCharacter.cantrips = ['fire-bolt', 'mage-hand', 'prestidigitation', 'light', 'minor-illusion', 'ray-of-frost'];
+        testCharacter.spells = [
+          'shield', 'magic-missile', 'chromatic-orb',
+          'misty-step', 'hold-person', 'scorching-ray',
+          'fireball', 'counterspell', 'haste',
+          'greater-invisibility', 'polymorph'
+        ];
+        testCharacter.metamagicOptions = ['quickened', 'twinned', 'subtle'];
+        testCharacter.asiChoices = {
+          4: { type: 'asi', asiType: 'single', singleAbility: 'charisma' },
+          8: { type: 'feat', feat: 'war-caster' }
         };
         break;
         
@@ -11697,6 +11753,7 @@ const CharacterCreator = ({
 
 const DevTools = ({ onQuickTest }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showLocalStorage, setShowLocalStorage] = useState(false);
   
   // Only show on dev subdomain
   const isDev = typeof window !== 'undefined' && 
@@ -11719,46 +11776,93 @@ const DevTools = ({ onQuickTest }) => {
   }, [isDev]);
   
   if (!isDev) return null;
+  
+  // Get localStorage data for debugging
+  const getLocalStorageData = () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      try {
+        data[key] = JSON.parse(localStorage.getItem(key));
+      } catch {
+        data[key] = localStorage.getItem(key);
+      }
+    }
+    return data;
+  };
 
   const quickTests = [
     {
-      name: 'Max Multiclass',
-      description: 'Level 20 character with 3-way multiclass',
+      name: 'Multiclass (Lv10)',
+      description: 'Level 10 character with multiclass',
       action: () => onQuickTest('multiclass')
     },
     {
-      name: 'Max Spells',
-      description: 'Wizard with all spell slots filled',
+      name: 'Full Caster (Lv10)',
+      description: 'Sorcerer with max cantrips & spells',
+      action: () => onQuickTest('fullCaster')
+    },
+    {
+      name: 'Max Spells (Wizard)',
+      description: 'Level 10 Wizard with full spellbook',
       action: () => onQuickTest('maxSpells')
     },
     {
       name: 'All Features',
-      description: 'Character with fighting style, feats, invocations',
+      description: 'Fighter with style, feats, subclass',
       action: () => onQuickTest('allFeatures')
     },
     {
       name: 'Long Equipment',
-      description: 'Character with extensive equipment list',
+      description: 'Extensive equipment list + gold',
       action: () => onQuickTest('longEquipment')
     },
     {
       name: 'Variant Human',
-      description: 'Variant human with feat and ASI choices',
+      description: 'Variant human with feat & ASI',
       action: () => onQuickTest('variantHuman')
     },
     {
       name: 'PDF Stress Test',
-      description: 'Character designed to test PDF pagination',
+      description: 'Paladin/Warlock multiclass for PDF',
       action: () => onQuickTest('pdfStress')
+    }
+  ];
+  
+  const utilityActions = [
+    {
+      name: 'View LocalStorage',
+      description: 'Inspect saved character data',
+      action: () => setShowLocalStorage(!showLocalStorage)
+    },
+    {
+      name: 'Copy Character JSON',
+      description: 'Copy current character to clipboard',
+      action: () => {
+        const char = localStorage.getItem('aethername_character');
+        if (char) {
+          navigator.clipboard.writeText(char);
+          alert('Character JSON copied to clipboard!');
+        } else {
+          alert('No character data found');
+        }
+      }
     },
     {
       name: 'Clear All Data',
-      description: 'Reset localStorage and start fresh',
+      description: 'Reset localStorage and reload',
       action: () => {
         if (window.confirm('Clear all saved data? This cannot be undone.')) {
           localStorage.clear();
           window.location.reload();
         }
+      }
+    },
+    {
+      name: 'Force Error',
+      description: 'Trigger an error for testing',
+      action: () => {
+        throw new Error('Dev Tools: Intentional test error');
       }
     }
   ];
@@ -11766,7 +11870,7 @@ const DevTools = ({ onQuickTest }) => {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {isOpen && (
-        <div className="mb-2 bg-slate-900 border-2 border-green-500 rounded-xl p-4 shadow-2xl max-w-sm">
+        <div className="mb-2 bg-slate-900 border-2 border-green-500 rounded-xl p-4 shadow-2xl max-w-sm max-h-[80vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -11781,13 +11885,15 @@ const DevTools = ({ onQuickTest }) => {
           </div>
           
           <div className="text-xs text-slate-500 mb-3 flex items-center justify-between">
-            <span>Quick test presets</span>
+            <span>Max Level: 10 • Quick tests</span>
             <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] font-mono">
               Ctrl+Shift+D
             </kbd>
           </div>
           
-          <div className="space-y-2">
+          {/* Quick Test Presets */}
+          <div className="space-y-1.5 mb-4">
+            <div className="text-[10px] uppercase text-slate-600 font-semibold tracking-wider">Character Presets</div>
             {quickTests.map((test) => (
               <button
                 key={test.name}
@@ -11798,6 +11904,38 @@ const DevTools = ({ onQuickTest }) => {
                 <div className="text-xs text-slate-500">{test.description}</div>
               </button>
             ))}
+          </div>
+          
+          {/* Utility Actions */}
+          <div className="space-y-1.5 mb-4">
+            <div className="text-[10px] uppercase text-slate-600 font-semibold tracking-wider">Utilities</div>
+            {utilityActions.map((action) => (
+              <button
+                key={action.name}
+                onClick={action.action}
+                className="w-full text-left p-2 rounded-lg bg-slate-800/50 hover:bg-amber-500/10 border border-slate-700 hover:border-amber-500/50 transition-all"
+              >
+                <div className="font-medium text-amber-400 text-sm">{action.name}</div>
+                <div className="text-xs text-slate-500">{action.description}</div>
+              </button>
+            ))}
+          </div>
+          
+          {/* LocalStorage Viewer */}
+          {showLocalStorage && (
+            <div className="mt-3 p-2 bg-slate-950 rounded-lg border border-slate-700">
+              <div className="text-[10px] uppercase text-slate-600 font-semibold mb-2">LocalStorage Data</div>
+              <pre className="text-[10px] text-slate-400 overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+                {JSON.stringify(getLocalStorageData(), null, 2)}
+              </pre>
+            </div>
+          )}
+          
+          {/* Version Info */}
+          <div className="mt-3 pt-3 border-t border-slate-700/50 text-center">
+            <div className="text-[10px] text-slate-600">
+              v1.5.1 • Dev Build • {new Date().toLocaleDateString()}
+            </div>
           </div>
         </div>
       )}
