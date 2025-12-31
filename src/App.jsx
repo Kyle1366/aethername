@@ -810,6 +810,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
   const [showTip, setShowTip] = useState(false);
+  const [generatedDuringTour, setGeneratedDuringTour] = useState(false);
   
   // Random tip for the end
   const randomTip = useMemo(() => 
@@ -820,7 +821,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   const step = TOUR_STEPS[currentStep];
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
   
-  // Update target element position
+  // Update target element position and scroll to it
   useEffect(() => {
     if (!isOpen || !step?.target) {
       setTargetRect(null);
@@ -830,6 +831,31 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     const updatePosition = () => {
       const el = document.getElementById(step.target);
       if (el) {
+        // Scroll element into view smoothly
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        
+        // Update position after scroll completes
+        setTimeout(() => {
+          const rect = el.getBoundingClientRect();
+          setTargetRect({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          });
+        }, 300);
+      } else {
+        setTargetRect(null);
+      }
+    };
+    
+    // Small delay to let page render
+    const timer = setTimeout(updatePosition, 150);
+    
+    // Also update on scroll/resize
+    const handleUpdate = () => {
+      const el = document.getElementById(step.target);
+      if (el) {
         const rect = el.getBoundingClientRect();
         setTargetRect({
           top: rect.top,
@@ -837,20 +863,16 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
           width: rect.width,
           height: rect.height,
         });
-      } else {
-        setTargetRect(null);
       }
     };
     
-    // Small delay to let page render
-    const timer = setTimeout(updatePosition, 100);
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition);
+    window.addEventListener('resize', handleUpdate);
+    window.addEventListener('scroll', handleUpdate);
     
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition);
+      window.removeEventListener('resize', handleUpdate);
+      window.removeEventListener('scroll', handleUpdate);
     };
   }, [isOpen, step, currentStep, currentPage]);
   
@@ -862,13 +884,25 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     }
   }, [isOpen, step, currentPage, setCurrentPage]);
   
-  // Auto-advance when user generates names
+  // Auto-advance when user generates names (only on step 4)
   useEffect(() => {
-    if (step?.waitForAction === 'generate' && hasGeneratedNames) {
+    if (step?.waitForAction === 'generate' && hasGeneratedNames && !generatedDuringTour) {
+      // Mark that we've advanced for this generation
+      setGeneratedDuringTour(true);
       // User generated names, advance to next step
-      setTimeout(() => setCurrentStep(prev => prev + 1), 500);
+      setTimeout(() => setCurrentStep(prev => prev + 1), 600);
     }
-  }, [hasGeneratedNames, step]);
+  }, [hasGeneratedNames, step, generatedDuringTour]);
+  
+  // Reset generated flag when going back to generate step
+  useEffect(() => {
+    if (step?.waitForAction === 'generate') {
+      // Only reset if we're on this step and names haven't been generated yet
+      if (!hasGeneratedNames) {
+        setGeneratedDuringTour(false);
+      }
+    }
+  }, [currentStep, step, hasGeneratedNames]);
   
   if (!isOpen) return null;
   
@@ -14540,12 +14574,14 @@ export default function AetherNames() {
           </div>
 
           {/* Main Action Buttons - Side by Side on Mobile */}
-          <div id="tour-generate-button" className="flex gap-2 md:gap-3 justify-center mb-3 md:mb-4">
-            <GlowButton onClick={generate} disabled={isGenerating} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-8" theme={config.genre}>
-              <Sparkles className={`w-4 h-4 md:w-5 md:h-5 ${isGenerating ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">{isGenerating ? 'Forging...' : 'Generate Names'}</span>
-              <span className="sm:hidden">{isGenerating ? 'Forging...' : 'Generate'}</span>
-            </GlowButton>
+          <div className="flex gap-2 md:gap-3 justify-center mb-3 md:mb-4">
+            <span id="tour-generate-button">
+              <GlowButton onClick={generate} disabled={isGenerating} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-8" theme={config.genre}>
+                <Sparkles className={`w-4 h-4 md:w-5 md:h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isGenerating ? 'Forging...' : 'Generate Names'}</span>
+                <span className="sm:hidden">{isGenerating ? 'Forging...' : 'Generate'}</span>
+              </GlowButton>
+            </span>
             <GlowButton variant="secondary" onClick={surpriseMe} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-6" theme={config.genre}>
               <Zap className="w-4 h-4 md:w-5 md:h-5" />
               <span className="hidden sm:inline">Surprise Me</span>
