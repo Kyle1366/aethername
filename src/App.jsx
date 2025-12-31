@@ -821,15 +821,60 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   const step = TOUR_STEPS[currentStep];
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
   
-  // Update target element position (no scroll since body is locked)
+  // Scroll to target element and update position
   useEffect(() => {
-    if (!isOpen || !step?.target) {
+    if (!isOpen) {
       setTargetRect(null);
       return;
     }
     
-    const updatePosition = () => {
-      const el = document.getElementById(step.target);
+    // Temporarily unlock scroll to allow scrollIntoView
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    
+    const scrollAndPosition = () => {
+      const el = step?.target ? document.getElementById(step.target) : null;
+      
+      if (el) {
+        // Scroll element into view
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        
+        // After scroll completes, lock body and update position
+        setTimeout(() => {
+          const scrollY = window.scrollY;
+          document.body.style.position = 'fixed';
+          document.body.style.top = `-${scrollY}px`;
+          document.body.style.width = '100%';
+          document.body.style.overflow = 'hidden';
+          
+          // Update rect after scroll and lock
+          const rect = el.getBoundingClientRect();
+          setTargetRect({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          });
+        }, 400);
+      } else {
+        // No target element, just lock scroll at current position
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        setTargetRect(null);
+      }
+    };
+    
+    // Small delay to let page render
+    const timer = setTimeout(scrollAndPosition, 50);
+    
+    // Update position on resize
+    const handleResize = () => {
+      const el = step?.target ? document.getElementById(step.target) : null;
       if (el) {
         const rect = el.getBoundingClientRect();
         setTargetRect({
@@ -838,22 +883,31 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
           width: rect.width,
           height: rect.height,
         });
-      } else {
-        setTargetRect(null);
       }
     };
     
-    // Small delay to let page render
-    const timer = setTimeout(updatePosition, 100);
-    
-    // Update on resize
-    window.addEventListener('resize', updatePosition);
+    window.addEventListener('resize', handleResize);
     
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('resize', handleResize);
     };
   }, [isOpen, step, currentStep, currentPage]);
+  
+  // Cleanup: restore scroll when tour closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Get the scroll position from the body top style
+      const scrollY = Math.abs(parseInt(document.body.style.top || '0', 10));
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY > 0) {
+        window.scrollTo(0, scrollY);
+      }
+    }
+  }, [isOpen]);
   
   // Navigate to correct page for step
   useEffect(() => {
@@ -862,27 +916,6 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
       setCurrentPage(step.page);
     }
   }, [isOpen, step, currentPage, setCurrentPage]);
-  
-  // Lock body scroll when tour is open
-  useEffect(() => {
-    if (isOpen) {
-      // Save current scroll position and lock scroll
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-      
-      return () => {
-        // Restore scroll position when tour closes
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [isOpen]);
   
   // Auto-advance when user generates names (only on step 4)
   useEffect(() => {
