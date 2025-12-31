@@ -1291,7 +1291,7 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1 }) => {
                   }}
                   className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
                 >
-                  {[...Array(20)].map((_, i) => (
+                  {[...Array(10)].map((_, i) => (
                     <option key={i + 1} value={i + 1}>{i + 1}</option>
                   ))}
                 </select>
@@ -1304,7 +1304,7 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1 }) => {
                   }}
                   className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
                 >
-                  {[...Array(20)].map((_, i) => (
+                  {[...Array(10)].map((_, i) => (
                     <option key={i + 1} value={i + 1} disabled={i + 1 < levelRange[0]}>{i + 1}</option>
                   ))}
                 </select>
@@ -1317,8 +1317,6 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1 }) => {
                 { label: 'Lvl 1', range: [1, 1] },
                 { label: '1-5', range: [1, 5] },
                 { label: '5-10', range: [5, 10] },
-                { label: '10-15', range: [10, 15] },
-                { label: '15-20', range: [15, 20] },
               ].map(preset => (
                 <button
                   key={preset.label}
@@ -5696,6 +5694,27 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
   // Saving throws only from primary class per official 5e rules
   const savingThrowOrder = [];
   (primaryClassData?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a));
+
+  const smartAssignAbilities = () => {
+    const priorities = [...primaryAbilityOrder, ...savingThrowOrder, ...ABILITY_NAMES].filter((v, i, arr) => v && arr.indexOf(v) === i);
+    const scores = [...STANDARD_ARRAY].sort((a, b) => b - a);
+    const newAssignments = {};
+    const newAbilities = { ...character.abilities };
+    priorities.forEach((ability, idx) => {
+      if (idx < scores.length) {
+        newAssignments[ability] = idx;
+        newAbilities[ability] = scores[idx];
+      }
+    });
+    setMethod('standard');
+    setAssignments(newAssignments);
+    setRolls([]);
+    setSelectedIndex(null);
+    updateCharacter('abilityMethod', 'standard');
+    updateCharacter('abilityAssignments', newAssignments);
+    updateCharacter('abilityRolls', []);
+    updateCharacter('abilities', newAbilities);
+  };
   
   // Calculate unassigned indices from assignments
   const getUnassignedIndices = () => {
@@ -5709,14 +5728,8 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     }
     return [];
   };
-  const [unassignedIndices, setUnassignedIndices] = useState(getUnassignedIndices);
-  
-  // Recalculate unassigned when assignments or rolls change
-  useEffect(() => {
-    setUnassignedIndices(getUnassignedIndices());
-  }, [assignments, rolls, method]);
-  
-  // Get the actual scores array based on method
+
+  // Get array of scores based on method
   const getScoresArray = () => {
     if (method === 'standard') return STANDARD_ARRAY;
     if (method === 'roll') return rolls.map(r => r.kept.reduce((a, b) => a + b, 0));
@@ -5918,28 +5931,39 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Ability Scores</h3>
-        {(primaryClassData || multiclassData.length > 0) && (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-slate-500">Saving Throws:</span>
-            {savingThrowOrder.map((st) => (
-              <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
-                {ABILITY_LABELS[st]?.short}
-              </span>
-            ))}
-            {primaryAbilityOrder.length > 0 && (
-              <span className="text-slate-600 text-xs ml-2">
-                Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
-              </span>
-            )}
-            {multiclassData.length > 0 && (
-              <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-full">
-                Multiclass active
-              </span>
-            )}
-          </div>
-        )}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Ability Scores</h3>
+          {(primaryClassData || multiclassData.length > 0) && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-slate-500">Saving Throws:</span>
+              {savingThrowOrder.map((st) => (
+                <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
+                  {ABILITY_LABELS[st]?.short}
+                </span>
+              ))}
+              {primaryAbilityOrder.length > 0 && (
+                <span className="text-slate-600 text-xs ml-2">
+                  Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
+                </span>
+              )}
+              {multiclassData.length > 0 && (
+                <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-full">
+                  Multiclass active
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={smartAssignAbilities}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap shrink-0"
+          title="Automatically assign a strong array based on your class priorities"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
       
       {/* Method Selection */}
@@ -6250,6 +6274,19 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
   
   // Initialize ASI choices if not exist
   const asiChoices = character.asiChoices || {};
+
+  const smartFillASI = () => {
+    const primaryTargets = [...primaryAbilityOrder, ...savingThrowOrder, ...ABILITY_NAMES].filter((v, i, arr) => v && arr.indexOf(v) === i);
+    const updated = { ...asiChoices };
+    asiLevels.forEach(level => {
+      const topAbility = primaryTargets[0] || 'constitution';
+      updated[level] = {
+        type: 'asi',
+        abilityIncreases: { [topAbility]: 2 }
+      };
+    });
+    updateCharacter('asiChoices', updated);
+  };
   
   const updateASIChoice = (level, choice) => {
     const updated = { ...asiChoices, [level]: choice };
@@ -6269,26 +6306,37 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
   
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Ability Score Improvements & Feats</h3>
-        <p className="text-sm text-slate-500">
-          At certain levels, you can choose to increase ability scores OR gain a feat.
-        </p>
-        {(primaryClassData || multiclassData.length > 0) && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-slate-500">Saving Throws:</span>
-            {savingThrowOrder.map((st) => (
-              <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
-                {ABILITY_LABELS[st]?.short}
-              </span>
-            ))}
-            {primaryAbilityOrder.length > 0 && (
-              <span className="text-slate-600 text-xs ml-2">
-                Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
-              </span>
-            )}
-          </div>
-        )}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Ability Score Improvements & Feats</h3>
+          <p className="text-sm text-slate-500">
+            At certain levels, you can choose to increase ability scores OR gain a feat.
+          </p>
+          {(primaryClassData || multiclassData.length > 0) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-slate-500">Saving Throws:</span>
+              {savingThrowOrder.map((st) => (
+                <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
+                  {ABILITY_LABELS[st]?.short}
+                </span>
+              ))}
+              {primaryAbilityOrder.length > 0 && (
+                <span className="text-slate-600 text-xs ml-2">
+                  Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={smartFillASI}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+          title="Automatically fill ASI choices to boost your primary ability"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
       
       {asiLevels.map(level => {
@@ -9648,6 +9696,32 @@ const MulticlassStep = ({ character, updateCharacter }) => {
   
   // Get all available classes except the primary class
   const availableClasses = Object.entries(CLASSES).filter(([id]) => id !== character.class);
+
+  const smartAddMulticlass = () => {
+    if (totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2) return;
+    const synergies = {
+      fighter: ['rogue', 'warlock', 'wizard', 'cleric'],
+      rogue: ['fighter', 'ranger', 'warlock', 'bard'],
+      paladin: ['warlock', 'sorcerer', 'bard'],
+      warlock: ['paladin', 'sorcerer', 'fighter', 'bard'],
+      sorcerer: ['warlock', 'paladin', 'bard'],
+      bard: ['warlock', 'paladin', 'rogue', 'sorcerer'],
+      ranger: ['rogue', 'fighter', 'druid', 'cleric'],
+      cleric: ['fighter', 'paladin', 'druid'],
+      druid: ['cleric', 'monk', 'ranger'],
+      monk: ['rogue', 'fighter', 'druid'],
+      barbarian: ['fighter', 'rogue', 'druid'],
+      wizard: ['fighter', 'cleric']
+    };
+    const primaryId = character.class;
+    const already = multiclassEntries.map(mc => mc.classId);
+    const choices = (synergies[primaryId] || availableClasses.map(([id]) => id))
+      .filter(id => id !== primaryId && !already.includes(id));
+    if (choices.length === 0) return;
+    const pickId = choices[0];
+    const newMulticlass = [...multiclassEntries, { classId: pickId, level: 1, subclass: null }];
+    updateCharacter('multiclass', newMulticlass);
+  };
   
   // Multi-class rules: need to be at least level 2 to multi-class
   if (totalLevel < 2) {
@@ -9697,11 +9771,27 @@ const MulticlassStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Multi-classing (Optional)</h3>
-        <p className="text-sm text-slate-500">
-          Split your total character level across multiple classes. Your primary class gets any unassigned levels.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Multi-classing (Optional)</h3>
+          <p className="text-sm text-slate-500">
+            Split your total character level across multiple classes. Your primary class gets any unassigned levels.
+          </p>
+        </div>
+        <button
+          onClick={smartAddMulticlass}
+          disabled={totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
+            totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2
+              ? 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
+              : 'bg-cyan-600/80 hover:bg-cyan-500/80 text-white'
+          }`}
+          title="Add a synergistic multiclass automatically"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
 
       {/* Level Summary */}
@@ -10034,6 +10124,25 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const spellcastingClasses = getSpellcastingClasses();
   const hasSpellcasting = spellcastingClasses.length > 0;
   const isMulticlassCaster = spellcastingClasses.length > 1;
+
+  const autoSelectSpells = () => {
+    if (!hasSpellcasting) return;
+    const pickedCantrips = availableCantrips.slice(0, maxCantrips).map(s => s.id);
+    const spellPool = [
+      ...availableLevel1Spells,
+      ...availableLevel2Spells,
+      ...availableLevel3Spells,
+      ...availableLevel4Spells,
+      ...availableLevel5Spells,
+      ...availableLevel6Spells,
+      ...availableLevel7Spells,
+      ...availableLevel8Spells,
+      ...availableLevel9Spells
+    ];
+    const pickedSpells = spellPool.slice(0, totalMaxSpells).map(s => s.id);
+    setSelectedCantrips(pickedCantrips);
+    setSelectedSpells(pickedSpells);
+  };
   
   // Merge available spells from all spellcasting classes (removing duplicates)
   const getMergedSpells = (spellLevel) => {
@@ -10224,15 +10333,24 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Spells</h3>
-        <p className="text-sm text-slate-500">
-          {isMulticlassCaster ? (
-            <>Spellcasting Classes: {spellcastingClasses.map(sc => `${CLASSES[sc.classId]?.name} (${ABILITY_LABELS[sc.info?.ability]?.short})`).join(', ')}</>
-          ) : (
-            <>Spellcasting Ability: {ABILITY_LABELS[primarySpellcastingAbility]?.name}</>
-          )}
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Spells</h3>
+          <p className="text-sm text-slate-500">
+            {isMulticlassCaster ? (
+              <>Spellcasting Classes: {spellcastingClasses.map(sc => `${CLASSES[sc.classId]?.name} (${ABILITY_LABELS[sc.info?.ability]?.short})`).join(', ')}</>
+            ) : (
+              <>Spellcasting Ability: {ABILITY_LABELS[primarySpellcastingAbility]?.name}</>
+            )}
+          </p>
+        </div>
+        <button
+          className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={autoSelectSpells}
+          disabled={!hasSpellcasting || (maxCantrips === 0 && totalMaxSpells === 0)}
+        >
+          Choose for me
+        </button>
       </div>
 
       {/* Spellcasting Summary */}
@@ -10851,6 +10969,18 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   const classGold = classId ? STARTING_GOLD[classId] : null;
   const backgroundEquipment = character.background ? BACKGROUNDS[character.background]?.equipment : null;
 
+  const autoSelectEquipment = () => {
+    if (!classEquipment) return;
+    const choices = {};
+    classEquipment.choices.forEach((_, idx) => {
+      choices[idx] = 0;
+    });
+    setMethod('starting');
+    setEquipmentChoices(choices);
+    setGoldRolled(false);
+    setPurchasedItems([]);
+  };
+
   // Update character when equipment changes
   useEffect(() => {
     updateCharacter('equipmentMethod', method);
@@ -10907,11 +11037,20 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Equipment</h3>
-        <p className="text-sm text-slate-500">
-          Take your class starting equipment or roll for gold to buy your own.
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Equipment</h3>
+          <p className="text-sm text-slate-500">
+            Take your class starting equipment or roll for gold to buy your own.
+          </p>
+        </div>
+        <button
+          onClick={autoSelectEquipment}
+          className="px-4 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!classEquipment}
+        >
+          Choose for me
+        </button>
       </div>
 
       {/* Method Selection */}
@@ -13003,14 +13142,23 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
 // Smart race selection based on class
 const smartChooseRace = (character) => {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  
+  const chooseSubrace = (raceId) => {
+    const race = RACES[raceId];
+    if (race?.subraces && race.subraces.length > 0) {
+      return pick(race.subraces);
+    }
+    return null;
+  };
+
   if (!character.class) {
-    // No class selected yet, pick a popular versatile race
-    return { race: pick(['human', 'halfElf', 'variantHuman']), subrace: null };
+    // No class yet: pick from stable, fully-supported races
+    const starterRaces = ['human', 'halfElf', 'dragonborn', 'woodElf', 'hillDwarf'].filter(id => RACES[id]);
+    const raceId = pick(starterRaces.length ? starterRaces : Object.keys(RACES));
+    return { race: raceId, subrace: chooseSubrace(raceId) };
   }
   
   const classData = CLASSES[character.class];
-  const primaryAbilities = classData.primaryAbility;
+  const primaryAbilities = classData.primaryAbility || [];
   
   // Map races to ability synergies
   const raceAbilityMap = {
@@ -13022,7 +13170,6 @@ const smartChooseRace = (character) => {
     lightfootHalfling: ['dexterity', 'charisma'],
     stoutHalfling: ['dexterity', 'constitution'],
     human: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
-    variantHuman: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
     dragonborn: ['strength', 'charisma'],
     gnome: ['intelligence', 'constitution'],
     halfElf: ['charisma', 'dexterity', 'wisdom'],
@@ -13036,15 +13183,11 @@ const smartChooseRace = (character) => {
     return primaryAbilities.some(ability => raceAbilities.includes(ability));
   });
   
-  const raceId = compatibleRaces.length > 0 ? pick(compatibleRaces) : pick(Object.keys(RACES));
-  const race = RACES[raceId];
-  
-  let subraceId = null;
-  if (race.subraces && race.subraces.length > 0) {
-    subraceId = pick(race.subraces);
-  }
-  
-  return { race: raceId, subrace: subraceId };
+  const raceId = (compatibleRaces.length > 0 ? compatibleRaces : Object.keys(RACES))
+    .filter(id => RACES[id])
+    .sort(() => Math.random() - 0.5)[0];
+
+  return { race: raceId, subrace: chooseSubrace(raceId) };
 };
 
 // Smart class selection based on ability scores
@@ -13718,7 +13861,7 @@ const CharacterCreator = ({
                 Character Level (Total)
               </label>
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(level => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
                   <button
                     key={level}
                     onClick={() => updateCharacter('level', level)}
@@ -13733,7 +13876,7 @@ const CharacterCreator = ({
                 ))}
               </div>
               <p className="text-xs text-slate-500 mt-2">
-                This is your total character level. If you multiclass, levels are split across classes (e.g., Level 5 total = Barbarian 3 / Warlock 2). Levels 4, 8, 12, 16, and 19 grant Ability Score Improvements or Feats.
+                This is your total character level. If you multiclass, levels are split across classes (e.g., Level 5 total = Barbarian 3 / Warlock 2). Levels 4 and 8 grant Ability Score Improvements or Feats.
               </p>
             </div>
 
