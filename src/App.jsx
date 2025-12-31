@@ -13144,31 +13144,27 @@ const smartChooseRace = (character) => {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const chooseSubrace = (raceId) => {
     const race = RACES[raceId];
-    if (race?.subraces && race.subraces.length > 0) {
-      return pick(race.subraces);
+    if (race?.subraces && Object.keys(race.subraces).length > 0) {
+      return pick(Object.keys(race.subraces));
     }
     return null;
   };
 
   if (!character.class) {
-    // No class yet: pick from stable, fully-supported races
-    const starterRaces = ['human', 'halfElf', 'dragonborn', 'woodElf', 'hillDwarf'].filter(id => RACES[id]);
-    const raceId = pick(starterRaces.length ? starterRaces : Object.keys(RACES));
+    // No class yet: pick from all available races
+    const allRaces = Object.keys(RACES).filter(id => RACES[id]);
+    const raceId = pick(allRaces);
     return { race: raceId, subrace: chooseSubrace(raceId) };
   }
   
   const classData = CLASSES[character.class];
   const primaryAbilities = classData.primaryAbility || [];
   
-  // Map races to ability synergies
+  // Map base races to ability synergies (not subraces)
   const raceAbilityMap = {
-    mountainDwarf: ['strength', 'constitution'],
-    hillDwarf: ['constitution', 'wisdom'],
-    highElf: ['dexterity', 'intelligence'],
-    woodElf: ['dexterity', 'wisdom'],
-    darkElf: ['dexterity', 'charisma'],
-    lightfootHalfling: ['dexterity', 'charisma'],
-    stoutHalfling: ['dexterity', 'constitution'],
+    dwarf: ['constitution', 'strength'],
+    elf: ['dexterity', 'intelligence', 'wisdom'],
+    halfling: ['dexterity', 'constitution', 'charisma'],
     human: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
     dragonborn: ['strength', 'charisma'],
     gnome: ['intelligence', 'constitution'],
@@ -13180,12 +13176,10 @@ const smartChooseRace = (character) => {
   // Find races that boost primary abilities
   const compatibleRaces = Object.keys(RACES).filter(raceId => {
     const raceAbilities = raceAbilityMap[raceId] || [];
-    return primaryAbilities.some(ability => raceAbilities.includes(ability));
+    return raceAbilities.length === 0 || primaryAbilities.some(ability => raceAbilities.includes(ability));
   });
   
-  const raceId = (compatibleRaces.length > 0 ? compatibleRaces : Object.keys(RACES))
-    .filter(id => RACES[id])
-    .sort(() => Math.random() - 0.5)[0];
+  const raceId = pick(compatibleRaces.length > 0 ? compatibleRaces : Object.keys(RACES).filter(id => RACES[id]));
 
   return { race: raceId, subrace: chooseSubrace(raceId) };
 };
@@ -13916,16 +13910,26 @@ const CharacterCreator = ({
                 <button
                   onClick={() => {
                     const ages = ['18', '25', '30', '45', '60', '120', '200'];
-                    const heights = ['4\'10"', '5\'2"', '5\'6"', '5\'10"', '6\'0"', '6\'4"'];
-                    const weights = ['100 lbs', '130 lbs', '160 lbs', '180 lbs', '200 lbs', '240 lbs'];
+                    // Height: 4'6" to 6'8" in 1-inch increments
+                    const feet = 4 + Math.floor(Math.random() * 3); // 4, 5, or 6
+                    const maxInches = feet === 6 ? 8 : 11;
+                    const inches = Math.floor(Math.random() * (maxInches + 1));
+                    const height = `${feet}'${inches}"`;
+                    
+                    // Weight: correlated with height (BMI range 18-30)
+                    const totalInches = feet * 12 + inches;
+                    const minWeight = Math.ceil((totalInches * totalInches * 18) / 703 / 5) * 5; // Round to nearest 5
+                    const maxWeight = Math.ceil((totalInches * totalInches * 30) / 703 / 5) * 5;
+                    const weight = `${minWeight + Math.floor(Math.random() * ((maxWeight - minWeight) / 5 + 1)) * 5} lbs`;
+                    
                     const eyeColors = ['Brown', 'Blue', 'Green', 'Hazel', 'Amber', 'Gray', 'Violet'];
                     const hairColors = ['Black', 'Brown', 'Blonde', 'Red', 'White', 'Silver', 'Auburn'];
                     const skinTones = ['Pale', 'Fair', 'Light', 'Olive', 'Tan', 'Brown', 'Dark'];
                     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
                     updateCharacter('physicalCharacteristics', {
-                      age: pick(ages),
-                      height: pick(heights),
-                      weight: pick(weights),
+                      age: ages[Math.floor(Math.random() * ages.length)],
+                      height,
+                      weight,
                       eyes: pick(eyeColors),
                       hair: pick(hairColors),
                       skin: pick(skinTones)
