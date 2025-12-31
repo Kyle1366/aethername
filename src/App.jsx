@@ -1188,8 +1188,8 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
                   <ChevronLeft className="w-3 h-3" /> Back
                 </button>
               )}
-              {/* Hide Next button when user must perform an action (like clicking Generate) */}
-              {step?.waitForAction !== 'generate' && (
+              {/* Hide Next button when user must perform an action (like clicking Generate or person icon) */}
+              {!step?.waitForAction && (
                 <button
                   onClick={handleNext}
                   className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-1"
