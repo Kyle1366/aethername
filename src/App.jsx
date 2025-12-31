@@ -6062,15 +6062,20 @@ const ReviewStep = ({
 
     y += 3;
 
-    // ============== TWO-COLUMN LAYOUT FOR BOTTOM SECTIONS ==============
-    const twoColStartY = y;
-    const bottomLeftX = margin;
-    const bottomRightX = pageWidth / 2 + 4;
-    const leftColWidth = pageWidth / 2 - margin - 6;
-    const rightColWidth = pageWidth / 2 - margin - 6;
+    // ============== THREE-COLUMN LAYOUT FOR BOTTOM SECTIONS ==============
+    const threeColStartY = y;
+    const colGap = 4;
+    const colWidth = (pageWidth - 2 * margin - 2 * colGap) / 3;
     
-    let leftY = twoColStartY;
-    let rightY = twoColStartY;
+    // Column X positions
+    const col1X = margin;
+    const col2X = margin + colWidth + colGap;
+    const col3X = margin + 2 * (colWidth + colGap);
+    
+    // Track Y position for each column
+    let col1Y = threeColStartY;
+    let col2Y = threeColStartY;
+    let col3Y = threeColStartY;
     
     // Column header helper - now supports optional right-side text
     const drawColumnHeader = (text, yPos, xPos, width, rightText = null) => {
@@ -6082,20 +6087,20 @@ const ReviewStep = ({
       doc.line(xPos, yPos, xPos + width, yPos);
       doc.setLineWidth(0.4);
       doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.lightGold);
-      doc.text(text, xPos + 3, yPos + 4.5);
+      doc.text(text, xPos + 2, yPos + 4.5);
       // Optional right-side text (for GP, etc)
       if (rightText) {
         doc.setFont('times', 'bolditalic');
         const rtWidth = doc.getTextWidth(rightText);
-        doc.text(rightText, xPos + width - rtWidth - 3, yPos + 4.5);
+        doc.text(rightText, xPos + width - rtWidth - 2, yPos + 4.5);
       }
       return yPos + headerHeight + 2;
     };
 
-    // ============== LEFT COLUMN: FEATURES & TRAITS ==============
+    // ============== COLUMN 1: FEATURES & TRAITS ==============
     const features = [];
     if (race?.traits) features.push(...race.traits.map(t => ({ text: t, type: 'Racial' })));
     
@@ -6116,53 +6121,45 @@ const ReviewStep = ({
     
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
     
-    // Check if section needs to move to next page
-    const estimatedFeaturesHeight = features.length * 8; // Rough estimate
-    if (checkSectionBreak(estimatedFeaturesHeight, 'Features & Traits')) {
-      leftY = margin;
-    }
+    col1Y = drawColumnHeader('FEATURES & TRAITS', col1Y, col1X, colWidth);
     
-    leftY = drawColumnHeader('FEATURES & TRAITS', leftY, bottomLeftX, leftColWidth);
-    
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textLight);
     
     features.forEach((feat, idx) => {
       // Calculate required space for this feature
-      const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - 20);
-      const requiredSpace = Math.max(4, wrappedText.length * 3.5) + 1;
+      const wrappedText = doc.splitTextToSize(feat.text, colWidth - 15);
+      const requiredSpace = Math.max(4, wrappedText.length * 3) + 1;
       
       // Check if we need a page break
-      if (checkPageBreak(requiredSpace)) {
-        leftY = margin;
-        leftY = drawColumnHeader('FEATURES & TRAITS (cont.)', leftY, bottomLeftX, leftColWidth);
+      if (col1Y + requiredSpace > maxY) {
+        // Content overflow - we'll handle this at the end
+        return;
       }
       
       // Type badge
       doc.setFillColor(...colors.headerBg);
-      doc.setFontSize(6);
-      const typeWidth = doc.getTextWidth(feat.type) + 3;
-      doc.roundedRect(bottomLeftX + 1, leftY - 1, typeWidth, 4, 0.8, 0.8, 'F');
+      doc.setFontSize(5);
+      const typeWidth = doc.getTextWidth(feat.type) + 2;
+      doc.roundedRect(col1X + 1, col1Y - 1, typeWidth, 3.5, 0.5, 0.5, 'F');
       
       doc.setFont('times', 'bold');
       doc.setTextColor(255, 255, 255);
-      doc.text(feat.type, bottomLeftX + 2.5, leftY + 1.5);
+      doc.text(feat.type, col1X + 2, col1Y + 1);
       
       // Feature text
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
       wrappedText.forEach((line, lineIdx) => {
-        doc.text(line, bottomLeftX + typeWidth + 3, leftY + 1.5 + lineIdx * 3.5);
+        doc.text(line, col1X + typeWidth + 2, col1Y + 1 + lineIdx * 3);
       });
       
-      leftY += requiredSpace;
+      col1Y += requiredSpace;
     });
-    
-    leftY += 3;
 
-    // ============== LEFT COLUMN: EQUIPMENT ==============
+    // ============== COLUMN 2: EQUIPMENT + LEVEL ADV ==============
     if (equipment.length > 0) {
       // Calculate total GP from equipment items (background gold) + character.gold
       let totalGP = character.gold || 0;
@@ -6174,39 +6171,29 @@ const ReviewStep = ({
       
       // Filter out GP items from equipment list
       const equipmentNoGP = equipment.filter(item => !gpRegex.test(item));
-      const estimatedEquipmentHeight = equipmentNoGP.length * 5 + 10;
-      
-      if (checkSectionBreak(estimatedEquipmentHeight, 'Equipment')) {
-        leftY = margin;
-      }
       
       // Show GP in header if any
       const gpText = totalGP > 0 ? `${totalGP} GP` : null;
-      leftY = drawColumnHeader('EQUIPMENT', leftY, bottomLeftX, leftColWidth, gpText) + 1;
+      col2Y = drawColumnHeader('EQUIPMENT', col2Y, col2X, colWidth, gpText);
       
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
       
       equipmentNoGP.forEach((item, idx) => {
-        if (checkPageBreak(5)) {
-          leftY = margin;
-          leftY = drawColumnHeader('EQUIPMENT (cont.)', leftY, bottomLeftX, leftColWidth, gpText) + 1;
-        }
+        if (col2Y + 4 > maxY) return; // Stop if overflow
         
         const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
         
         doc.setFillColor(...colors.gold);
-        doc.circle(bottomLeftX + 3, leftY + 1, 1, 'F');
-        doc.text(cleanItem, bottomLeftX + 7, leftY + 2);
-        leftY += 4.5;
+        doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
+        doc.text(cleanItem, col2X + 5, col2Y + 2);
+        col2Y += 4;
       });
     }
     
-    // ============== LEFT COLUMN: LEVEL ADVANCEMENTS ==============
+    // Level Advancements in column 2
     const levelAdvancements = [];
-    
-    // Read from asiChoices (the actual storage format)
     if (character.asiChoices && Object.keys(character.asiChoices).length > 0) {
       Object.entries(character.asiChoices).forEach(([level, choice]) => {
         if (!choice) return;
@@ -6229,255 +6216,226 @@ const ReviewStep = ({
       });
     }
     
-    if (levelAdvancements.length > 0) {
-      leftY += 3;
-      leftY = drawColumnHeader('LEVEL ADV', leftY, bottomLeftX, leftColWidth) + 1;
+    if (levelAdvancements.length > 0 && col2Y + 10 < maxY) {
+      col2Y += 3;
+      col2Y = drawColumnHeader('LEVEL ADV', col2Y, col2X, colWidth);
       
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
       
       levelAdvancements.forEach((adv) => {
+        if (col2Y + 4 > maxY) return;
         doc.setFillColor(...colors.accentPurple);
-        doc.circle(bottomLeftX + 3, leftY + 1, 1, 'F');
-        doc.text(adv, bottomLeftX + 7, leftY + 2);
-        leftY += 4.5;
+        doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
+        doc.text(adv, col2X + 5, col2Y + 2);
+        col2Y += 4;
       });
     }
     
-    // ============== LEFT COLUMN: FIGHTING STYLE ==============
-    if (character.fightingStyle) {
-      checkPageBreak(12);
-      
-      leftY += 3;
-      doc.setFontSize(10);
-      doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.accentPurple);
-      doc.text('FIGHTING STYLE', bottomLeftX + 2, leftY);
-      leftY += 4;
-      
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      const styleName = FIGHTING_STYLES[character.fightingStyle]?.name || character.fightingStyle;
-      doc.text(styleName, bottomLeftX + 5, leftY);
-      leftY += 5;
-    }
-    
-    // ============== LEFT COLUMN: PHYSICAL CHARACTERISTICS ==============
-    const hasPhysicalTraits = character.age || character.height || character.weight || 
-                              character.eyes || character.hair || character.skin;
-    
-    if (hasPhysicalTraits) {
-      leftY += 3;
-      const physicalTraits = [
-        { label: 'Age', value: character.age },
-        { label: 'Height', value: character.height },
-        { label: 'Weight', value: character.weight },
-        { label: 'Eyes', value: character.eyes },
-        { label: 'Hair', value: character.hair },
-        { label: 'Skin', value: character.skin }
-      ].filter(t => t.value);
-      
-      doc.setFontSize(8);
-      doc.setFont('times', 'bolditalic');
-      doc.setTextColor(...colors.textMuted);
-      
-      physicalTraits.forEach((trait, idx) => {
-        if (idx % 2 === 0 && idx > 0) leftY += 6;
-        const xPos = bottomLeftX + (idx % 2) * (leftColWidth / 2);
-        doc.text(trait.label.toUpperCase(), xPos, leftY);
-        doc.setFontSize(9);
+    // Fighting Style in column 2
+    if (character.fightingStyle && col2Y + 15 < maxY) {
+      const fs = FIGHTING_STYLES[character.fightingStyle];
+      if (fs) {
+        col2Y += 3;
+        col2Y = drawColumnHeader('FIGHTING STYLE', col2Y, col2X, colWidth);
+        
+        doc.setFontSize(8);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.textGold);
+        doc.text(fs.name, col2X + 2, col2Y + 1);
+        col2Y += 4;
+        
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
-        doc.text(String(trait.value), xPos, leftY + 3);
-        doc.setFontSize(8);
-        doc.setFont('times', 'bolditalic');
-        doc.setTextColor(...colors.textMuted);
+        const fsDesc = doc.splitTextToSize(fs.description, colWidth - 4);
+        fsDesc.forEach((line, idx) => {
+          if (col2Y + 3 > maxY) return;
+          doc.text(line, col2X + 2, col2Y + 1 + idx * 3);
+        });
+        col2Y += fsDesc.length * 3;
+      }
+    }
+    
+    // Metamagic in column 2
+    if (character.metamagicOptions && character.metamagicOptions.length > 0 && col2Y + 10 < maxY) {
+      col2Y += 3;
+      col2Y = drawColumnHeader('METAMAGIC', col2Y, col2X, colWidth);
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      
+      character.metamagicOptions.forEach((metaKey) => {
+        if (col2Y + 4 > maxY) return;
+        const meta = METAMAGIC_OPTIONS[metaKey];
+        if (meta) {
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
+          doc.text(`${meta.name} (${meta.cost}SP)`, col2X + 5, col2Y + 2);
+          col2Y += 4;
+        }
+      });
+    }
+    
+    // Battle Master Maneuvers in column 2
+    if (character.battleMasterManeuvers && character.battleMasterManeuvers.length > 0 && col2Y + 10 < maxY) {
+      col2Y += 3;
+      col2Y = drawColumnHeader('MANEUVERS', col2Y, col2X, colWidth);
+      
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      
+      character.battleMasterManeuvers.forEach((manKey) => {
+        if (col2Y + 4 > maxY) return;
+        const man = BATTLE_MASTER_MANEUVERS[manKey];
+        if (man) {
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(col2X + 2, col2Y + 1, 0.8, 'F');
+          doc.text(man.name, col2X + 5, col2Y + 2);
+          col2Y += 4;
+        }
       });
     }
 
-    // ============== RIGHT COLUMN: SPELLCASTING ==============
+    // ============== COLUMN 3: SPELLCASTING ==============
     if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
-      // Helper to check page break for right column
-      const checkRightColumnPageBreak = (requiredSpace) => {
-        if (rightY + requiredSpace > maxY) {
-          addFooter(currentPage);
-          doc.addPage();
-          currentPage++;
-          rightY = margin;
-          addDecorativeBorder();
-          return true;
-        }
-        return false;
-      };
-      
-      rightY = drawColumnHeader('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 2;
-      
-      // Multiclass disclaimer
-      if (character.multiclass && character.multiclass.length > 1) {
-        const hasMultipleCasters = character.multiclass.filter(mc => {
-          const mcClass = CLASSES[mc.classId];
-          return mcClass?.spellcasting;
-        }).length > 1;
-        
-        if (hasMultipleCasters) {
-          doc.setFontSize(8);
-          doc.setFont('times', 'italic');
-          doc.setTextColor(...colors.accentBlue);
-          doc.text('Multiclass spells: primary class only', bottomRightX + 2, rightY);
-          rightY += 4;
-        }
-      }
+      col3Y = drawColumnHeader('SPELLCASTING', col3Y, col3X, colWidth);
       
       const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       
-      // Spell stats - smaller font to prevent clipping
-      doc.setFontSize(10);
+      // Spell stats
+      doc.setFontSize(8);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
-      doc.text(`DC ${spellDC} • ATK +${spellAttack} • ${ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase()}`, bottomRightX + 2, rightY);
-      rightY += 6;
+      doc.text(`DC ${spellDC} • ATK +${spellAttack}`, col3X + 2, col3Y);
+      col3Y += 4;
       
       // Spell slots
       const slots = getSpellSlots(character.class, totalLevel);
       if (slots) {
-        doc.setFontSize(10);
-        doc.setFont('times', 'bold');
-        doc.setTextColor(...colors.accentPurple);
-        doc.text('Slots:', bottomRightX + 2, rightY);
-        rightY += 4;
-        
-        doc.setFontSize(10);
+        doc.setFontSize(7);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
         
         if (character.class === 'warlock') {
-          doc.text(`${slots.slots} × Lv${slots.level}`, bottomRightX + 4, rightY);
-          rightY += 5;
+          doc.text(`Pact: ${slots.slots}×Lv${slots.level}`, col3X + 2, col3Y);
+          col3Y += 4;
         } else {
           const slotText = Object.entries(slots)
             .filter(([_, count]) => count > 0)
             .map(([lvl, count]) => `${lvl}:${count}`)
-            .join(' • ');
+            .join(' ');
           if (slotText) {
-            const wrappedSlots = doc.splitTextToSize(slotText, rightColWidth - 6);
+            const wrappedSlots = doc.splitTextToSize(slotText, colWidth - 4);
             wrappedSlots.forEach((line, idx) => {
-              doc.text(line, bottomRightX + 4, rightY + idx * 4);
+              doc.text(line, col3X + 2, col3Y + idx * 3);
             });
-            rightY += wrappedSlots.length * 4 + 2;
+            col3Y += wrappedSlots.length * 3 + 1;
           }
         }
       }
       
       // Cantrips
       if (spellList.cantrips.length > 0) {
-        checkRightColumnPageBreak(10);
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('CANTRIPS', bottomRightX + 2, rightY);
-        rightY += 5;
+        doc.text('Cantrips', col3X + 2, col3Y);
+        col3Y += 4;
         
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
-        spellList.cantrips.forEach((spell, idx) => {
-          if (checkRightColumnPageBreak(5)) {
-            doc.setFontSize(10);
-            doc.setFont('times', 'bold');
-            doc.setTextColor(...colors.accentPurple);
-            doc.text('CANTRIPS (cont.)', bottomRightX + 2, rightY);
-            rightY += 5;
-            doc.setFontSize(10);
-            doc.setFont('times', 'normal');
-            doc.setTextColor(...colors.textLight);
-          }
+        spellList.cantrips.forEach((spell) => {
+          if (col3Y + 4 > maxY) return;
           doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
-          doc.text(spell, bottomRightX + 8, rightY + 2);
-          rightY += 4.5;
+          doc.circle(col3X + 3, col3Y + 0.5, 0.8, 'F');
+          doc.text(spell, col3X + 6, col3Y + 1.5);
+          col3Y += 3.5;
         });
-        rightY += 2;
+        col3Y += 2;
       }
       
       // Prepared/Known Spells
       if (spellList.spells.length > 0) {
-        checkRightColumnPageBreak(10);
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('KNOWN/PREPARED', bottomRightX + 2, rightY);
-        rightY += 5;
+        doc.text('Spells', col3X + 2, col3Y);
+        col3Y += 4;
         
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
-        spellList.spells.forEach((spell, idx) => {
-          if (checkRightColumnPageBreak(5)) {
-            doc.setFontSize(10);
-            doc.setFont('times', 'bold');
-            doc.setTextColor(...colors.accentPurple);
-            doc.text('KNOWN/PREPARED (cont.)', bottomRightX + 2, rightY);
-            rightY += 5;
-            doc.setFontSize(10);
-            doc.setFont('times', 'normal');
-            doc.setTextColor(...colors.textLight);
-          }
+        spellList.spells.forEach((spell) => {
+          if (col3Y + 4 > maxY) return;
           doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
-          doc.text(spell, bottomRightX + 8, rightY + 2);
-          rightY += 4.5;
+          doc.circle(col3X + 3, col3Y + 0.5, 0.8, 'F');
+          doc.text(spell, col3X + 6, col3Y + 1.5);
+          col3Y += 3.5;
         });
       }
     }
     
-    // ============== RIGHT COLUMN: ELDRITCH INVOCATIONS ==============
+    // Eldritch Invocations in column 3 (right after spells)
     if (character.warlockInvocations && character.warlockInvocations.length > 0) {
-      // Helper to check page break for right column (define again if spellcasting section didn't run)
-      const checkRightColumnPageBreak = (requiredSpace) => {
-        if (rightY + requiredSpace > maxY) {
-          addFooter(currentPage);
-          doc.addPage();
-          currentPage++;
-          rightY = margin;
-          addDecorativeBorder();
-          return true;
-        }
-        return false;
-      };
-      
-      rightY += 4;
-      checkRightColumnPageBreak(10);
-      doc.setFontSize(10);
-      doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.accentPurple);
-      doc.text('INVOCATIONS', bottomRightX + 2, rightY);
-      rightY += 5;
-      
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      character.warlockInvocations.forEach((invKey) => {
-        const invocation = WARLOCK_INVOCATIONS[invKey];
-        if (invocation) {
-          if (checkRightColumnPageBreak(5)) {
-            doc.setFontSize(10);
-            doc.setFont('times', 'bold');
-            doc.setTextColor(...colors.accentPurple);
-            doc.text('INVOCATIONS (cont.)', bottomRightX + 2, rightY);
-            rightY += 5;
-            doc.setFontSize(10);
-            doc.setFont('times', 'normal');
-            doc.setTextColor(...colors.textLight);
+      if (col3Y + 10 < maxY) {
+        col3Y += 3;
+        doc.setFontSize(8);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.accentPurple);
+        doc.text('Invocations', col3X + 2, col3Y);
+        col3Y += 4;
+        
+        doc.setFontSize(8);
+        doc.setFont('times', 'normal');
+        doc.setTextColor(...colors.textLight);
+        character.warlockInvocations.forEach((invKey) => {
+          if (col3Y + 4 > maxY) return;
+          const invocation = WARLOCK_INVOCATIONS[invKey];
+          if (invocation) {
+            doc.setFillColor(...colors.accentPurple);
+            doc.circle(col3X + 3, col3Y + 0.5, 0.8, 'F');
+            doc.text(invocation.name, col3X + 6, col3Y + 1.5);
+            col3Y += 3.5;
           }
-          doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
-          doc.text(invocation.name, bottomRightX + 8, rightY + 2);
-          rightY += 4.5;
-        }
-      });
+        });
+      }
+    }
+    
+    // Physical characteristics in column 3 if space
+    if (character.physicalCharacteristics && col3Y + 20 < maxY) {
+      const physicalTraits = [
+        { label: 'Age', value: character.physicalCharacteristics.age },
+        { label: 'Height', value: character.physicalCharacteristics.height },
+        { label: 'Weight', value: character.physicalCharacteristics.weight },
+        { label: 'Eyes', value: character.physicalCharacteristics.eyes },
+        { label: 'Hair', value: character.physicalCharacteristics.hair },
+        { label: 'Skin', value: character.physicalCharacteristics.skin }
+      ].filter(t => t.value);
+      
+      if (physicalTraits.length > 0) {
+        col3Y += 3;
+        doc.setFontSize(8);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.accentPurple);
+        doc.text('Physical', col3X + 2, col3Y);
+        col3Y += 4;
+        
+        doc.setFontSize(7);
+        doc.setFont('times', 'normal');
+        physicalTraits.forEach((trait) => {
+          if (col3Y + 3 > maxY) return;
+          doc.setTextColor(...colors.textMuted);
+          doc.text(`${trait.label}:`, col3X + 2, col3Y);
+          doc.setTextColor(...colors.textLight);
+          doc.text(String(trait.value), col3X + 18, col3Y);
+          col3Y += 3;
+        });
+      }
     }
 
     // Add footer to current page
@@ -11222,35 +11180,49 @@ const CharacterCreator = ({
         break;
         
       case 'pdfStress':
-        // Kitchen sink character - level 10 multiclass
+        // Kitchen sink character - level 10 triple-class
         testCharacter = generateRandomCharacter('PDF Stress Test', true);
         testCharacter.level = 10;
         testCharacter.class = 'paladin';
+        testCharacter.subclass = 'devotion';
         testCharacter.multiclass = [
-          { classId: 'warlock', level: 3, subclass: 'fiend' }
+          { classId: 'warlock', level: 3, subclass: 'fiend' },
+          { classId: 'sorcerer', level: 2, subclass: 'draconicBloodline' }
         ];
         testCharacter.fightingStyle = 'defense';
-        testCharacter.warlockInvocations = ['agonizing-blast', 'repelling-blast'];
+        testCharacter.warlockInvocations = ['agonizingBlast', 'repellingBlast', 'devilsSight'];
+        testCharacter.metamagicOptions = ['quickened', 'twinned'];
         testCharacter.equipment = [
           'Plate Armor', 'Greatsword', 'Shield', 'Javelin (5)', 'Backpack',
           'Bedroll', 'Mess Kit', 'Tinderbox', '10 torches', 'Rations (10 days)',
           'Waterskin', 'Hemp rope (50 ft)', 'Holy Symbol', 'Prayer Book',
           'Incense', 'Vestments', 'Common Clothes', 'Belt Pouch', 'Healing Potion (5)',
-          'Antitoxin', 'Crowbar', 'Hammer', 'Pitons (10)', 'Oil Flask (5)'
+          'Antitoxin', 'Crowbar', 'Hammer', 'Pitons (10)', 'Oil Flask (5)',
+          'Thieves Tools', 'Component Pouch'
         ];
-        // Warlock cantrips (level 3 gets 2 cantrips)
-        testCharacter.cantrips = ['eldritchBlast', 'mageHand'];
-        // Paladin spells (prepared based on CHA + level) + Warlock spells (4 known at level 3)
+        // Combined cantrips: Warlock 2 + Sorcerer 4 = 6
+        testCharacter.cantrips = ['eldritchBlast', 'mageHand', 'fireBolt', 'prestidigitation', 'light', 'minorIllusion'];
+        // Paladin prepared (CHA+level) + Warlock known (4) + Sorcerer known (3)
         testCharacter.spells = [
-          // Paladin spells
+          // Paladin spells (prepared)
           'bless', 'cureWounds', 'shieldOfFaith', 'divineFavor', 'aid', 'lesserRestoration',
-          // Warlock spells  
-          'hex', 'armorOfAgathys', 'hellishRebuke', 'holdPerson'
+          // Warlock spells (known)
+          'hex', 'armorOfAgathys', 'hellishRebuke', 'holdPerson',
+          // Sorcerer spells (known)
+          'shield', 'magicMissile', 'chromaticOrb'
         ];
         testCharacter.gold = 150;
         testCharacter.asiChoices = {
-          4: { type: 'feat', feat: 'war-caster' },
-          8: { type: 'asi', asiType: 'single', singleAbility: 'charisma' }
+          4: { type: 'feat', feat: 'warCaster' },
+          8: { type: 'asi', asiType: 'double', doubleAbilities: ['charisma', 'constitution'] }
+        };
+        testCharacter.physicalCharacteristics = {
+          age: '28',
+          height: '6\'2"',
+          weight: '190 lbs',
+          eyes: 'Amber',
+          hair: 'Black',
+          skin: 'Red'
         };
         break;
       
