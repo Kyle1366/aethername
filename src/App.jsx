@@ -1011,71 +1011,82 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   };
   
   return (
-    <div className="fixed inset-0 z-[100]">
-      {/* Spotlight overlay with cutout */}
-      <svg 
-        className="absolute inset-0 w-full h-full"
-        style={{ pointerEvents: step.interactive && targetRect ? 'none' : 'auto' }}
-      >
-        <defs>
-          <mask id="spotlight-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {targetRect && (
-              <rect 
-                x={targetRect.left - 8} 
-                y={targetRect.top - 8} 
-                width={targetRect.width + 16} 
-                height={targetRect.height + 16} 
-                rx="12"
-                fill="black" 
-              />
-            )}
-          </mask>
-        </defs>
-        <rect 
-          x="0" y="0" 
-          width="100%" height="100%" 
-          fill="rgba(0,0,0,0.85)" 
-          mask="url(#spotlight-mask)" 
-        />
-      </svg>
-      
-      {/* For interactive steps, add click-blocking overlays around the cutout area */}
-      {step.interactive && targetRect && (
-        <>
-          {/* Top blocker */}
-          <div 
-            className="absolute left-0 right-0 top-0"
-            style={{ 
-              height: Math.max(0, targetRect.top - 8),
-              pointerEvents: 'auto' 
-            }}
+    <div className="fixed inset-0 z-[100]" style={{ pointerEvents: 'none' }}>
+      {/* Spotlight overlay with cutout - blocks clicks for non-interactive steps */}
+      {!step.interactive ? (
+        <svg 
+          className="absolute inset-0 w-full h-full"
+          style={{ pointerEvents: 'auto' }}
+        >
+          <defs>
+            <mask id="spotlight-mask">
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              {targetRect && (
+                <rect 
+                  x={targetRect.left - 8} 
+                  y={targetRect.top - 8} 
+                  width={targetRect.width + 16} 
+                  height={targetRect.height + 16} 
+                  rx="12"
+                  fill="black" 
+                />
+              )}
+            </mask>
+          </defs>
+          <rect 
+            x="0" y="0" 
+            width="100%" height="100%" 
+            fill="rgba(0,0,0,0.85)" 
+            mask="url(#spotlight-mask)" 
           />
-          {/* Bottom blocker */}
-          <div 
-            className="absolute left-0 right-0 bottom-0"
-            style={{ 
-              top: targetRect.top + targetRect.height + 8,
-              pointerEvents: 'auto' 
-            }}
-          />
-          {/* Left blocker */}
-          <div 
-            className="absolute left-0 top-0 bottom-0"
-            style={{ 
-              width: Math.max(0, targetRect.left - 8),
-              pointerEvents: 'auto' 
-            }}
-          />
-          {/* Right blocker */}
-          <div 
-            className="absolute right-0 top-0 bottom-0"
-            style={{ 
-              left: targetRect.left + targetRect.width + 8,
-              pointerEvents: 'auto' 
-            }}
-          />
-        </>
+        </svg>
+      ) : (
+        /* For interactive steps, use 4 blocking divs around the cutout */
+        targetRect && (
+          <>
+            {/* Semi-transparent overlay - top */}
+            <div 
+              className="absolute left-0 right-0 top-0"
+              style={{ 
+                height: Math.max(0, targetRect.top - 8),
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+            {/* Semi-transparent overlay - bottom */}
+            <div 
+              className="absolute left-0 right-0"
+              style={{ 
+                top: targetRect.top + targetRect.height + 8,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+            {/* Semi-transparent overlay - left */}
+            <div 
+              className="absolute left-0"
+              style={{ 
+                top: targetRect.top - 8,
+                height: targetRect.height + 16,
+                width: Math.max(0, targetRect.left - 8),
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+            {/* Semi-transparent overlay - right */}
+            <div 
+              className="absolute right-0"
+              style={{ 
+                top: targetRect.top - 8,
+                height: targetRect.height + 16,
+                left: targetRect.left + targetRect.width + 8,
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+          </>
+        )
       )}
       
       {/* Highlight ring around target */}
