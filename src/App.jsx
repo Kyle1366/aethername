@@ -6116,13 +6116,6 @@ const ReviewStep = ({
 
     // ============== LEFT COLUMN: EQUIPMENT ==============
     if (equipment.length > 0) {
-      const equipmentNoGP = equipment.filter(item => !/^(\d+)\s*gp$/i.test(item));
-      const estimatedEquipmentHeight = equipmentNoGP.length * 5 + 10;
-      
-      if (checkSectionBreak(estimatedEquipmentHeight, 'Equipment')) {
-        leftY = margin;
-      }
-      
       // Calculate total GP from equipment items (background gold) + character.gold
       let totalGP = character.gold || 0;
       const gpRegex = /^(\d+)\s*gp$/i;
@@ -6133,6 +6126,11 @@ const ReviewStep = ({
       
       // Filter out GP items from equipment list
       const equipmentNoGP = equipment.filter(item => !gpRegex.test(item));
+      const estimatedEquipmentHeight = equipmentNoGP.length * 5 + 10;
+      
+      if (checkSectionBreak(estimatedEquipmentHeight, 'Equipment')) {
+        leftY = margin;
+      }
       
       // Show GP in header if any
       const gpText = totalGP > 0 ? `${totalGP} GP` : null;
