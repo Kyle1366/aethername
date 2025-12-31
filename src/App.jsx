@@ -1212,6 +1212,168 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
 };
 
 // ============================================================================
+// RANDOMIZER POPOVER COMPONENT
+// ============================================================================
+
+const RandomizerPopover = ({ onRandomize, currentLevel = 1 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [levelRange, setLevelRange] = useState([1, 5]);
+  const [enableMulticlass, setEnableMulticlass] = useState(false);
+  const popoverRef = useRef(null);
+  
+  // Close on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+  
+  const handleQuickRandom = () => {
+    // Quick random with current settings
+    const randomLevel = Math.floor(Math.random() * (levelRange[1] - levelRange[0] + 1)) + levelRange[0];
+    onRandomize(randomLevel, enableMulticlass && randomLevel >= 2);
+    setIsOpen(false);
+  };
+  
+  const handleRandomWithOptions = () => {
+    const randomLevel = Math.floor(Math.random() * (levelRange[1] - levelRange[0] + 1)) + levelRange[0];
+    onRandomize(randomLevel, enableMulticlass && randomLevel >= 2);
+    setIsOpen(false);
+  };
+  
+  return (
+    <div ref={popoverRef} className="relative">
+      <div className="flex">
+        {/* Main random button */}
+        <button
+          onClick={handleQuickRandom}
+          className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-l-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Random</span>
+        </button>
+        {/* Options dropdown toggle */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="px-2 py-2.5 md:py-2 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-r-lg font-medium hover:from-pink-600 hover:to-pink-700 transition-all border-l border-pink-400/30"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+      
+      {/* Popover */}
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-white flex items-center gap-2">
+              <Settings className="w-4 h-4 text-purple-400" />
+              Random Character Options
+            </div>
+            
+            {/* Level Range */}
+            <div>
+              <label className="block text-xs text-slate-400 mb-2">
+                Level Range: {levelRange[0]} - {levelRange[1]}
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={levelRange[0]}
+                  onChange={(e) => {
+                    const min = parseInt(e.target.value);
+                    setLevelRange([min, Math.max(min, levelRange[1])]);
+                    if (min < 2) setEnableMulticlass(false);
+                  }}
+                  className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                >
+                  {[...Array(20)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                  ))}
+                </select>
+                <span className="text-slate-500">to</span>
+                <select
+                  value={levelRange[1]}
+                  onChange={(e) => {
+                    const max = parseInt(e.target.value);
+                    setLevelRange([Math.min(levelRange[0], max), max]);
+                  }}
+                  className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                >
+                  {[...Array(20)].map((_, i) => (
+                    <option key={i + 1} value={i + 1} disabled={i + 1 < levelRange[0]}>{i + 1}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            {/* Quick Level Presets */}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: 'Lvl 1', range: [1, 1] },
+                { label: '1-5', range: [1, 5] },
+                { label: '5-10', range: [5, 10] },
+                { label: '10-15', range: [10, 15] },
+                { label: '15-20', range: [15, 20] },
+              ].map(preset => (
+                <button
+                  key={preset.label}
+                  onClick={() => {
+                    setLevelRange(preset.range);
+                    if (preset.range[0] < 2) setEnableMulticlass(false);
+                  }}
+                  className={`px-2 py-1 text-xs rounded-md transition-all ${
+                    levelRange[0] === preset.range[0] && levelRange[1] === preset.range[1]
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
+                      : 'bg-slate-800/50 text-slate-400 hover:text-slate-200 border border-slate-700/50 hover:border-slate-600'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            
+            {/* Multiclass Option */}
+            <label className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${
+              levelRange[0] >= 2 
+                ? 'bg-slate-800/30 border-slate-700/50 hover:bg-slate-800/50' 
+                : 'bg-slate-800/20 border-slate-800 opacity-50 cursor-not-allowed'
+            }`}>
+              <input
+                type="checkbox"
+                checked={enableMulticlass}
+                onChange={(e) => setEnableMulticlass(e.target.checked)}
+                disabled={levelRange[0] < 2}
+                className="rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
+              />
+              <div>
+                <span className="text-sm text-slate-300">Enable Multiclass</span>
+                {levelRange[0] < 2 && (
+                  <span className="block text-[10px] text-slate-500">Requires level 2+</span>
+                )}
+              </div>
+            </label>
+            
+            {/* Generate Button */}
+            <button
+              onClick={handleRandomWithOptions}
+              className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-500 hover:to-pink-500 transition-all flex items-center justify-center gap-2"
+            >
+              <Dices className="w-4 h-4" />
+              Generate Character
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
 // TEMPLATES MODAL COMPONENT
 // ============================================================================
 
@@ -1329,38 +1491,53 @@ const TemplatesModal = ({ isOpen, onClose, onSelectTemplate, currentCharacter, o
           {tab === 'iconic' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {Object.values(ICONIC_BUILDS).map(build => (
-                <button
+                <div
                   key={build.id}
-                  onClick={() => {
-                    onSelectTemplate(build.character);
-                    onClose();
-                  }}
-                  className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800 transition-all text-left group"
+                  className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800 transition-all text-left group relative"
                 >
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">{build.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
-                        {build.name}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-0.5 line-clamp-2">{build.description}</div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                          build.difficulty === 'Beginner' ? 'bg-green-500/20 text-green-400' :
-                          build.difficulty === 'Intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-red-500/20 text-red-400'
-                        }`}>
-                          {build.difficulty}
-                        </span>
-                        {build.tags.slice(0, 2).map(tag => (
-                          <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400">
-                            {tag}
+                  <button
+                    onClick={() => {
+                      onSelectTemplate(build.character);
+                      onClose();
+                    }}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{build.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                          {build.name}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-0.5 line-clamp-2">{build.description}</div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            build.difficulty === 'Beginner' ? 'bg-green-500/20 text-green-400' :
+                            build.difficulty === 'Intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {build.difficulty}
                           </span>
-                        ))}
+                          {build.tags.slice(0, 2).map(tag => (
+                            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  {/* Export button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportTemplate({ ...build, name: build.name });
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600/50 hover:text-slate-200 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Export as JSON"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -9688,6 +9865,91 @@ const MulticlassStep = ({ character, updateCharacter }) => {
           <h4 className="text-sm font-semibold text-slate-300 mb-3">
             {multiclassEntries.length === 0 ? 'Add a Class' : 'Add Another Class'}
           </h4>
+          
+          {/* Synergy Recommendations */}
+          {primaryClass && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-300">Synergy Recommendations</span>
+              </div>
+              <div className="text-xs text-slate-400 space-y-1">
+                {(() => {
+                  // Define multiclass synergies
+                  const synergies = {
+                    fighter: ['rogue', 'warlock', 'wizard', 'cleric'],
+                    rogue: ['fighter', 'ranger', 'warlock', 'bard'],
+                    paladin: ['warlock', 'sorcerer', 'bard'],
+                    warlock: ['paladin', 'sorcerer', 'fighter', 'bard'],
+                    sorcerer: ['warlock', 'paladin', 'bard'],
+                    bard: ['warlock', 'paladin', 'rogue', 'sorcerer'],
+                    ranger: ['rogue', 'fighter', 'druid', 'cleric'],
+                    cleric: ['fighter', 'paladin', 'druid'],
+                    druid: ['cleric', 'monk', 'ranger'],
+                    monk: ['rogue', 'fighter', 'druid'],
+                    barbarian: ['fighter', 'rogue', 'druid'],
+                    wizard: ['fighter', 'cleric', 'artificer']
+                  };
+                  const reasons = {
+                    'fighter-rogue': 'Action Surge + Sneak Attack for devastating burst damage',
+                    'fighter-warlock': 'Eldritch Blast + Action Surge, Hexblade for CHA attacks',
+                    'fighter-wizard': 'War Magic + Heavy Armor for a tanky spellcaster',
+                    'fighter-cleric': 'Divine Strike + Fighting Style, heavy armor proficiency',
+                    'rogue-fighter': 'Extra Attack helps land Sneak Attack, Action Surge',
+                    'rogue-ranger': 'Nature skills + Hunter\'s Mark + Sneak Attack',
+                    'rogue-warlock': 'Devil\'s Sight + darkness, Hexblade for CHA attacks',
+                    'rogue-bard': 'Expertise stacking, Jack of All Trades, spellcasting',
+                    'paladin-warlock': 'Hexblade: CHA attacks + smite slots on short rest',
+                    'paladin-sorcerer': 'Quicken Spell + smites, more spell slots',
+                    'paladin-bard': 'Inspirations + healing + smite fuel',
+                    'warlock-sorcerer': 'Quicken Eldritch Blast, font of magic flexibility',
+                    'warlock-bard': 'Short rest slots + Bardic Inspiration',
+                    'warlock-fighter': 'Hexblade + Action Surge + Eldritch Smite',
+                    'sorcerer-warlock': 'Coffeelock: convert short rest slots to sorcery points',
+                    'sorcerer-bard': 'Metamagic + Bardic spells, great face character',
+                    'bard-warlock': 'Hex + Bardic Inspiration, short rest synergy',
+                    'bard-paladin': 'CHA synergy, healing + smites',
+                    'bard-rogue': 'Double Expertise, Jack of All Trades',
+                    'ranger-rogue': 'Hunter\'s Mark + Sneak Attack, great scouts',
+                    'ranger-fighter': 'Fighting Style + Extra Attack progression',
+                    'ranger-druid': 'Nature casting synergy, Wild Shape utility',
+                    'ranger-cleric': 'Healing + nature spells, divine ranger',
+                    'cleric-fighter': 'Heavy armor + healing + Spirit Guardians',
+                    'cleric-druid': 'Full WIS caster with Wild Shape utility',
+                    'cleric-paladin': 'Channel Divinity options, smite flexibility',
+                    'druid-cleric': 'WIS synergy, expanded healing options',
+                    'druid-monk': 'WIS synergy, Unarmored Defense in Wild Shape',
+                    'druid-ranger': 'Nature spell overlap, tracking abilities',
+                    'monk-rogue': 'Mobile melee, bonus action flexibility',
+                    'monk-fighter': 'Action Surge + Flurry, Fighting Style',
+                    'monk-druid': 'Wild Shape + Martial Arts (certain forms)',
+                    'barbarian-fighter': 'Rage + Action Surge, multiple Extra Attacks',
+                    'barbarian-rogue': 'Reckless Attack = easy Sneak Attack',
+                    'barbarian-druid': 'Rage in Wild Shape for massive HP',
+                    'wizard-fighter': 'Bladesinger or War Magic + armor/weapons',
+                    'wizard-cleric': 'Expanded ritual casting, armor proficiency'
+                  };
+                  
+                  const primaryId = character.class;
+                  const recs = synergies[primaryId] || [];
+                  const alreadyTaken = multiclassEntries.map(mc => mc.classId);
+                  
+                  return recs.filter(r => !alreadyTaken.includes(r)).slice(0, 3).map(recId => {
+                    const key = `${primaryId}-${recId}`;
+                    const reason = reasons[key] || 'Good synergy';
+                    return (
+                      <div key={recId} className="flex items-center gap-2">
+                        <span className="text-emerald-400">{CLASS_ICONS[recId] || '⚔️'}</span>
+                        <span className="text-emerald-200 font-medium">{CLASSES[recId]?.name}:</span>
+                        <span>{reason}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
             {availableClasses.map(([classId, classData]) => {
               const isAlreadySelected = multiclassEntries.some(mc => mc.classId === classId);
@@ -11887,9 +12149,12 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
 // ============================================================================
 
 // Generates a random character with synergistic choices
-const generateRandomCharacter = (importedName = '', enableMulticlass = false) => {
+const generateRandomCharacter = (importedName = '', enableMulticlass = false, targetLevel = null) => {
   // Helper to pick random from array
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  // Determine level - use targetLevel if provided, otherwise random 1-10
+  const characterLevel = targetLevel || Math.floor(Math.random() * 10) + 1;
   
   // Step 1: Pick a random class first (determines build strategy)
   const classId = pick(Object.keys(CLASSES));
@@ -12046,16 +12311,8 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
   const possibleAlignments = alignmentsByClass[selectedClass.name.toLowerCase()] || Object.keys(ALIGNMENTS);
   const alignment = pick(possibleAlignments);
   
-  // Step 9: Random level (weighted toward low levels)
-  const levelWeights = [1, 1, 1, 1, 1, 3, 2, 2, 1, 1]; // More likely to be level 1-5
-  const weightedLevels = [];
-  levelWeights.forEach((weight, i) => {
-    for (let j = 0; j < weight; j++) {
-      weightedLevels.push(i + 1);
-    }
-  });
-  const levelPool = enableMulticlass ? weightedLevels.filter(l => l >= 2) : weightedLevels;
-  const level = pick(levelPool.length ? levelPool : weightedLevels);
+  // Step 9: Use the determined level (from targetLevel or random)
+  const level = characterLevel;
   
   // Step 9.5: Multiclass generation (if enabled and level is high enough)
   let multiclassLevels = [];
@@ -13110,7 +13367,7 @@ const CharacterCreator = ({
       name: prev.name || '', // Keep current name if set
       playerName: prev.playerName || '' // Keep current player name
     }));
-    setCurrentStep(0); // Go to first step
+    setCurrentStep(steps.length - 1); // Go to review step
   };
 
   return (
@@ -13260,38 +13517,15 @@ const CharacterCreator = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">Basic Information</h3>
-              <div className="flex flex-col items-end gap-2">
-                <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
-                  <input
-                    type="checkbox"
-                    checked={randomWithMulticlass}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setRandomWithMulticlass(checked);
-                      if (checked && (character.level || 1) < 2) {
-                        updateCharacter('level', 2);
-                      }
-                    }}
-                    className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-                  />
-                  <span>Multiclass (Random)</span>
-                </label>
-                <button
-                  onClick={() => {
-                    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
-                    // Preserve playerName if user entered it before randomizing
-                    randomChar.playerName = character.playerName || '';
-                    setCharacter(randomChar);
-                    // Jump to review step (last step)
-                    setCurrentStep(steps.length - 1);
-                  }}
-                  className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span className="hidden sm:inline">Random Character</span>
-                  <span className="sm:hidden">Random</span>
-                </button>
-              </div>
+              <RandomizerPopover 
+                onRandomize={(level, multiclass) => {
+                  const randomChar = generateRandomCharacter(importedName, multiclass, level);
+                  randomChar.playerName = character.playerName || '';
+                  setCharacter(randomChar);
+                  setCurrentStep(steps.length - 1);
+                }}
+                currentLevel={character.level || 1}
+              />
             </div>
             
             {/* Character Name */}
@@ -13393,9 +13627,34 @@ const CharacterCreator = ({
 
             {/* Physical Characteristics */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">
-                Physical Characteristics <span className="text-slate-500 font-normal">(Optional)</span>
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-slate-300">
+                  Physical Characteristics <span className="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <button
+                  onClick={() => {
+                    const ages = ['18', '25', '30', '45', '60', '120', '200'];
+                    const heights = ['4\'10"', '5\'2"', '5\'6"', '5\'10"', '6\'0"', '6\'4"'];
+                    const weights = ['100 lbs', '130 lbs', '160 lbs', '180 lbs', '200 lbs', '240 lbs'];
+                    const eyeColors = ['Brown', 'Blue', 'Green', 'Hazel', 'Amber', 'Gray', 'Violet'];
+                    const hairColors = ['Black', 'Brown', 'Blonde', 'Red', 'White', 'Silver', 'Auburn'];
+                    const skinTones = ['Pale', 'Fair', 'Light', 'Olive', 'Tan', 'Brown', 'Dark'];
+                    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+                    updateCharacter('physicalCharacteristics', {
+                      age: pick(ages),
+                      height: pick(heights),
+                      weight: pick(weights),
+                      eyes: pick(eyeColors),
+                      hair: pick(hairColors),
+                      skin: pick(skinTones)
+                    });
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600/80 to-teal-600/80 text-white text-xs font-medium hover:from-cyan-500/80 hover:to-teal-500/80 transition-all flex items-center gap-1.5"
+                >
+                  <Dices className="w-3.5 h-3.5" />
+                  Randomize
+                </button>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Age</label>
