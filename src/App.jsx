@@ -11229,49 +11229,49 @@ const CharacterCreator = ({
         break;
         
       case 'pdfStress':
-        // Kitchen sink character - level 10 triple-class
+        // MAXIMUM TEXT - Fighter 7 (Battle Master) / Warlock 3 for most content
         testCharacter = generateRandomCharacter('PDF Stress Test', true);
         testCharacter.level = 10;
-        testCharacter.class = 'paladin';
-        testCharacter.subclass = 'devotion';
+        testCharacter.class = 'fighter';
+        testCharacter.subclass = 'battleMaster';
         testCharacter.multiclass = [
-          { classId: 'warlock', level: 3, subclass: 'fiend' },
-          { classId: 'sorcerer', level: 2, subclass: 'draconicBloodline' }
+          { classId: 'warlock', level: 3, subclass: 'fiend', pactBoon: 'pactOfTheBlade' }
         ];
-        testCharacter.fightingStyle = 'defense';
-        testCharacter.warlockInvocations = ['agonizingBlast', 'repellingBlast', 'devilsSight'];
-        testCharacter.metamagicOptions = ['quickenedSpell', 'twinnedSpell'];
+        testCharacter.fightingStyle = 'greatWeaponFighting';
+        // 5 maneuvers for Fighter 7 Battle Master
+        testCharacter.battleMasterManeuvers = [
+          'commandersStrike', 'disarmingAttack', 'riposte', 'precisionAttack', 'menacingAttack'
+        ];
+        // 2 invocations for Warlock 3
+        testCharacter.warlockInvocations = ['agonizingBlast', 'devilsSight'];
+        // Maximum equipment for stress test
         testCharacter.equipment = [
-          'Plate Armor', 'Greatsword', 'Shield', 'Javelin (5)', 'Backpack',
-          'Bedroll', 'Mess Kit', 'Tinderbox', '10 torches', 'Rations (10 days)',
-          'Waterskin', 'Hemp rope (50 ft)', 'Holy Symbol', 'Prayer Book',
-          'Incense', 'Vestments', 'Common Clothes', 'Belt Pouch', 'Healing Potion (5)',
-          'Antitoxin', 'Crowbar', 'Hammer', 'Pitons (10)', 'Oil Flask (5)',
-          'Thieves Tools', 'Component Pouch'
+          'Plate Armor', 'Greatsword +1', 'Shield', 'Longbow', 'Arrows (40)',
+          'Javelin (5)', 'Dagger (2)', 'Handaxe (2)', 'Backpack', 'Bedroll',
+          'Mess Kit', 'Tinderbox', 'Torches (10)', 'Rations (10 days)', 'Waterskin',
+          'Hemp Rope (50 ft)', 'Grappling Hook', 'Crowbar', 'Hammer', 'Pitons (10)',
+          'Lantern (Hooded)', 'Oil Flask (5)', 'Healing Potion (3)', 'Antitoxin',
+          'Caltrops', 'Ball Bearings', 'Chain (10 ft)', 'Manacles', 'Mirror (Steel)',
+          'Bell', 'Candles (5)', 'Chalk', 'Component Pouch', 'Explorer\'s Pack'
         ];
-        // Combined cantrips: Warlock 2 + Sorcerer 4 = 6
-        testCharacter.cantrips = ['eldritchBlast', 'mageHand', 'fireBolt', 'prestidigitation', 'light', 'minorIllusion'];
-        // Paladin prepared (CHA+level) + Warlock known (4) + Sorcerer known (3)
+        // Warlock cantrips
+        testCharacter.cantrips = ['eldritchBlast', 'mageHand', 'prestidigitation'];
+        // Warlock spells known (4 at level 3)
         testCharacter.spells = [
-          // Paladin spells (prepared)
-          'bless', 'cureWounds', 'shieldOfFaith', 'divineFavor', 'aid', 'lesserRestoration',
-          // Warlock spells (known)
-          'hex', 'armorOfAgathys', 'hellishRebuke', 'holdPerson',
-          // Sorcerer spells (known)
-          'shield', 'magicMissile', 'chromaticOrb'
+          'hex', 'armorOfAgathys', 'hellishRebuke', 'darkness'
         ];
-        testCharacter.gold = 150;
+        testCharacter.gold = 250;
         testCharacter.asiChoices = {
-          4: { type: 'feat', feat: 'warCaster' },
-          8: { type: 'asi', asiType: 'double', doubleAbilities: ['charisma', 'constitution'] }
+          4: { type: 'feat', feat: 'greatWeaponMaster' },
+          6: { type: 'asi', asiType: 'double', doubleAbilities: ['strength', 'constitution'] }
         };
         testCharacter.physicalCharacteristics = {
-          age: '28',
-          height: '6\'2"',
-          weight: '190 lbs',
-          eyes: 'Amber',
-          hair: 'Black',
-          skin: 'Red'
+          age: '32',
+          height: '6\'4"',
+          weight: '220 lbs',
+          eyes: 'Steel Gray',
+          hair: 'Black with gray streaks',
+          skin: 'Weathered tan'
         };
         break;
       
