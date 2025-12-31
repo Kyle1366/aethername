@@ -5839,7 +5839,7 @@ const ReviewStep = ({
       const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
       doc.setFontSize(14);
       doc.setFont('times', 'bold');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(...(printerFriendly ? [0, 0, 0] : [255, 255, 255]));
       const modWidth = doc.getTextWidth(modStr);
       doc.text(modStr, x + (width - modWidth) / 2, circleY + 2);
       
@@ -5872,12 +5872,14 @@ const ReviewStep = ({
       doc.setLineWidth(0.5);
       doc.line(margin, yPos + headerHeight, pageWidth - margin, yPos + headerHeight);
       
-      // Section title with drop shadow
+      // Section title with drop shadow (skip shadow for printer-friendly)
       doc.setFontSize(12);
       doc.setFont('times', 'bold');
-      // Shadow
-      doc.setTextColor(20, 15, 30);
-      doc.text(text, margin + 4.5, yPos + 6);
+      if (!printerFriendly) {
+        // Shadow
+        doc.setTextColor(20, 15, 30);
+        doc.text(text, margin + 4.5, yPos + 6);
+      }
       // Main text
       doc.setTextColor(...colors.lightGold);
       doc.text(text, margin + 4, yPos + 5.5);
@@ -5921,9 +5923,11 @@ const ReviewStep = ({
     const charName = character.name || 'Unnamed Character';
     const nameWidth = doc.getTextWidth(charName);
     const nameX = (pageWidth - nameWidth) / 2;
-    // Subtle shadow
-    doc.setTextColor(25, 22, 35);
-    doc.text(charName, nameX + 0.5, margin + 11.5);
+    // Subtle shadow (skip for printer-friendly)
+    if (!printerFriendly) {
+      doc.setTextColor(25, 22, 35);
+      doc.text(charName, nameX + 0.5, margin + 11.5);
+    }
     // Main text
     doc.setTextColor(...colors.lightGold);
     doc.text(charName, nameX, margin + 11);
@@ -5961,7 +5965,7 @@ const ReviewStep = ({
     }
     
     // If still too long, wrap to multiple lines
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(...(printerFriendly ? [0, 0, 0] : [255, 255, 255]));
     if (classWidth > maxClassWidth) {
       const classLines = doc.splitTextToSize(classText, maxClassWidth);
       classLines.forEach((line, idx) => {
@@ -6213,7 +6217,7 @@ const ReviewStep = ({
       doc.roundedRect(col1X + 1, col1Y - 1, typeWidth, 3.5, 0.5, 0.5, 'F');
       
       doc.setFont('times', 'bold');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(...(printerFriendly ? [0, 0, 0] : [255, 255, 255]));
       doc.text(feat.type, col1X + 2, col1Y + 1);
       
       doc.setFontSize(8);
