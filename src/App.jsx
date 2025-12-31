@@ -1622,7 +1622,7 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
         >
           {/* Header with close button */}
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs text-slate-500 font-medium">Click parts to tweak:</div>
+            <div className="text-xs text-slate-400 font-semibold">Click parts to tweak:</div>
             <button 
               onClick={handleClose}
               className="p-1 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded transition-colors"
@@ -1677,7 +1677,7 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
           </div>
           
           {/* Hint */}
-          <div className="text-[10px] text-slate-600 mt-2 text-center">
+          <div className="text-xs text-slate-400 mt-2 text-center font-medium">
             {selectedIndices.size === 0 ? 'No selection = tweak entire name' : `${selectedIndices.size} part${selectedIndices.size > 1 ? 's' : ''} selected`}
           </div>
         </div>,
@@ -1797,7 +1797,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, met
           </div>
           <div className="min-w-0 flex-1">
             <span className="text-base md:text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent break-all">{name}</span>
-            <span className="ml-1 md:ml-2 text-[10px] md:text-xs text-slate-500 font-mono">({syllables})</span>
+            <span className="ml-1 md:ml-2 text-xs text-slate-400 font-mono font-semibold">({syllables})</span>
           </div>
         </div>
         <button onClick={onCopy} className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${copied ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30'}`}>
@@ -1829,7 +1829,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, met
             <div className="text-slate-400 space-y-2">
               {metadata.method === 'elements' && metadata.elements?.start ? (
                 <div>
-                  <div className="text-slate-500 text-[10px] mb-1">Combined word elements:</div>
+                  <div className="text-slate-400 text-xs font-semibold mb-1">Combined word elements:</div>
                   <div className="flex flex-wrap items-start gap-2">
                     <div className="flex flex-col items-center">
                       <span className="px-2 py-1 bg-amber-500/20 text-amber-300 rounded font-mono">{metadata.elements.start}</span>
@@ -1846,7 +1846,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, met
                 </div>
               ) : metadata.method === 'syllable' && metadata.syllables?.length > 0 ? (
                 <div>
-                  <div className="text-slate-500 text-[10px] mb-1">Generated from syllable patterns:</div>
+                  <div className="text-slate-400 text-xs font-semibold mb-1">Generated from syllable patterns:</div>
                   <div className="flex flex-wrap items-start gap-2">
                     {metadata.syllables.map((s, i) => (
                       <React.Fragment key={i}>
@@ -1863,7 +1863,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, met
                 </div>
               ) : metadata.method === 'mixed' && metadata.parts?.length > 0 ? (
                 <div>
-                  <div className="text-slate-500 text-[10px] mb-1">Mixed element + syllables:</div>
+                  <div className="text-slate-400 text-xs font-semibold mb-1">Mixed element + syllables:</div>
                   <div className="flex flex-wrap items-start gap-2">
                     {metadata.parts.map((p, i) => (
                       <React.Fragment key={i}>
@@ -1880,7 +1880,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, met
                 </div>
               ) : (
                 <div>
-                  <div className="text-slate-500 text-[10px] mb-1">Construction details unavailable</div>
+                  <div className="text-slate-400 text-xs font-semibold mb-1">Construction details unavailable</div>
                   <span className="text-white font-mono">{name}</span>
                 </div>
               )}
@@ -1991,7 +1991,7 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
                     <div className={`font-medium ${isActive ? 'text-indigo-300' : 'text-slate-200'}`}>
                       {page.label}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    <div className="text-xs text-slate-400 mt-0.5 font-medium">
                       {page.description}
                     </div>
                   </div>
@@ -3875,7 +3875,7 @@ const AbilityRollResult = ({ roll, index, onAssign, assignedTo }) => {
           Assigned to {ABILITY_LABELS[assignedTo].short}
         </div>
       ) : (
-        <div className="text-xs text-slate-500">Click an ability below to assign</div>
+        <div className="text-xs text-slate-300 font-medium">Click an ability below to assign</div>
       )}
     </div>
   );
@@ -4178,7 +4178,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
             <div className={`font-semibold ${method === m.id ? 'text-indigo-300' : 'text-slate-200'}`}>
               {m.label}
             </div>
-            <div className="text-xs text-slate-500">{m.desc}</div>
+            <div className="text-xs text-slate-300 font-medium">{m.desc}</div>
           </button>
         ))}
       </div>
@@ -4358,7 +4358,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-500">{info.name}</div>
+                    <div className="text-xs text-slate-300 font-medium">{info.name}</div>
                   </div>
                   <div className="text-right">
                     {method === 'manual' ? (
@@ -4396,7 +4396,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
                     </div>
                   </div>
                 </div>
-                <div className="text-xs text-slate-500">{info.desc}</div>
+                <div className="text-xs text-slate-300">{info.desc}</div>
                 {method === 'pointbuy' && (
                   <div className="text-xs text-indigo-400 mt-1">
                     Cost: {POINT_BUY_COSTS[score]} points
@@ -4435,7 +4435,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
 
       {/* D&D Modifier Reference */}
       {method && (
-        <div className="text-xs text-slate-600 text-center">
+        <div className="text-xs text-slate-400 text-center font-medium">
           D&D Modifier: (Score - 10) ÷ 2, rounded down. 8 = -1, 10 = +0, 12 = +1, 14 = +2, 16 = +3, 18 = +4
         </div>
       )}
@@ -4528,7 +4528,7 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
                 }`}
               >
                 <div className="text-sm font-semibold text-indigo-300">Ability Score Improvement</div>
-                <div className="text-xs text-slate-400 mt-1">+2 to one ability, OR +1 to two abilities</div>
+                <div className="text-xs text-slate-300 mt-1 font-medium">+2 to one ability, OR +1 to two abilities</div>
               </button>
               <button
                 onClick={() => updateASIChoice(level, { type: 'feat', feat: null })}
@@ -4539,7 +4539,7 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
                 }`}
               >
                 <div className="text-sm font-semibold text-purple-300">Feat</div>
-                <div className="text-xs text-slate-400 mt-1">Gain a special ability or feature</div>
+                <div className="text-xs text-slate-300 mt-1 font-medium">Gain a special ability or feature</div>
               </button>
             </div>
             
@@ -4591,7 +4591,7 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
                           }`}
                         >
                           <div>{ABILITY_LABELS[ability].short}</div>
-                          <div className="text-[10px] text-slate-500">{currentScore} → {currentScore + 2}</div>
+                          <div className="text-xs text-slate-300 font-semibold">{currentScore} → {currentScore + 2}</div>
                           {isSelected && <div className="text-green-400">✓</div>}
                           {atMax && <div className="text-red-400 text-[10px]">Max</div>}
                         </button>
@@ -12789,8 +12789,8 @@ export default function AetherNames() {
                     <div className="inline-flex p-6 rounded-full bg-slate-800/50 mb-4">
                       <Wand2 className="w-12 h-12 text-slate-600" />
                     </div>
-                    <p className="text-slate-500 text-lg">Configure your settings and generate names</p>
-                    <p className="text-slate-600 text-sm mt-2">Each name follows authentic linguistic rules</p>
+                    <p className="text-slate-400 text-lg font-medium">Configure your settings and generate names</p>
+                    <p className="text-slate-400 text-sm mt-2 font-medium">Each name follows authentic linguistic rules</p>
                   </div>
                 ) : (
                   generatedNames.map((n, index) => (
