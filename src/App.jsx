@@ -177,7 +177,7 @@ const DiceRoller = () => {
   };
   
   return (
-    <div className="fixed top-20 right-4 z-40">
+    <div id="tour-dice-roller" className="fixed top-20 right-4 z-40">
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -721,28 +721,72 @@ const ICONIC_BUILDS = {
 const TOUR_STEPS = [
   {
     id: 'welcome',
-    title: 'Welcome to AetherNames! 👋',
-    content: 'Create unique fantasy names and complete D&D 5e characters. This quick tour will show you around.',
-    target: null, // Full screen modal
-  },
-  {
-    id: 'generator',
-    title: 'Name Generator',
-    content: 'Generate linguistically authentic names for any fantasy or sci-fi setting. Choose a genre and click Generate!',
-    target: 'generator-tab',
-  },
-  {
-    id: 'creator',
-    title: 'Character Creator',
-    content: 'Build complete D&D 5e characters step-by-step. Race, class, abilities, spells, and equipment.',
-    target: 'creator-tab',
-  },
-  {
-    id: 'export',
-    title: 'Export Your Work',
-    content: 'Download characters as beautiful PDF sheets, or export as text/JSON. Share your creations!',
+    title: 'Welcome to AetherNames! 🎲',
+    content: 'Create unique fantasy names and complete D&D 5e characters. Let me show you around!',
     target: null,
-  }
+    page: 'generator',
+    action: null,
+  },
+  {
+    id: 'nav-generator',
+    title: 'Name Generator Tab',
+    content: 'This is where you generate unique names for characters, locations, factions, and more.',
+    target: 'tour-nav-generator',
+    page: 'generator',
+    position: 'bottom',
+  },
+  {
+    id: 'genre-select',
+    title: 'Choose Your Genre',
+    content: 'Pick Fantasy for swords & sorcery, Sci-Fi for space opera, or Mixed for both! Try clicking one now.',
+    target: 'tour-genre-buttons',
+    page: 'generator',
+    position: 'bottom',
+    interactive: true,
+  },
+  {
+    id: 'generate-button',
+    title: 'Generate Names!',
+    content: 'Click Generate to create 10 unique names based on your settings. Go ahead, try it!',
+    target: 'tour-generate-button',
+    page: 'generator',
+    position: 'top',
+    interactive: true,
+    waitForAction: 'generate',
+  },
+  {
+    id: 'name-results',
+    title: 'Your Generated Names',
+    content: 'Click any name to copy it. Use the ⭐ to save favorites, or the flask 🧪 to generate variations!',
+    target: 'tour-results-area',
+    page: 'generator',
+    position: 'left',
+  },
+  {
+    id: 'nav-creator',
+    title: 'Character Creator Tab',
+    content: 'Build complete D&D 5e characters! Click here to check it out.',
+    target: 'tour-nav-creator',
+    page: 'generator',
+    position: 'bottom',
+    interactive: true,
+    waitForAction: 'navigate-creator',
+  },
+  {
+    id: 'creator-intro',
+    title: 'Full Character Builder',
+    content: 'Create characters step-by-step with race, class, abilities, spells, and equipment. Export as a beautiful PDF character sheet!',
+    target: null,
+    page: 'character',
+  },
+  {
+    id: 'dice-roller',
+    title: 'Built-in Dice Roller 🎲',
+    content: 'Need to roll dice? Click the floating dice button anytime! It supports d4, d6, d8, d10, d12, d20, and d100.',
+    target: 'tour-dice-roller',
+    page: 'character',
+    position: 'left',
+  },
 ];
 
 const DID_YOU_KNOW_TIPS = [
@@ -762,8 +806,9 @@ const DID_YOU_KNOW_TIPS = [
 // ONBOARDING TOUR COMPONENT
 // ============================================================================
 
-const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
+const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPage, onGenerate, hasGeneratedNames }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [targetRect, setTargetRect] = useState(null);
   const [showTip, setShowTip] = useState(false);
   
   // Random tip for the end
@@ -772,10 +817,60 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
     []
   );
   
-  if (!isOpen) return null;
-  
   const step = TOUR_STEPS[currentStep];
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
+  
+  // Update target element position
+  useEffect(() => {
+    if (!isOpen || !step?.target) {
+      setTargetRect(null);
+      return;
+    }
+    
+    const updatePosition = () => {
+      const el = document.getElementById(step.target);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setTargetRect({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        });
+      } else {
+        setTargetRect(null);
+      }
+    };
+    
+    // Small delay to let page render
+    const timer = setTimeout(updatePosition, 100);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition);
+    };
+  }, [isOpen, step, currentStep, currentPage]);
+  
+  // Navigate to correct page for step
+  useEffect(() => {
+    if (!isOpen || !step?.page) return;
+    if (step.page !== currentPage) {
+      setCurrentPage(step.page);
+    }
+  }, [isOpen, step, currentPage, setCurrentPage]);
+  
+  // Auto-advance when user generates names
+  useEffect(() => {
+    if (step?.waitForAction === 'generate' && hasGeneratedNames) {
+      // User generated names, advance to next step
+      setTimeout(() => setCurrentStep(prev => prev + 1), 500);
+    }
+  }, [hasGeneratedNames, step]);
+  
+  if (!isOpen) return null;
   
   const handleNext = () => {
     if (isLastStep) {
@@ -787,6 +882,10 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
         onClose();
       }
     } else {
+      // Handle special actions
+      if (step.waitForAction === 'navigate-creator') {
+        setCurrentPage('character');
+      }
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -796,55 +895,158 @@ const OnboardingTour = ({ isOpen, onClose, onComplete }) => {
     onClose();
   };
   
+  // Calculate tooltip position based on target
+  const getTooltipStyle = () => {
+    if (!targetRect || !step?.position) {
+      return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+    }
+    
+    const padding = 16;
+    const tooltipWidth = 340;
+    
+    switch (step.position) {
+      case 'bottom':
+        return {
+          position: 'fixed',
+          top: `${targetRect.top + targetRect.height + padding}px`,
+          left: `${Math.max(padding, Math.min(window.innerWidth - tooltipWidth - padding, targetRect.left + targetRect.width / 2 - tooltipWidth / 2))}px`,
+        };
+      case 'top':
+        return {
+          position: 'fixed',
+          bottom: `${window.innerHeight - targetRect.top + padding}px`,
+          left: `${Math.max(padding, Math.min(window.innerWidth - tooltipWidth - padding, targetRect.left + targetRect.width / 2 - tooltipWidth / 2))}px`,
+        };
+      case 'left':
+        return {
+          position: 'fixed',
+          top: `${targetRect.top + targetRect.height / 2}px`,
+          right: `${window.innerWidth - targetRect.left + padding}px`,
+          transform: 'translateY(-50%)',
+        };
+      case 'right':
+        return {
+          position: 'fixed',
+          top: `${targetRect.top + targetRect.height / 2}px`,
+          left: `${targetRect.left + targetRect.width + padding}px`,
+          transform: 'translateY(-50%)',
+        };
+      default:
+        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+    }
+  };
+  
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleSkip} />
+    <div className="fixed inset-0 z-[100] pointer-events-none">
+      {/* Spotlight overlay with cutout */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-auto" onClick={handleSkip}>
+        <defs>
+          <mask id="spotlight-mask">
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            {targetRect && (
+              <rect 
+                x={targetRect.left - 8} 
+                y={targetRect.top - 8} 
+                width={targetRect.width + 16} 
+                height={targetRect.height + 16} 
+                rx="12"
+                fill="black" 
+              />
+            )}
+          </mask>
+        </defs>
+        <rect 
+          x="0" y="0" 
+          width="100%" height="100%" 
+          fill="rgba(0,0,0,0.85)" 
+          mask="url(#spotlight-mask)" 
+        />
+      </svg>
       
-      {/* Tour Card */}
-      <div className="relative bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-        {/* Progress */}
+      {/* Highlight ring around target */}
+      {targetRect && (
+        <div 
+          className="absolute border-2 border-indigo-400 rounded-xl pointer-events-none animate-pulse"
+          style={{
+            top: targetRect.top - 8,
+            left: targetRect.left - 8,
+            width: targetRect.width + 16,
+            height: targetRect.height + 16,
+            boxShadow: '0 0 20px 4px rgba(99, 102, 241, 0.5)',
+          }}
+        />
+      )}
+      
+      {/* Tour tooltip */}
+      <div 
+        className="bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl w-[340px] overflow-hidden pointer-events-auto"
+        style={getTooltipStyle()}
+      >
+        {/* Progress dots */}
         <div className="flex gap-1 p-3 bg-slate-800/50">
           {TOUR_STEPS.map((_, idx) => (
             <div 
               key={idx}
-              className={`h-1 flex-1 rounded-full transition-all ${
-                idx <= currentStep ? 'bg-indigo-500' : 'bg-slate-700'
+              className={`h-1.5 w-1.5 rounded-full transition-all ${
+                idx < currentStep ? 'bg-indigo-500' : idx === currentStep ? 'bg-indigo-400 scale-125' : 'bg-slate-700'
               }`}
             />
           ))}
         </div>
         
-        <div className="p-6">
+        <div className="p-5">
           {!showTip ? (
             <>
-              <div className="text-3xl mb-3">{step.id === 'welcome' ? '🎲' : step.id === 'generator' ? '✨' : step.id === 'creator' ? '⚔️' : '📄'}</div>
-              <h2 className="text-xl font-bold text-white mb-2">{step.title}</h2>
-              <p className="text-slate-400 mb-6">{step.content}</p>
+              <h2 className="text-lg font-bold text-white mb-2">{step.title}</h2>
+              <p className="text-slate-400 text-sm mb-4 leading-relaxed">{step.content}</p>
+              
+              {step.interactive && (
+                <p className="text-xs text-indigo-400 mb-4 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-indigo-400 rounded-full animate-pulse" />
+                  {step.waitForAction === 'generate' ? 'Click Generate to continue...' : 
+                   step.waitForAction === 'navigate-creator' ? 'Click or press Next...' : 
+                   'Try it out, then click Next!'}
+                </p>
+              )}
             </>
           ) : (
             <>
-              <div className="text-3xl mb-3">💡</div>
-              <h2 className="text-xl font-bold text-white mb-2">Did You Know?</h2>
-              <p className="text-slate-400 mb-6">{randomTip}</p>
+              <div className="text-2xl mb-2">💡</div>
+              <h2 className="text-lg font-bold text-white mb-2">Did You Know?</h2>
+              <p className="text-slate-400 text-sm mb-4 leading-relaxed">{randomTip}</p>
             </>
           )}
           
           <div className="flex items-center justify-between">
             <button
               onClick={handleSkip}
-              className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
             >
               Skip tour
             </button>
-            <button
-              onClick={handleNext}
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-2"
-            >
-              {showTip ? 'Get Started!' : isLastStep ? 'One More Thing...' : 'Next'}
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            <div className="flex gap-2">
+              {currentStep > 0 && !showTip && (
+                <button
+                  onClick={() => setCurrentStep(prev => prev - 1)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-sm hover:bg-slate-700 transition-all flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-3 h-3" /> Back
+                </button>
+              )}
+              <button
+                onClick={handleNext}
+                className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-1"
+              >
+                {showTip ? 'Get Started!' : isLastStep ? 'Finish' : 'Next'}
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
           </div>
+        </div>
+        
+        {/* Step counter */}
+        <div className="px-5 pb-3 text-xs text-slate-600 text-center">
+          Step {currentStep + 1} of {TOUR_STEPS.length}
         </div>
       </div>
     </div>
@@ -3159,6 +3361,7 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
   return (
     <div className="relative z-50">
       <button
+        id="tour-nav-generator"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-indigo-500/50 transition-all"
       >
@@ -3182,6 +3385,7 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
               return (
                 <button
                   key={page.id}
+                  id={page.id === 'character' ? 'tour-nav-creator' : undefined}
                   onClick={() => {
                     setCurrentPage(page.id);
                     setIsOpen(false);
@@ -12442,10 +12646,6 @@ const CharacterCreator = ({
   // Modal states
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSubclassCompare, setShowSubclassCompare] = useState(false);
-  const [showTour, setShowTour] = useState(() => {
-    // Show tour on first visit
-    return !LocalStorageUtil.getItem('aethernames_tour_complete', false);
-  });
 
   // Save character state to localStorage whenever it changes
   useEffect(() => {
@@ -12757,13 +12957,6 @@ const CharacterCreator = ({
 
   return (
     <div ref={containerRef} className="space-y-4 md:space-y-6 overflow-x-hidden">
-      {/* Onboarding Tour */}
-      <OnboardingTour 
-        isOpen={showTour}
-        onClose={() => setShowTour(false)}
-        onComplete={() => setShowTour(false)}
-      />
-      
       {/* Templates Modal */}
       <TemplatesModal
         isOpen={showTemplates}
@@ -12796,13 +12989,6 @@ const CharacterCreator = ({
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Templates</span>
-            </button>
-            <button
-              onClick={() => setShowTour(true)}
-              className="p-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all"
-              title="Show Tour"
-            >
-              <Info className="w-4 h-4" />
             </button>
             <span className="text-xs md:text-sm text-slate-400 ml-1">
               Step {currentStep + 1} of {steps.length}
@@ -13543,6 +13729,11 @@ export default function AetherNames() {
   const resultsRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [animateHeader, setAnimateHeader] = useState(false);
+  
+  // Tour state - at app level to work across both pages
+  const [showTour, setShowTour] = useState(() => {
+    return !LocalStorageUtil.getItem('aethernames_tour_complete', false);
+  });
 
   // Load favorites and history from localStorage on mount
   useEffect(() => {
@@ -14268,12 +14459,19 @@ export default function AetherNames() {
         {/* Header */}
         <header className={`relative z-50 text-center py-8 mb-8 transition-all duration-1000 ${animateHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
           {/* Navigation */}
-          <div className="flex justify-center mb-6">
+          <div className="flex items-center justify-center gap-3 mb-6">
             <Navigation 
               currentPage={currentPage} 
               setCurrentPage={setCurrentPage} 
               theme={config.genre}
             />
+            <button
+              onClick={() => setShowTour(true)}
+              className="p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/50 transition-all"
+              title="Show Tour / Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
           </div>
 
           {currentPage === 'generator' && (
@@ -14342,7 +14540,7 @@ export default function AetherNames() {
           </div>
 
           {/* Main Action Buttons - Side by Side on Mobile */}
-          <div className="flex gap-2 md:gap-3 justify-center mb-3 md:mb-4">
+          <div id="tour-generate-button" className="flex gap-2 md:gap-3 justify-center mb-3 md:mb-4">
             <GlowButton onClick={generate} disabled={isGenerating} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-8" theme={config.genre}>
               <Sparkles className={`w-4 h-4 md:w-5 md:h-5 ${isGenerating ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">{isGenerating ? 'Forging...' : 'Generate Names'}</span>
@@ -14516,7 +14714,7 @@ export default function AetherNames() {
               {/* Genre */}
               <div className="mb-6">
                 <SectionHeader title="Genre" helpText={helpTexts.genre} icon={Globe} isLocked={lockedSettings.genre} onToggleLock={toggleLock} lockKey="genre" />
-                <div className="grid grid-cols-3 gap-2">
+                <div id="tour-genre-buttons" className="grid grid-cols-3 gap-2">
                   {genres.map(g => (
                     <SelectionChip key={g.value} selected={config.genre === g.value} onClick={() => updateConfig('genre', g.value)}>
                       <span className="mr-1">{g.icon}</span> {g.label}
@@ -14686,7 +14884,7 @@ export default function AetherNames() {
           </div>
 
           {/* Results Panel */}
-          <div className="lg:col-span-3" ref={resultsRef}>
+          <div id="tour-results-area" className="lg:col-span-3" ref={resultsRef}>
             <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -14898,6 +15096,17 @@ export default function AetherNames() {
       
       {/* Floating Dice Roller - Available on all pages */}
       <DiceRoller />
+      
+      {/* Onboarding Tour - App Level */}
+      <OnboardingTour 
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={() => setShowTour(false)}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        onGenerate={generate}
+        hasGeneratedNames={generatedNames.length > 0}
+      />
     </div>
   );
 }
