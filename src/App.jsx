@@ -812,6 +812,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   const [targetRect, setTargetRect] = useState(null);
   const [showTip, setShowTip] = useState(false);
   const [generatedDuringTour, setGeneratedDuringTour] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   
   // Random tip for the end
   const randomTip = useMemo(() => 
@@ -821,13 +822,18 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   
   const step = TOUR_STEPS[currentStep];
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
+  const isSendToCharacterStep = step?.id === 'send-to-character';
   
   // Scroll to target element and update position
   useEffect(() => {
     if (!isOpen) {
       setTargetRect(null);
+      setIsVisible(false);
       return;
     }
+    
+    // Fade out before scrolling
+    setIsVisible(false);
     
     // Temporarily unlock scroll to allow scrollIntoView
     document.body.style.position = '';
@@ -864,6 +870,9 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
             width: rect.width,
             height: rect.height,
           });
+          
+          // Fade in after positioning
+          setTimeout(() => setIsVisible(true), 50);
         }, 400);
       } else {
         // No target element, just lock scroll at current position
@@ -873,6 +882,9 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
         document.body.style.width = '100%';
         document.body.style.overflow = 'hidden';
         setTargetRect(null);
+        
+        // Fade in after positioning
+        setTimeout(() => setIsVisible(true), 50);
       }
     };
     
@@ -1018,7 +1030,17 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   };
   
   return (
-    <div className="fixed inset-0 z-[100]" style={{ pointerEvents: 'none' }}>
+    <div 
+      className="fixed inset-0 z-[100] transition-opacity duration-300" 
+      style={{ 
+        pointerEvents: 'none',
+        opacity: isVisible ? 1 : 0,
+      }}
+    >
+      {/* Disable person icons when not on send-to-character step */}
+      {!isSendToCharacterStep && (
+        <style>{`.tour-send-to-character { pointer-events: none !important; opacity: 0.3 !important; }`}</style>
+      )}
       {/* Spotlight overlay with cutout - blocks clicks for non-interactive steps */}
       {!step.interactive ? (
         <svg 
@@ -1166,13 +1188,16 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
                   <ChevronLeft className="w-3 h-3" /> Back
                 </button>
               )}
-              <button
-                onClick={handleNext}
-                className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-1"
-              >
-                {showTip ? 'Get Started!' : isLastStep ? 'Finish' : 'Next'}
-                <ChevronRight className="w-3 h-3" />
-              </button>
+              {/* Hide Next button when user must perform an action (like clicking Generate) */}
+              {step?.waitForAction !== 'generate' && (
+                <button
+                  onClick={handleNext}
+                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-1"
+                >
+                  {showTip ? 'Get Started!' : isLastStep ? 'Finish' : 'Next'}
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
             </div>
           </div>
         </div>
