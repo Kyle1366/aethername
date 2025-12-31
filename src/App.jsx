@@ -8006,30 +8006,62 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const [showConcentrationOnly, setShowConcentrationOnly] = useState(false);
   const [selectedSchools, setSelectedSchools] = useState(new Set());
 
-  // Use the primary class spellcasting if available; otherwise fall back to the first spellcasting multiclass.
-  const getSpellcastingClassId = () => {
-    if (spellcastingInfo?.available) return classId;
+  // Get all spellcasting classes (primary + multiclass)
+  const getSpellcastingClasses = () => {
+    const classes = [];
+    
+    // Check primary class
+    if (classId && spellcastingInfo?.available) {
+      const multiclassLevelSum = (character.multiclass || []).reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
+      const primaryLevel = Math.max(1, (character.level || 1) - multiclassLevelSum);
+      const info = getSpellcastingInfo(classId, primaryLevel);
+      if (info?.available) {
+        classes.push({ classId, level: primaryLevel, info });
+      }
+    }
+    
+    // Check multiclass
     for (const mc of character.multiclass || []) {
       if (!mc?.classId) continue;
-      const mcSpellcasting = getSpellcastingInfo(mc.classId, character.level);
-      if (mcSpellcasting?.available) return mc.classId;
+      const mcInfo = getSpellcastingInfo(mc.classId, mc.level);
+      if (mcInfo?.available) {
+        classes.push({ classId: mc.classId, level: mc.level, info: mcInfo });
+      }
     }
-    return classId;
+    
+    return classes;
+  };
+  
+  const spellcastingClasses = getSpellcastingClasses();
+  const hasSpellcasting = spellcastingClasses.length > 0;
+  const isMulticlassCaster = spellcastingClasses.length > 1;
+  
+  // Merge available spells from all spellcasting classes (removing duplicates)
+  const getMergedSpells = (spellLevel) => {
+    const spellMap = new Map();
+    for (const sc of spellcastingClasses) {
+      const spells = getSpellsForClass(sc.classId, spellLevel);
+      for (const spell of spells) {
+        if (!spellMap.has(spell.id)) {
+          spellMap.set(spell.id, { ...spell, fromClasses: [sc.classId] });
+        } else {
+          spellMap.get(spell.id).fromClasses.push(sc.classId);
+        }
+      }
+    }
+    return Array.from(spellMap.values());
   };
 
-  const spellcastingClassId = getSpellcastingClassId();
-  const effectiveSpellcasting = spellcastingClassId ? getSpellcastingInfo(spellcastingClassId, character.level) : null;
-
-  const availableCantrips = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 0) : [];
-  const availableLevel1Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 1) : [];
-  const availableLevel2Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 2) : [];
-  const availableLevel3Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 3) : [];
-  const availableLevel4Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 4) : [];
-  const availableLevel5Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 5) : [];
-  const availableLevel6Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 6) : [];
-  const availableLevel7Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 7) : [];
-  const availableLevel8Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 8) : [];
-  const availableLevel9Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 9) : [];
+  const availableCantrips = hasSpellcasting ? getMergedSpells(0) : [];
+  const availableLevel1Spells = hasSpellcasting ? getMergedSpells(1) : [];
+  const availableLevel2Spells = hasSpellcasting ? getMergedSpells(2) : [];
+  const availableLevel3Spells = hasSpellcasting ? getMergedSpells(3) : [];
+  const availableLevel4Spells = hasSpellcasting ? getMergedSpells(4) : [];
+  const availableLevel5Spells = hasSpellcasting ? getMergedSpells(5) : [];
+  const availableLevel6Spells = hasSpellcasting ? getMergedSpells(6) : [];
+  const availableLevel7Spells = hasSpellcasting ? getMergedSpells(7) : [];
+  const availableLevel8Spells = hasSpellcasting ? getMergedSpells(8) : [];
+  const availableLevel9Spells = hasSpellcasting ? getMergedSpells(9) : [];
   
   // Filter spells based on search query and filters
   const filterSpells = (spellObjects) => {
@@ -8089,19 +8121,38 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   };
   const maxSpellLevel = getMaxSpellLevel();
 
-  const maxCantrips = effectiveSpellcasting?.cantrips || 0;
-  const maxSpellsKnown = effectiveSpellcasting?.spellsKnown || 0;
-  const spellcastingType = effectiveSpellcasting?.type; // 'known', 'prepared', 'pact'
+  // Calculate total cantrips from all spellcasting classes
+  const maxCantrips = spellcastingClasses.reduce((total, sc) => total + (sc.info?.cantrips || 0), 0);
   
-  // Calculate max prepared spells for prepared casters (Wizard, Cleric, Druid, Paladin)
-  const getMaxPreparedSpells = () => {
-    if (spellcastingType !== 'prepared') return null;
-    const abilityMod = getModifier(character.abilities[effectiveSpellcasting?.ability] || 10);
-    const level = character.level || 1;
-    // Prepared = ability mod + class level (minimum 1)
-    return Math.max(1, abilityMod + level);
+  // Calculate total spells known/prepared
+  // For multiclass: each class has its own limit based on type
+  const getMaxSpells = () => {
+    let totalKnown = 0;
+    let hasPrepared = false;
+    let maxPrepared = 0;
+    
+    for (const sc of spellcastingClasses) {
+      if (sc.info?.type === 'prepared') {
+        hasPrepared = true;
+        const abilityMod = getModifier(character.abilities[sc.info?.ability] || 10);
+        // Prepared = ability mod + class level (minimum 1)
+        maxPrepared += Math.max(1, abilityMod + sc.level);
+      } else if (sc.info?.type === 'known' || sc.info?.type === 'pact') {
+        totalKnown += sc.info?.spellsKnown || 0;
+      }
+    }
+    
+    return { totalKnown, hasPrepared, maxPrepared };
   };
-  const maxPreparedSpells = getMaxPreparedSpells();
+  
+  const spellLimits = getMaxSpells();
+  const maxSpellsKnown = spellLimits.totalKnown;
+  const maxPreparedSpells = spellLimits.hasPrepared ? spellLimits.maxPrepared : null;
+  const hasKnownCaster = spellLimits.totalKnown > 0;
+  const hasPreparedCaster = spellLimits.hasPrepared;
+  
+  // Total max spells (known + prepared)
+  const totalMaxSpells = (maxSpellsKnown || 0) + (maxPreparedSpells || 0);
 
   // Update character when selections change
   useEffect(() => {
@@ -8124,14 +8175,8 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       if (prev.includes(spellId)) {
         return prev.filter(id => id !== spellId);
       }
-      // For 'known' casters, limit spells
-      if (spellcastingType === 'known' || spellcastingType === 'pact') {
-        if (prev.length >= maxSpellsKnown) return prev;
-      }
-      // For 'prepared' casters, limit to max prepared
-      if (spellcastingType === 'prepared' && maxPreparedSpells !== null) {
-        if (prev.length >= maxPreparedSpells) return prev;
-      }
+      // Check against total max spells
+      if (prev.length >= totalMaxSpells) return prev;
       return [...prev, spellId];
     });
   };
@@ -8161,8 +8206,8 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
     );
   }
 
-  // Non-spellcaster
-  if (!effectiveSpellcasting || !effectiveSpellcasting.available) {
+  // Non-spellcaster (no spellcasting classes at all)
+  if (!hasSpellcasting) {
     return (
       <div className="text-center py-20 text-slate-500">
         <Sword className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -8174,13 +8219,20 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       </div>
     );
   }
+  
+  // Get primary spellcasting ability for display
+  const primarySpellcastingAbility = spellcastingClasses[0]?.info?.ability || 'charisma';
 
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-xl font-bold text-white mb-1">Choose Your Spells</h3>
         <p className="text-sm text-slate-500">
-          Spellcasting Ability: {ABILITY_LABELS[effectiveSpellcasting.ability]?.name}
+          {isMulticlassCaster ? (
+            <>Spellcasting Classes: {spellcastingClasses.map(sc => `${CLASSES[sc.classId]?.name} (${ABILITY_LABELS[sc.info?.ability]?.short})`).join(', ')}</>
+          ) : (
+            <>Spellcasting Ability: {ABILITY_LABELS[primarySpellcastingAbility]?.name}</>
+          )}
         </p>
       </div>
 
@@ -8192,35 +8244,35 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
             {selectedCantrips.length} / {maxCantrips}
           </div>
         </div>
-        {(spellcastingType === 'known' || spellcastingType === 'pact') && (
+        {hasKnownCaster && (
           <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
             <div className="text-xs text-indigo-300">Spells Known</div>
             <div className="text-xl font-bold text-indigo-400">
-              {selectedSpells.length} / {maxSpellsKnown}
+              {Math.min(selectedSpells.length, maxSpellsKnown)} / {maxSpellsKnown}
             </div>
           </div>
         )}
-        {spellcastingType === 'prepared' && maxPreparedSpells !== null && (
+        {hasPreparedCaster && maxPreparedSpells !== null && (
           <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
             <div className="text-xs text-indigo-300">Prepared Spells</div>
             <div className="text-xl font-bold text-indigo-400">
-              {selectedSpells.length} / {maxPreparedSpells}
+              {hasKnownCaster ? Math.max(0, selectedSpells.length - maxSpellsKnown) : selectedSpells.length} / {maxPreparedSpells}
             </div>
             <div className="text-xs text-slate-500">
-              {ABILITY_LABELS[effectiveSpellcasting?.ability]?.short} mod ({getModifier(character.abilities[effectiveSpellcasting?.ability])}) + Total Level ({character.level})
+              Ability mod + class level
             </div>
           </div>
         )}
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
           <div className="text-xs text-amber-300">Spell Save DC</div>
           <div className="text-xl font-bold text-amber-400">
-            {8 + 2 + getModifier(character.abilities[effectiveSpellcasting?.ability] || 10)}
+            {8 + 2 + getModifier(character.abilities[primarySpellcastingAbility] || 10)}
           </div>
         </div>
         <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
           <div className="text-xs text-green-300">Spell Attack</div>
           <div className="text-xl font-bold text-green-400">
-            +{2 + getModifier(character.abilities[effectiveSpellcasting?.ability] || 10)}
+            +{2 + getModifier(character.abilities[primarySpellcastingAbility] || 10)}
           </div>
         </div>
       </div>
@@ -8565,9 +8617,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
 
           {activeTab === 'level1' && filteredLevel1Spells.map(spell => {
             const isSelected = selectedSpells.includes(spell.id);
-            const isDisabledKnown = (spellcastingType === 'known' || spellcastingType === 'pact') && selectedSpells.length >= maxSpellsKnown;
-            const isDisabledPrepared = spellcastingType === 'prepared' && maxPreparedSpells !== null && selectedSpells.length >= maxPreparedSpells;
-            const isDisabled = !isSelected && (isDisabledKnown || isDisabledPrepared);
+            const isDisabled = !isSelected && selectedSpells.length >= totalMaxSpells;
             
             return (
               <div
@@ -8636,9 +8686,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
             
             return spellList.map(spell => {
               const isSelected = selectedSpells.includes(spell.id);
-              const isDisabledKnown = (spellcastingType === 'known' || spellcastingType === 'pact') && selectedSpells.length >= maxSpellsKnown;
-              const isDisabledPrepared = spellcastingType === 'prepared' && maxPreparedSpells !== null && selectedSpells.length >= maxPreparedSpells;
-              const isDisabled = !isSelected && (isDisabledKnown || isDisabledPrepared);
+              const isDisabled = !isSelected && selectedSpells.length >= totalMaxSpells;
               
               return (
                 <div
@@ -11065,13 +11113,13 @@ const CharacterCreator = ({
         testCharacter.class = 'wizard';
         testCharacter.level = 10;
         // Level 10 wizard: 5 cantrips, up to 5th level spells
-        testCharacter.cantrips = ['fire-bolt', 'mage-hand', 'prestidigitation', 'light', 'minor-illusion'];
+        testCharacter.cantrips = ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion'];
         testCharacter.spells = [
-          'shield', 'magic-missile', 'detect-magic', 'identify', 'mage-armor',
-          'misty-step', 'hold-person', 'invisibility', 'scorching-ray',
-          'fireball', 'counterspell', 'haste', 'lightning-bolt',
-          'greater-invisibility', 'polymorph', 'dimension-door',
-          'wall-of-force', 'cone-of-cold'
+          'shield', 'magicMissile', 'detectMagic', 'identify', 'mageArmor',
+          'mistyStep', 'holdPerson', 'invisibility', 'scorchingRay',
+          'fireball', 'counterspell', 'haste', 'lightningBolt',
+          'greaterInvisibility', 'polymorph', 'dimensionDoor',
+          'wallOfForce', 'coneOfCold'
         ];
         break;
         
@@ -11129,11 +11177,14 @@ const CharacterCreator = ({
           'Incense', 'Vestments', 'Common Clothes', 'Belt Pouch', 'Healing Potion (5)',
           'Antitoxin', 'Crowbar', 'Hammer', 'Pitons (10)', 'Oil Flask (5)'
         ];
-        // Level 10 Paladin 7 / Warlock 3: 4 cantrips, ~8 spells
-        testCharacter.cantrips = ['sacred-flame', 'light', 'eldritch-blast', 'mage-hand'];
+        // Warlock cantrips (level 3 gets 2 cantrips)
+        testCharacter.cantrips = ['eldritchBlast', 'mageHand'];
+        // Paladin spells (prepared based on CHA + level) + Warlock spells (4 known at level 3)
         testCharacter.spells = [
-          'bless', 'cure-wounds', 'shield-of-faith', 'hex', 'armor-of-agathys',
-          'aid', 'lesser-restoration', 'hold-person'
+          // Paladin spells
+          'bless', 'cureWounds', 'shieldOfFaith', 'divineFavor', 'aid', 'lesserRestoration',
+          // Warlock spells  
+          'hex', 'armorOfAgathys', 'hellishRebuke', 'holdPerson'
         ];
         testCharacter.gold = 150;
         testCharacter.asiChoices = {
@@ -11149,12 +11200,12 @@ const CharacterCreator = ({
         testCharacter.level = 10;
         testCharacter.subclass = 'draconicBloodline';
         // Level 10 sorcerer: 6 cantrips, 11 spells known
-        testCharacter.cantrips = ['fire-bolt', 'mage-hand', 'prestidigitation', 'light', 'minor-illusion', 'ray-of-frost'];
+        testCharacter.cantrips = ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'rayOfFrost'];
         testCharacter.spells = [
-          'shield', 'magic-missile', 'chromatic-orb',
-          'misty-step', 'hold-person', 'scorching-ray',
+          'shield', 'magicMissile', 'chromaticOrb',
+          'mistyStep', 'holdPerson', 'scorchingRay',
           'fireball', 'counterspell', 'haste',
-          'greater-invisibility', 'polymorph'
+          'greaterInvisibility', 'polymorph'
         ];
         testCharacter.metamagicOptions = ['quickened', 'twinned', 'subtle'];
         testCharacter.asiChoices = {
