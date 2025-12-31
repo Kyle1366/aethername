@@ -11691,6 +11691,21 @@ const DevTools = ({ onQuickTest }) => {
                 (window.location.hostname === 'dev.aether-names.com' || 
                  window.location.hostname === 'localhost');
   
+  // Keyboard shortcut: Ctrl+Shift+D (or Cmd+Shift+D on Mac)
+  useEffect(() => {
+    if (!isDev) return;
+    
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setIsOpen(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDev]);
+  
   if (!isDev) return null;
 
   const quickTests = [
@@ -11723,6 +11738,16 @@ const DevTools = ({ onQuickTest }) => {
       name: 'PDF Stress Test',
       description: 'Character designed to test PDF pagination',
       action: () => onQuickTest('pdfStress')
+    },
+    {
+      name: 'Clear All Data',
+      description: 'Reset localStorage and start fresh',
+      action: () => {
+        if (window.confirm('Clear all saved data? This cannot be undone.')) {
+          localStorage.clear();
+          window.location.reload();
+        }
+      }
     }
   ];
 
@@ -11743,9 +11768,12 @@ const DevTools = ({ onQuickTest }) => {
             </button>
           </div>
           
-          <p className="text-xs text-slate-400 mb-3">
-            Quick character generation presets for testing
-          </p>
+          <div className="text-xs text-slate-500 mb-3 flex items-center justify-between">
+            <span>Quick test presets</span>
+            <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] font-mono">
+              Ctrl+Shift+D
+            </kbd>
+          </div>
           
           <div className="space-y-2">
             {quickTests.map((test) => (
@@ -11764,10 +11792,13 @@ const DevTools = ({ onQuickTest }) => {
       
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-green-600 hover:bg-green-500 text-white p-3 rounded-full shadow-lg shadow-green-500/50 transition-all"
-        title="Dev Tools"
+        className="bg-green-600 hover:bg-green-500 text-white p-3 rounded-full shadow-lg shadow-green-500/50 transition-all group relative"
+        title="Dev Tools (Ctrl+Shift+D)"
       >
         <FlaskConical className="w-5 h-5" />
+        {!isOpen && (
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
+        )}
       </button>
     </div>
   );
@@ -13180,17 +13211,15 @@ export default function AetherNames() {
         </div>
       )}
       
-      {/* Dev Tools - Only shows on dev.aether-names.com */}
-      {currentPage === 'character' && (
-        <DevTools 
-          onQuickTest={(testType) => {
-            // Navigate to character creator if not already there
-            setCurrentPage('character');
-            // Set a flag or pass test type - we'll need to update CharacterCreator to accept this
-            setCharacterImportName(`DEV_TEST:${testType}`);
-          }}
-        />
-      )}
+      {/* Dev Tools - Accessible from anywhere with Ctrl+Shift+D */}
+      <DevTools 
+        onQuickTest={(testType) => {
+          // Navigate to character creator if not already there
+          setCurrentPage('character');
+          // Set a flag or pass test type
+          setCharacterImportName(`DEV_TEST:${testType}`);
+        }}
+      />
     </div>
   );
 }
