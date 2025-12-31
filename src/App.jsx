@@ -765,8 +765,8 @@ const TOUR_STEPS = [
   {
     id: 'nav-creator',
     title: 'Character Creator Tab',
-    content: 'Build complete D&D 5e characters! Click here to check it out.',
-    target: 'tour-nav-creator',
+    content: 'Build complete D&D 5e characters! Click the menu to switch to the Character Creator.',
+    target: 'tour-nav-generator',
     page: 'generator',
     position: 'bottom',
     interactive: true,
@@ -927,6 +927,13 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     }
   }, [hasGeneratedNames, step, generatedDuringTour]);
   
+  // Auto-advance when user navigates to character creator
+  useEffect(() => {
+    if (step?.waitForAction === 'navigate-creator' && currentPage === 'character') {
+      setTimeout(() => setCurrentStep(prev => prev + 1), 300);
+    }
+  }, [currentPage, step]);
+  
   // Reset generated flag when going back to generate step
   useEffect(() => {
     if (step?.waitForAction === 'generate') {
@@ -1004,9 +1011,12 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
   };
   
   return (
-    <div className="fixed inset-0 z-[100] pointer-events-none">
-      {/* Spotlight overlay with cutout - blocks all clicks */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-auto">
+    <div className="fixed inset-0 z-[100]">
+      {/* Spotlight overlay with cutout */}
+      <svg 
+        className="absolute inset-0 w-full h-full"
+        style={{ pointerEvents: step.interactive && targetRect ? 'none' : 'auto' }}
+      >
         <defs>
           <mask id="spotlight-mask">
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
@@ -1029,6 +1039,44 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
           mask="url(#spotlight-mask)" 
         />
       </svg>
+      
+      {/* For interactive steps, add click-blocking overlays around the cutout area */}
+      {step.interactive && targetRect && (
+        <>
+          {/* Top blocker */}
+          <div 
+            className="absolute left-0 right-0 top-0"
+            style={{ 
+              height: Math.max(0, targetRect.top - 8),
+              pointerEvents: 'auto' 
+            }}
+          />
+          {/* Bottom blocker */}
+          <div 
+            className="absolute left-0 right-0 bottom-0"
+            style={{ 
+              top: targetRect.top + targetRect.height + 8,
+              pointerEvents: 'auto' 
+            }}
+          />
+          {/* Left blocker */}
+          <div 
+            className="absolute left-0 top-0 bottom-0"
+            style={{ 
+              width: Math.max(0, targetRect.left - 8),
+              pointerEvents: 'auto' 
+            }}
+          />
+          {/* Right blocker */}
+          <div 
+            className="absolute right-0 top-0 bottom-0"
+            style={{ 
+              left: targetRect.left + targetRect.width + 8,
+              pointerEvents: 'auto' 
+            }}
+          />
+        </>
+      )}
       
       {/* Highlight ring around target */}
       {targetRect && (
