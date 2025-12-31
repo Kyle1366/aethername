@@ -11659,9 +11659,8 @@ const ClassSelectionStep = ({ character, updateCharacter, onShowCompare }) => {
   useEffect(() => {
     if ((character.multiclass || []).length > 0 && !multiclassExpanded) {
       setMulticlassExpanded(true);
-      setRandomWithMulticlass(true);
     }
-  }, [character.multiclass, multiclassExpanded, setRandomWithMulticlass]);
+  }, [character.multiclass, multiclassExpanded]);
 
   const pickClass = (classId) => {
     updateCharacter('class', classId);
