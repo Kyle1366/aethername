@@ -6163,7 +6163,7 @@ const ReviewStep = ({
         if (feat.choices && feat.choices.length > 0) {
           feat.choices.forEach(choice => {
             if (choice.type === 'feat' && choice.featId) {
-              const featData = FEATS.find(f => f.id === choice.featId);
+              const featData = FEATS[choice.featId];
               if (featData) {
                 levelAdvancements.push(`Lv${feat.level}: ${featData.name}`);
               }
