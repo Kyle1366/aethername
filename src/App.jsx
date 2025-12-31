@@ -6049,17 +6049,6 @@ const ReviewStep = ({
     };
 
     // ============== LEFT COLUMN: FEATURES & TRAITS ==============
-    const estimatedFeaturesHeight = features.length * 8; // Rough estimate
-    if (checkSectionBreak(estimatedFeaturesHeight, 'Features & Traits')) {
-      leftY = margin;
-    }
-    
-    leftY = drawColumnHeader('FEATURES & TRAITS', leftY, bottomLeftX, leftColWidth);
-    
-    doc.setFontSize(9);
-    doc.setFont('times', 'normal');
-    doc.setTextColor(...colors.textLight);
-    
     const features = [];
     if (race?.traits) features.push(...race.traits.map(t => ({ text: t, type: 'Racial' })));
     
@@ -6079,6 +6068,18 @@ const ReviewStep = ({
     }
     
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
+    
+    // Check if section needs to move to next page
+    const estimatedFeaturesHeight = features.length * 8; // Rough estimate
+    if (checkSectionBreak(estimatedFeaturesHeight, 'Features & Traits')) {
+      leftY = margin;
+    }
+    
+    leftY = drawColumnHeader('FEATURES & TRAITS', leftY, bottomLeftX, leftColWidth);
+    
+    doc.setFontSize(9);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...colors.textLight);
     
     features.forEach((feat, idx) => {
       // Calculate required space for this feature
