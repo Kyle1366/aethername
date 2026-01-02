@@ -5640,47 +5640,76 @@ const formatBonusLine = (bonuses) => {
 };
 
 // Animated D6 Die Component
+// Dice animation frames - purple theme to match app
+const DICE_ROLL_FRAMES = [
+  '/dice/sprites/Purple_Dice_Start_1.png',
+  '/dice/sprites/Purple_Dice_Roll_1.png',
+  '/dice/sprites/Purple_Dice_Roll_2.png',
+  '/dice/sprites/Purple_Dice_Roll_3.png',
+  '/dice/sprites/Purple_Dice_Roll_4.png',
+  '/dice/sprites/Purple_Dice_Roll_5.png',
+  '/dice/sprites/Purple_Dice_Roll_6_2.png',
+  '/dice/sprites/Purple_Dice_Roll_6_3.png',
+  '/dice/sprites/Purple_Dice_Roll_6_4.png',
+  '/dice/sprites/Purple_Dice_Roll_6_5.png',
+  '/dice/sprites/Purple_Dice_Roll_6_6.png',
+  '/dice/sprites/Purple_Dice_Roll_6_7.png',
+  '/dice/sprites/Purple_Dice_Roll_7_1.png',
+  '/dice/sprites/Purple_Dice_Roll_7_2.png',
+  '/dice/sprites/Purple_Dice_Roll_7_3.png',
+  '/dice/sprites/Purple_Dice_Roll_7_4.png',
+  '/dice/sprites/Purple_Dice_Roll_7_5.png',
+  '/dice/sprites/Purple_Dice_Roll_7_6.png',
+  '/dice/sprites/Purple_Dice_Roll_8_1.png',
+  '/dice/sprites/Purple_Dice_Roll_8_2.png',
+  '/dice/sprites/Purple_Dice_Roll_8_3.png',
+  '/dice/sprites/Purple_Dice_Roll_8_4.png',
+  '/dice/sprites/Purple_Dice_Roll_8_5.png',
+  '/dice/sprites/Purple_Dice_Roll_8_6.png',
+];
+
+// Result sprites showing numbers 1-6 (we only need 1-6 for ability score d6s)
+const DICE_RESULT_SPRITES = {
+  1: '/dice/results/DicePu_R_1.png',
+  2: '/dice/results/DicePu_R_2.png',
+  3: '/dice/results/DicePu_R_3.png',
+  4: '/dice/results/DicePu_R_4.png',
+  5: '/dice/results/DicePu_R_5.png',
+  6: '/dice/results/DicePu_R_6.png',
+};
+
 const AnimatedDie = ({ value, isRolling, isDropped = false }) => {
-  const [displayValue, setDisplayValue] = useState(value || 1);
+  const [frameIndex, setFrameIndex] = useState(0);
   
   useEffect(() => {
     if (isRolling) {
       const interval = setInterval(() => {
-        setDisplayValue(Math.floor(Math.random() * 6) + 1);
-      }, 80);
+        setFrameIndex(prev => (prev + 1) % DICE_ROLL_FRAMES.length);
+      }, 60); // ~16fps for smooth animation
       return () => clearInterval(interval);
-    } else {
-      setDisplayValue(value);
     }
-  }, [isRolling, value]);
+  }, [isRolling]);
 
-  const dotPositions = {
-    1: [[50, 50]],
-    2: [[25, 25], [75, 75]],
-    3: [[25, 25], [50, 50], [75, 75]],
-    4: [[25, 25], [75, 25], [25, 75], [75, 75]],
-    5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
-    6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]]
-  };
+  // Show result sprite when not rolling, animation frame when rolling
+  const imageSrc = isRolling 
+    ? DICE_ROLL_FRAMES[frameIndex]
+    : DICE_RESULT_SPRITES[value] || DICE_RESULT_SPRITES[1];
 
   return (
     <div 
-      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 ${
-        isDropped 
-          ? 'bg-slate-700/50 border-2 border-red-500/30 opacity-50 scale-90' 
-          : 'bg-gradient-to-br from-white to-slate-200 shadow-lg'
-      } ${isRolling ? 'animate-bounce' : ''}`}
+      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 overflow-hidden ${
+        isDropped ? 'opacity-40 scale-90' : ''
+      } ${isRolling ? 'animate-pulse' : ''}`}
     >
-      {dotPositions[displayValue]?.map(([x, y], i) => (
-        <div
-          key={i}
-          className={`absolute w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${isDropped ? 'bg-red-400/50' : 'bg-slate-800'}`}
-          style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
-        />
-      ))}
+      <img 
+        src={imageSrc}
+        alt={isRolling ? 'Rolling...' : `Die showing ${value}`}
+        className="w-full h-full object-contain"
+        draggable={false}
+      />
       {isDropped && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full h-0.5 bg-red-500/60 rotate-45 absolute" />
+        <div className="absolute inset-0 flex items-center justify-center bg-red-900/30 rounded-lg">
+          <div className="w-full h-0.5 bg-red-500/80 rotate-45 absolute" />
         </div>
       )}
     </div>
