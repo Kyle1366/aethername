@@ -5805,6 +5805,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     return [];
   };
   const scoresArray = getScoresArray();
+  const unassignedIndices = getUnassignedIndices();
 
   // Calculate point buy remaining
   const pointBuySpent = Object.values(pointBuyScores).reduce((sum, score) => sum + POINT_BUY_COSTS[score], 0);
@@ -14270,63 +14271,136 @@ const CharacterCreator = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Age</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.age || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, age: e.target.value })}
-                    placeholder="e.g., 25"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.age || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, age: e.target.value })}
+                      placeholder="e.g., 25"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const ages = ['18', '20', '22', '25', '28', '30', '35', '40', '45', '50', '60', '75', '100', '150', '200', '300'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, age: ages[Math.floor(Math.random() * ages.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize age"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Height</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.height || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, height: e.target.value })}
-                    placeholder="e.g., 5'10&quot;"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.height || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, height: e.target.value })}
+                      placeholder="e.g., 5'10&quot;"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const feet = 4 + Math.floor(Math.random() * 3);
+                        const inches = Math.floor(Math.random() * 12);
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, height: `${feet}'${inches}"` });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize height"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Weight</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.weight || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, weight: e.target.value })}
-                    placeholder="e.g., 180 lbs"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.weight || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, weight: e.target.value })}
+                      placeholder="e.g., 180 lbs"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const weights = ['90', '100', '110', '120', '130', '140', '150', '160', '170', '180', '190', '200', '220', '240', '260'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, weight: `${weights[Math.floor(Math.random() * weights.length)]} lbs` });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize weight"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Eyes</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.eyes || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, eyes: e.target.value })}
-                    placeholder="e.g., Blue"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.eyes || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, eyes: e.target.value })}
+                      placeholder="e.g., Blue"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const eyeColors = ['Brown', 'Blue', 'Green', 'Hazel', 'Amber', 'Gray', 'Violet', 'Black', 'Gold', 'Silver', 'Red', 'White'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, eyes: eyeColors[Math.floor(Math.random() * eyeColors.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize eye color"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Hair</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.hair || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, hair: e.target.value })}
-                    placeholder="e.g., Brown"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.hair || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, hair: e.target.value })}
+                      placeholder="e.g., Brown"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const hairColors = ['Black', 'Brown', 'Blonde', 'Red', 'White', 'Silver', 'Auburn', 'Gray', 'Bald', 'Blue', 'Green', 'Purple'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, hair: hairColors[Math.floor(Math.random() * hairColors.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize hair color"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Skin</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.skin || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, skin: e.target.value })}
-                    placeholder="e.g., Fair"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.skin || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, skin: e.target.value })}
+                      placeholder="e.g., Fair"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const skinTones = ['Pale', 'Fair', 'Light', 'Olive', 'Tan', 'Brown', 'Dark', 'Ebony', 'Golden', 'Gray', 'Green', 'Blue'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, skin: skinTones[Math.floor(Math.random() * skinTones.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize skin tone"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
