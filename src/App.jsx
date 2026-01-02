@@ -5731,7 +5731,12 @@ const AbilityRollResult = ({ roll, index, onAssign, assignedTo }) => {
 // Main Ability Score Step
 const AbilityScoreStep = ({ character, updateCharacter }) => {
   const [method, setMethod] = useState(character.abilityMethod || null);
-  const [rolls, setRolls] = useState(character.abilityRolls || []);
+  // Validate and sanitize rolls data from storage
+  const sanitizeRolls = (rawRolls) => {
+    if (!Array.isArray(rawRolls)) return [];
+    return rawRolls.filter(r => r && Array.isArray(r.kept) && Array.isArray(r.all));
+  };
+  const [rolls, setRolls] = useState(sanitizeRolls(character.abilityRolls));
   const [isRolling, setIsRolling] = useState(false);
   const [assignments, setAssignments] = useState(character.abilityAssignments || {}); // Maps ability -> scoreIndex (not value!)
   const [selectedIndex, setSelectedIndex] = useState(null); // Index of selected score, not value
@@ -5796,7 +5801,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
   // Get array of scores based on method
   const getScoresArray = () => {
     if (method === 'standard') return STANDARD_ARRAY;
-    if (method === 'roll') return rolls.map(r => r.kept.reduce((a, b) => a + b, 0));
+    if (method === 'roll') return rolls.map(r => r?.kept?.reduce((a, b) => a + b, 0) ?? 10);
     return [];
   };
   const scoresArray = getScoresArray();
@@ -6084,6 +6089,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
           {rolls.length > 0 && !isRolling && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {rolls.map((roll, i) => {
+                if (!roll || !roll.kept || !roll.all) return null;
                 const total = roll.kept.reduce((a, b) => a + b, 0);
                 const assignedAbility = Object.entries(assignments).find(([_, idx]) => idx === i)?.[0];
                 const modifier = getModifier(total);
