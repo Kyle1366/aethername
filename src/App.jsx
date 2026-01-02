@@ -863,16 +863,23 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
           document.body.style.overflow = 'hidden';
           
           // Update rect after scroll and lock
-          const rect = el.getBoundingClientRect();
-          setTargetRect({
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height,
+          // Use a small delay to ensure layout is stable on mobile
+          requestAnimationFrame(() => {
+            const rect = el.getBoundingClientRect();
+            // Account for visual viewport offset on mobile (for address bar, keyboard, etc.)
+            const visualViewportOffsetTop = window.visualViewport?.offsetTop || 0;
+            const visualViewportOffsetLeft = window.visualViewport?.offsetLeft || 0;
+            
+            setTargetRect({
+              top: rect.top + visualViewportOffsetTop,
+              left: rect.left + visualViewportOffsetLeft,
+              width: rect.width,
+              height: rect.height,
+            });
+            
+            // Fade in after positioning
+            setTimeout(() => setIsVisible(true), 50);
           });
-          
-          // Fade in after positioning
-          setTimeout(() => setIsVisible(true), 50);
         }, 400);
       } else {
         // No target element, just lock scroll at current position
@@ -891,25 +898,36 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     // Small delay to let page render
     const timer = setTimeout(scrollAndPosition, 50);
     
-    // Update position on resize
+    // Update position on resize (including visual viewport changes on mobile)
     const handleResize = () => {
       const el = findElement(step?.target);
       if (el) {
-        const rect = el.getBoundingClientRect();
-        setTargetRect({
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
+        requestAnimationFrame(() => {
+          const rect = el.getBoundingClientRect();
+          // Account for visual viewport offset on mobile
+          const visualViewportOffsetTop = window.visualViewport?.offsetTop || 0;
+          const visualViewportOffsetLeft = window.visualViewport?.offsetLeft || 0;
+          
+          setTargetRect({
+            top: rect.top + visualViewportOffsetTop,
+            left: rect.left + visualViewportOffsetLeft,
+            width: rect.width,
+            height: rect.height,
+          });
         });
       }
     };
     
     window.addEventListener('resize', handleResize);
+    // Also listen to visual viewport changes on mobile
+    window.visualViewport?.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('scroll', handleResize);
     
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
     };
   }, [isOpen, step, currentStep, currentPage]);
   
@@ -995,39 +1013,76 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
     }
     
     const padding = 16;
-    const tooltipWidth = 340;
+    const tooltipWidth = Math.min(340, window.innerWidth - padding * 2); // Responsive width
+    const tooltipHeight = 280; // Approximate tooltip height
+    
+    // Calculate centered left position with bounds checking
+    const centeredLeft = Math.max(
+      padding, 
+      Math.min(
+        window.innerWidth - tooltipWidth - padding, 
+        targetRect.left + targetRect.width / 2 - tooltipWidth / 2
+      )
+    );
     
     switch (step.position) {
-      case 'bottom':
-        return {
-          position: 'fixed',
-          top: `${targetRect.top + targetRect.height + padding}px`,
-          left: `${Math.max(padding, Math.min(window.innerWidth - tooltipWidth - padding, targetRect.left + targetRect.width / 2 - tooltipWidth / 2))}px`,
-        };
+      case 'bottom': {
+        // Check if there's room below
+        const hasRoomBelow = targetRect.top + targetRect.height + padding + tooltipHeight < window.innerHeight;
+        if (hasRoomBelow) {
+          return {
+            position: 'fixed',
+            top: `${targetRect.top + targetRect.height + padding}px`,
+            left: `${centeredLeft}px`,
+            maxWidth: `${tooltipWidth}px`,
+          };
+        }
+        // Fall through to show above if no room below
+      }
       case 'top':
         return {
           position: 'fixed',
-          bottom: `${window.innerHeight - targetRect.top + padding}px`,
-          left: `${Math.max(padding, Math.min(window.innerWidth - tooltipWidth - padding, targetRect.left + targetRect.width / 2 - tooltipWidth / 2))}px`,
+          bottom: `${Math.max(padding, window.innerHeight - targetRect.top + padding)}px`,
+          left: `${centeredLeft}px`,
+          maxWidth: `${tooltipWidth}px`,
         };
-      case 'left':
-        return {
-          position: 'fixed',
-          top: `${targetRect.top + targetRect.height / 2}px`,
-          right: `${window.innerWidth - targetRect.left + padding}px`,
-          transform: 'translateY(-50%)',
-        };
-      case 'right':
-        return {
-          position: 'fixed',
-          top: `${targetRect.top + targetRect.height / 2}px`,
-          left: `${targetRect.left + targetRect.width + padding}px`,
-          transform: 'translateY(-50%)',
-        };
+      case 'left': {
+        // Check if there's room to the left
+        const hasRoomLeft = targetRect.left > tooltipWidth + padding;
+        if (hasRoomLeft) {
+          return {
+            position: 'fixed',
+            top: `${Math.max(padding, Math.min(window.innerHeight - tooltipHeight - padding, targetRect.top + targetRect.height / 2))}px`,
+            right: `${Math.max(padding, window.innerWidth - targetRect.left + padding)}px`,
+            transform: 'translateY(-50%)',
+            maxWidth: `${tooltipWidth}px`,
+          };
+        }
+        // Show centered if no room on left
+        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: `${tooltipWidth}px` };
+      }
+      case 'right': {
+        // Check if there's room to the right
+        const hasRoomRight = window.innerWidth - targetRect.right > tooltipWidth + padding;
+        if (hasRoomRight) {
+          return {
+            position: 'fixed',
+            top: `${Math.max(padding, Math.min(window.innerHeight - tooltipHeight - padding, targetRect.top + targetRect.height / 2))}px`,
+            left: `${targetRect.left + targetRect.width + padding}px`,
+            transform: 'translateY(-50%)',
+            maxWidth: `${tooltipWidth}px`,
+          };
+        }
+        // Show centered if no room on right
+        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: `${tooltipWidth}px` };
+      }
       default:
-        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: `${tooltipWidth}px` };
     }
   };
+  
+  // Early return if step is undefined (prevents crashes)
+  if (!step) return null;
   
   return (
     <div 
@@ -1052,8 +1107,8 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
               <rect x="0" y="0" width="100%" height="100%" fill="white" />
               {targetRect && (
                 <rect 
-                  x={targetRect.left - 8} 
-                  y={targetRect.top - 8} 
+                  x={Math.max(0, targetRect.left - 8)} 
+                  y={Math.max(0, targetRect.top - 8)} 
                   width={targetRect.width + 16} 
                   height={targetRect.height + 16} 
                   rx="12"
@@ -1070,8 +1125,8 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
           />
         </svg>
       ) : (
-        /* For interactive steps, use 4 blocking divs around the cutout */
-        targetRect && (
+        /* For interactive steps, use 4 blocking divs around the cutout, or full overlay if no target */
+        targetRect ? (
           <>
             {/* Semi-transparent overlay - top */}
             <div 
@@ -1115,6 +1170,15 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
               }}
             />
           </>
+        ) : (
+          /* Fallback: full overlay when interactive but no target found */
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              pointerEvents: 'auto' 
+            }}
+          />
         )
       )}
       
@@ -14988,11 +15052,11 @@ export default function AetherNames() {
           const hadThe = nameObj.name.toLowerCase().startsWith('the ');
           
           if (hadThe) {
-            newName = 'The ' + capitalize(newParts[0].text) + ' ' + capitalize(newParts[1]?.text || '');
+            newName = 'The ' + capitalize(newParts[0]?.text || '') + ' ' + capitalize(newParts[1]?.text || '');
           } else if (hadSpaces) {
-            newName = newParts.map(p => capitalize(p.text)).join(' ');
+            newName = newParts.map(p => capitalize(p.text || '')).join(' ');
           } else {
-            newName = capitalize(newParts[0].text) + (newParts[1]?.text.toLowerCase() || '');
+            newName = capitalize(newParts[0]?.text || '') + (newParts[1]?.text?.toLowerCase() || '');
           }
         } else {
           newName = newParts.map(p => p.text).join('');
@@ -15149,7 +15213,7 @@ export default function AetherNames() {
         // Join with spaces, preserve "The" at the start
         newName = newParts.map((p, i) => {
           if (p.isTitle) return p.text; // Keep "The" as-is
-          return capitalize(p.text.toLowerCase());
+          return capitalize((p.text || '').toLowerCase());
         }).join(' ');
       } else if (hasTypeParts) {
         // Type-element names: check original name style
@@ -15158,12 +15222,12 @@ export default function AetherNames() {
         const hadThe = originalName.toLowerCase().startsWith('the ');
         
         if (hadThe) {
-          newName = 'The ' + capitalize(newParts[0].text) + ' ' + capitalize(newParts[1]?.text || '');
+          newName = 'The ' + capitalize(newParts[0]?.text || '') + ' ' + capitalize(newParts[1]?.text || '');
         } else if (hadSpaces) {
-          newName = newParts.map(p => capitalize(p.text)).join(' ');
+          newName = newParts.map(p => capitalize(p.text || '')).join(' ');
         } else {
           // Compound style - join directly
-          newName = capitalize(newParts[0].text) + newParts[1]?.text.toLowerCase();
+          newName = capitalize(newParts[0]?.text || '') + (newParts[1]?.text?.toLowerCase() || '');
         }
       } else {
         newName = newParts.map(p => p.text).join('');
