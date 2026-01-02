@@ -5688,95 +5688,47 @@ const formatBonusLine = (bonuses) => {
 };
 
 // Animated D6 Die Component
-// Dice animation frames - purple theme to match app
-const DICE_ROLL_FRAMES = [
-  '/dice/sprites/Purple_Dice_Start_1.png',
-  '/dice/sprites/Purple_Dice_Roll_1.png',
-  '/dice/sprites/Purple_Dice_Roll_2.png',
-  '/dice/sprites/Purple_Dice_Roll_3.png',
-  '/dice/sprites/Purple_Dice_Roll_4.png',
-  '/dice/sprites/Purple_Dice_Roll_5.png',
-  '/dice/sprites/Purple_Dice_Roll_6_2.png',
-  '/dice/sprites/Purple_Dice_Roll_6_3.png',
-  '/dice/sprites/Purple_Dice_Roll_6_4.png',
-  '/dice/sprites/Purple_Dice_Roll_6_5.png',
-  '/dice/sprites/Purple_Dice_Roll_6_6.png',
-  '/dice/sprites/Purple_Dice_Roll_6_7.png',
-  '/dice/sprites/Purple_Dice_Roll_7_1.png',
-  '/dice/sprites/Purple_Dice_Roll_7_2.png',
-  '/dice/sprites/Purple_Dice_Roll_7_3.png',
-  '/dice/sprites/Purple_Dice_Roll_7_4.png',
-  '/dice/sprites/Purple_Dice_Roll_7_5.png',
-  '/dice/sprites/Purple_Dice_Roll_7_6.png',
-  '/dice/sprites/Purple_Dice_Roll_8_1.png',
-  '/dice/sprites/Purple_Dice_Roll_8_2.png',
-  '/dice/sprites/Purple_Dice_Roll_8_3.png',
-  '/dice/sprites/Purple_Dice_Roll_8_4.png',
-  '/dice/sprites/Purple_Dice_Roll_8_5.png',
-  '/dice/sprites/Purple_Dice_Roll_8_6.png',
-];
-
-// D6 pip positions for traditional dice face display
-const D6_PIP_POSITIONS = {
-  1: [[50, 50]],
-  2: [[25, 25], [75, 75]],
-  3: [[25, 25], [50, 50], [75, 75]],
-  4: [[25, 25], [75, 25], [25, 75], [75, 75]],
-  5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
-  6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]]
-};
+// Uses CSS animation for rolling, sprite images for results
 
 const AnimatedDie = ({ value, isRolling, isDropped = false }) => {
-  const [frameIndex, setFrameIndex] = useState(0);
+  const [displayValue, setDisplayValue] = useState(value || 1);
   
+  // During rolling, cycle through random d6 values for the display
   useEffect(() => {
     if (isRolling) {
       const interval = setInterval(() => {
-        setFrameIndex(prev => (prev + 1) % DICE_ROLL_FRAMES.length);
-      }, 50); // ~20fps for smooth animation
+        setDisplayValue(Math.floor(Math.random() * 6) + 1);
+      }, 80); // Change face every 80ms
       return () => clearInterval(interval);
-    } else {
-      setFrameIndex(0);
+    } else if (value) {
+      setDisplayValue(value);
     }
-  }, [isRolling]);
+  }, [isRolling, value]);
 
-  // When rolling, show sprite animation. When stopped, show traditional d6 pips
-  if (isRolling) {
-    return (
-      <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden">
-        <img 
-          src={DICE_ROLL_FRAMES[frameIndex]}
-          alt="Rolling..."
-          className="w-full h-full object-contain"
-          draggable={false}
-        />
-      </div>
-    );
-  }
-
-  // Stopped - show traditional d6 face with pips
-  const pips = D6_PIP_POSITIONS[value] || D6_PIP_POSITIONS[1];
+  // Get the d6 result sprite (1-6)
+  const getD6Sprite = (val) => `/dice/d6/DicePu_R_${val}.png`;
   
   return (
     <div 
-      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 ${
+      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden transition-all duration-200 ${
+        isRolling 
+          ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' 
+          : ''
+      } ${
         isDropped 
-          ? 'bg-slate-700/50 border-2 border-red-500/40 opacity-50 scale-90' 
-          : 'bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30'
+          ? 'opacity-50 scale-90 grayscale' 
+          : 'shadow-lg shadow-purple-500/30'
       }`}
     >
-      {pips.map(([x, y], i) => (
-        <div
-          key={i}
-          className={`absolute w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
-            isDropped ? 'bg-red-400/50' : 'bg-white shadow-sm'
-          }`}
-          style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
-        />
-      ))}
+      <img 
+        src={getD6Sprite(displayValue)}
+        alt={`D6: ${displayValue}`}
+        className="w-full h-full object-contain"
+        draggable={false}
+      />
       {isDropped && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full h-0.5 bg-red-500/70 rotate-45 absolute" />
+        <div className="absolute inset-0 flex items-center justify-center bg-red-900/40">
+          <div className="w-full h-0.5 bg-red-500 rotate-45 absolute" />
         </div>
       )}
     </div>
