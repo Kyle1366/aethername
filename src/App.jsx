@@ -88,33 +88,55 @@ const DiceRoller = () => {
   const [diceType, setDiceType] = useState(20);
   const [rolling, setRolling] = useState(false);
   const [history, setHistory] = useState([]);
-  const [diceRotation, setDiceRotation] = useState({ x: 0, y: 0, z: 0 });
+  const [animFrame, setAnimFrame] = useState(0);
+  
+  // Animation frames for rolling
+  const rollFrames = [
+    '/dice/sprites/Purple_Dice_Start_1.png',
+    '/dice/sprites/Purple_Dice_Roll_1.png',
+    '/dice/sprites/Purple_Dice_Roll_2.png',
+    '/dice/sprites/Purple_Dice_Roll_3.png',
+    '/dice/sprites/Purple_Dice_Roll_4.png',
+    '/dice/sprites/Purple_Dice_Roll_5.png',
+    '/dice/sprites/Purple_Dice_Roll_6_2.png',
+    '/dice/sprites/Purple_Dice_Roll_6_3.png',
+    '/dice/sprites/Purple_Dice_Roll_6_4.png',
+    '/dice/sprites/Purple_Dice_Roll_6_5.png',
+    '/dice/sprites/Purple_Dice_Roll_6_6.png',
+    '/dice/sprites/Purple_Dice_Roll_6_7.png',
+    '/dice/sprites/Purple_Dice_Roll_7_1.png',
+    '/dice/sprites/Purple_Dice_Roll_7_2.png',
+    '/dice/sprites/Purple_Dice_Roll_7_3.png',
+    '/dice/sprites/Purple_Dice_Roll_7_4.png',
+    '/dice/sprites/Purple_Dice_Roll_7_5.png',
+    '/dice/sprites/Purple_Dice_Roll_7_6.png',
+    '/dice/sprites/Purple_Dice_Roll_8_1.png',
+    '/dice/sprites/Purple_Dice_Roll_8_2.png',
+    '/dice/sprites/Purple_Dice_Roll_8_3.png',
+    '/dice/sprites/Purple_Dice_Roll_8_4.png',
+    '/dice/sprites/Purple_Dice_Roll_8_5.png',
+    '/dice/sprites/Purple_Dice_Roll_8_6.png',
+  ];
   
   const roll = (sides) => {
     setDiceType(sides);
     setRolling(true);
     setResult(null);
     
-    // Animate dice tumbling
-    let rotationCount = 0;
-    const rotationInterval = setInterval(() => {
-      setDiceRotation({
-        x: Math.random() * 720 - 360,
-        y: Math.random() * 720 - 360,
-        z: Math.random() * 360
-      });
-      setResult(Math.floor(Math.random() * sides) + 1);
-      rotationCount++;
+    // Animate dice rolling through frames
+    let frameCount = 0;
+    const animInterval = setInterval(() => {
+      setAnimFrame(prev => (prev + 1) % rollFrames.length);
+      frameCount++;
       
-      if (rotationCount > 12) {
-        clearInterval(rotationInterval);
+      if (frameCount > 30) { // ~1.5 seconds at 50ms
+        clearInterval(animInterval);
         const finalResult = Math.floor(Math.random() * sides) + 1;
         setResult(finalResult);
-        setDiceRotation({ x: 0, y: 0, z: 0 });
         setRolling(false);
         setHistory(prev => [{sides, result: finalResult, time: Date.now()}, ...prev.slice(0, 4)]);
       }
-    }, 80);
+    }, 50);
   };
   
   const getResultColor = () => {
@@ -124,6 +146,14 @@ const DiceRoller = () => {
       if (result === 1) return 'text-red-400'; // Nat 1
     }
     return 'text-white';
+  };
+
+  // Get result sprite path (for d20 results 1-20)
+  const getResultSprite = () => {
+    if (result && result >= 1 && result <= 20) {
+      return `/dice/d20/DicePu_R_${result}.png`;
+    }
+    return null;
   };
 
   // SVG dice icons from game-icons.net (CC BY 3.0 - Skoll & Delapouite)
@@ -204,7 +234,7 @@ const DiceRoller = () => {
             </button>
           </div>
           
-          {/* 3D Dice Display */}
+          {/* Dice Display */}
           <div className="relative h-36 flex items-center justify-center mb-3 overflow-hidden rounded-lg bg-slate-800/50 border border-slate-700/30">
             {/* Dice shadow */}
             <div 
@@ -214,38 +244,56 @@ const DiceRoller = () => {
             />
             
             {/* Animated Dice */}
-            <div
-              className={`relative transition-all ${rolling ? 'duration-75' : 'duration-300'}`}
-              style={{
-                transform: `perspective(200px) rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg) rotateZ(${diceRotation.z}deg) ${rolling ? 'scale(0.85)' : 'scale(1)'}`,
-                transformStyle: 'preserve-3d',
-              }}
-            >
-              <div 
-                className={`w-24 h-24 bg-gradient-to-br ${getDiceColor()} rounded-xl flex items-center justify-center shadow-2xl transition-all duration-300 relative overflow-hidden`}
-                style={{
-                  boxShadow: rolling 
-                    ? '0 0 40px rgba(99, 102, 241, 0.6), inset 0 0 30px rgba(255,255,255,0.15)' 
-                    : result === 20 && diceType === 20 
-                      ? '0 0 50px rgba(234, 179, 8, 0.7), 0 0 100px rgba(234, 179, 8, 0.3), inset 0 0 30px rgba(255,255,255,0.2)'
-                      : result === 1 && diceType === 20
-                        ? '0 0 50px rgba(239, 68, 68, 0.7), inset 0 0 20px rgba(0,0,0,0.3)'
-                        : '0 15px 40px rgba(0,0,0,0.4), inset 0 0 30px rgba(255,255,255,0.1)'
-                }}
-              >
-                {/* Dice shape outline */}
-                <div className="absolute inset-2 text-white/20">
-                  {getDiceIcon()}
+            <div className={`relative transition-all duration-200 ${rolling ? 'scale-95' : 'scale-100'}`}>
+              {rolling ? (
+                // Rolling animation
+                <img 
+                  src={rollFrames[animFrame]}
+                  alt="Rolling..."
+                  className="w-28 h-28 object-contain"
+                  draggable={false}
+                />
+              ) : result && diceType === 20 && getResultSprite() ? (
+                // D20 result with sprite
+                <div className="relative">
+                  <img 
+                    src={getResultSprite()}
+                    alt={`Result: ${result}`}
+                    className="w-28 h-28 object-contain"
+                    draggable={false}
+                  />
+                  {/* Glow effect for nat 20 */}
+                  {result === 20 && (
+                    <div className="absolute inset-0 bg-yellow-400/20 rounded-full blur-xl animate-pulse" />
+                  )}
+                  {/* Dark overlay for nat 1 */}
+                  {result === 1 && (
+                    <div className="absolute inset-0 bg-red-900/30 rounded-full" />
+                  )}
                 </div>
-                
-                {/* Result number */}
-                <span className={`text-4xl font-bold text-white drop-shadow-lg relative z-10 ${rolling ? 'blur-[2px] animate-pulse' : ''}`}>
-                  {result || '?'}
-                </span>
-                
-                {/* Shine effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none" />
-              </div>
+              ) : (
+                // Other dice or no result - show icon with number
+                <div 
+                  className={`w-24 h-24 bg-gradient-to-br ${
+                    result === 20 && diceType === 20 ? 'from-yellow-500 to-amber-600' :
+                    result === 1 && diceType === 20 ? 'from-red-600 to-red-800' :
+                    'from-indigo-500 to-purple-600'
+                  } rounded-xl flex items-center justify-center shadow-2xl relative overflow-hidden`}
+                >
+                  {/* Dice shape outline */}
+                  <div className="absolute inset-2 text-white/20">
+                    {getDiceIcon()}
+                  </div>
+                  
+                  {/* Result number */}
+                  <span className="text-4xl font-bold text-white drop-shadow-lg relative z-10">
+                    {result || '?'}
+                  </span>
+                  
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none" />
+                </div>
+              )}
             </div>
             
             {/* Sparkles for nat 20 */}
@@ -5668,14 +5716,14 @@ const DICE_ROLL_FRAMES = [
   '/dice/sprites/Purple_Dice_Roll_8_6.png',
 ];
 
-// Result sprites showing numbers 1-6 (we only need 1-6 for ability score d6s)
-const DICE_RESULT_SPRITES = {
-  1: '/dice/results/DicePu_R_1.png',
-  2: '/dice/results/DicePu_R_2.png',
-  3: '/dice/results/DicePu_R_3.png',
-  4: '/dice/results/DicePu_R_4.png',
-  5: '/dice/results/DicePu_R_5.png',
-  6: '/dice/results/DicePu_R_6.png',
+// D6 pip positions for traditional dice face display
+const D6_PIP_POSITIONS = {
+  1: [[50, 50]],
+  2: [[25, 25], [75, 75]],
+  3: [[25, 25], [50, 50], [75, 75]],
+  4: [[25, 25], [75, 25], [25, 75], [75, 75]],
+  5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
+  6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]]
 };
 
 const AnimatedDie = ({ value, isRolling, isDropped = false }) => {
@@ -5685,31 +5733,50 @@ const AnimatedDie = ({ value, isRolling, isDropped = false }) => {
     if (isRolling) {
       const interval = setInterval(() => {
         setFrameIndex(prev => (prev + 1) % DICE_ROLL_FRAMES.length);
-      }, 60); // ~16fps for smooth animation
+      }, 50); // ~20fps for smooth animation
       return () => clearInterval(interval);
+    } else {
+      setFrameIndex(0);
     }
   }, [isRolling]);
 
-  // Show result sprite when not rolling, animation frame when rolling
-  const imageSrc = isRolling 
-    ? DICE_ROLL_FRAMES[frameIndex]
-    : DICE_RESULT_SPRITES[value] || DICE_RESULT_SPRITES[1];
+  // When rolling, show sprite animation. When stopped, show traditional d6 pips
+  if (isRolling) {
+    return (
+      <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden">
+        <img 
+          src={DICE_ROLL_FRAMES[frameIndex]}
+          alt="Rolling..."
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
+      </div>
+    );
+  }
 
+  // Stopped - show traditional d6 face with pips
+  const pips = D6_PIP_POSITIONS[value] || D6_PIP_POSITIONS[1];
+  
   return (
     <div 
-      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 overflow-hidden ${
-        isDropped ? 'opacity-40 scale-90' : ''
-      } ${isRolling ? 'animate-pulse' : ''}`}
+      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 ${
+        isDropped 
+          ? 'bg-slate-700/50 border-2 border-red-500/40 opacity-50 scale-90' 
+          : 'bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30'
+      }`}
     >
-      <img 
-        src={imageSrc}
-        alt={isRolling ? 'Rolling...' : `Die showing ${value}`}
-        className="w-full h-full object-contain"
-        draggable={false}
-      />
+      {pips.map(([x, y], i) => (
+        <div
+          key={i}
+          className={`absolute w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
+            isDropped ? 'bg-red-400/50' : 'bg-white shadow-sm'
+          }`}
+          style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
+        />
+      ))}
       {isDropped && (
-        <div className="absolute inset-0 flex items-center justify-center bg-red-900/30 rounded-lg">
-          <div className="w-full h-0.5 bg-red-500/80 rotate-45 absolute" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-full h-0.5 bg-red-500/70 rotate-45 absolute" />
         </div>
       )}
     </div>
