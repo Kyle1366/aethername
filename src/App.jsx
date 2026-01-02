@@ -88,51 +88,38 @@ const DiceRoller = () => {
   const [diceType, setDiceType] = useState(20);
   const [rolling, setRolling] = useState(false);
   const [history, setHistory] = useState([]);
-  const [animFrame, setAnimFrame] = useState(0);
+  const [displayValue, setDisplayValue] = useState(null);
   
-  // Animation frames for rolling
-  const rollFrames = [
-    '/dice/sprites/Purple_Dice_Start_1.png',
-    '/dice/sprites/Purple_Dice_Roll_1.png',
-    '/dice/sprites/Purple_Dice_Roll_2.png',
-    '/dice/sprites/Purple_Dice_Roll_3.png',
-    '/dice/sprites/Purple_Dice_Roll_4.png',
-    '/dice/sprites/Purple_Dice_Roll_5.png',
-    '/dice/sprites/Purple_Dice_Roll_6_2.png',
-    '/dice/sprites/Purple_Dice_Roll_6_3.png',
-    '/dice/sprites/Purple_Dice_Roll_6_4.png',
-    '/dice/sprites/Purple_Dice_Roll_6_5.png',
-    '/dice/sprites/Purple_Dice_Roll_6_6.png',
-    '/dice/sprites/Purple_Dice_Roll_6_7.png',
-    '/dice/sprites/Purple_Dice_Roll_7_1.png',
-    '/dice/sprites/Purple_Dice_Roll_7_2.png',
-    '/dice/sprites/Purple_Dice_Roll_7_3.png',
-    '/dice/sprites/Purple_Dice_Roll_7_4.png',
-    '/dice/sprites/Purple_Dice_Roll_7_5.png',
-    '/dice/sprites/Purple_Dice_Roll_7_6.png',
-    '/dice/sprites/Purple_Dice_Roll_8_1.png',
-    '/dice/sprites/Purple_Dice_Roll_8_2.png',
-    '/dice/sprites/Purple_Dice_Roll_8_3.png',
-    '/dice/sprites/Purple_Dice_Roll_8_4.png',
-    '/dice/sprites/Purple_Dice_Roll_8_5.png',
-    '/dice/sprites/Purple_Dice_Roll_8_6.png',
-  ];
+  // Get dice icon image path
+  const getDiceIconPath = (sides) => {
+    const diceMap = { 4: 'D4', 6: 'D6', 8: 'D8', 10: 'D10', 12: 'D12', 20: 'D20', 100: 'D10' };
+    return `/dice/icons/${diceMap[sides] || 'D20'}_Shadow.png`;
+  };
+  
+  // Get result sprite path (works for any result 1-20)
+  const getResultSprite = (value) => {
+    if (value && value >= 1 && value <= 20) {
+      return `/dice/d20/DicePu_R_${value}.png`;
+    }
+    return null;
+  };
   
   const roll = (sides) => {
     setDiceType(sides);
     setRolling(true);
     setResult(null);
     
-    // Animate dice rolling through frames
+    // Animate by cycling through random values
     let frameCount = 0;
     const animInterval = setInterval(() => {
-      setAnimFrame(prev => (prev + 1) % rollFrames.length);
+      setDisplayValue(Math.floor(Math.random() * sides) + 1);
       frameCount++;
       
-      if (frameCount > 30) { // ~1.5 seconds at 50ms
+      if (frameCount > 25) { // ~1.25 seconds at 50ms
         clearInterval(animInterval);
         const finalResult = Math.floor(Math.random() * sides) + 1;
         setResult(finalResult);
+        setDisplayValue(finalResult);
         setRolling(false);
         setHistory(prev => [{sides, result: finalResult, time: Date.now()}, ...prev.slice(0, 4)]);
       }
@@ -146,64 +133,6 @@ const DiceRoller = () => {
       if (result === 1) return 'text-red-400'; // Nat 1
     }
     return 'text-white';
-  };
-
-  // Get result sprite path (for d20 results 1-20)
-  const getResultSprite = () => {
-    if (result && result >= 1 && result <= 20) {
-      return `/dice/d20/DicePu_R_${result}.png`;
-    }
-    return null;
-  };
-
-  // SVG dice icons from game-icons.net (CC BY 3.0 - Skoll & Delapouite)
-  const DiceIcons = {
-    d4: (
-      <svg viewBox="0 0 512 512" className="w-full h-full">
-        <path d="M248.5 22.63L18.75 489.4h459.5L248.5 22.63zm0 89.77l124.6 252.3h-51.5l-22.8-46.4H200.1l-23.5 46.4h-51.4l123.3-252.3zm0 74.7l-51.6 104.6h102.4l-50.8-104.6z" fill="currentColor"/>
-      </svg>
-    ),
-    d6: (
-      <svg viewBox="0 0 512 512" className="w-full h-full">
-        <path d="M255.76 44.764c-6.176 0-12.353 1.384-17.137 4.152L85.87 137.276c-9.57 5.536-9.57 14.29 0 19.826l152.753 88.36c9.57 5.536 24.703 5.536 34.272 0l152.753-88.36c9.57-5.535 9.57-14.29 0-19.825l-152.753-88.36c-4.785-2.77-10.96-4.153-17.136-4.153zm-.824 44.653c5.594 0 10.135 4.54 10.135 10.135 0 5.593-4.54 10.134-10.135 10.134-5.594 0-10.135-4.54-10.135-10.134 0-5.594 4.54-10.135 10.135-10.135zm-82.538 47.67c5.594 0 10.135 4.54 10.135 10.135 0 5.593-4.54 10.134-10.135 10.134-5.594 0-10.135-4.54-10.135-10.134 0-5.594 4.54-10.134 10.135-10.134zm165.622 0c5.594 0 10.135 4.54 10.135 10.135 0 5.593-4.54 10.134-10.135 10.134-5.593 0-10.135-4.54-10.135-10.134 0-5.594 4.542-10.134 10.135-10.134zM67.26 176.008c-5.09 0-9.21 4.09-9.21 9.18v141.3c0 5.09 4.12 9.18 9.21 9.18h72.01l60.6-35.016c-1.44-.49-2.87-.997-4.26-1.55-3.11-1.23-6.1-2.62-8.91-4.24-3.33-1.92-6.42-4.12-9.22-6.63-3.7-3.31-6.95-7.11-9.66-11.37-1.84-2.91-3.42-6.03-4.72-9.32-.64-1.62-1.22-3.28-1.73-4.98-.5-1.7-.92-3.45-1.27-5.24-.48-2.4-.82-4.86-1.02-7.38-.23-2.52-.32-5.1-.27-7.75.04-2.64.2-5.35.48-8.12.16-1.59.37-3.2.63-4.84H67.26zm377.48 0c5.09 0 9.21 4.09 9.21 9.18v141.3c0 5.09-4.12 9.18-9.21 9.18h-72.01l-60.6-35.016c1.44-.49 2.87-.997 4.26-1.55 3.11-1.23 6.1-2.62 8.91-4.24 3.33-1.92 6.42-4.12 9.22-6.63 3.7-3.31 6.95-7.11 9.66-11.37 1.84-2.91 3.42-6.03 4.72-9.32.64-1.62 1.22-3.28 1.73-4.98.5-1.7.92-3.45 1.27-5.24.48-2.4.82-4.86 1.02-7.38.23-2.52.32-5.1.27-7.75-.04-2.64-.2-5.35-.48-8.12-.16-1.59-.37-3.2-.63-4.84h91.89zM255.76 264.408c-5.593 0-10.134 4.54-10.134 10.135 0 5.594 4.54 10.135 10.134 10.135 5.594 0 10.135-4.54 10.135-10.135 0-5.594-4.54-10.135-10.135-10.135zM85.87 354.896c-9.57 5.537-9.57 14.29 0 19.826l152.753 88.36c9.57 5.536 24.703 5.536 34.272 0l152.753-88.36c9.57-5.537 9.57-14.29 0-19.826l-152.753-88.36c-9.57-5.536-24.703-5.536-34.272 0l-152.753 88.36zm169.89 19.69c5.594 0 10.135 4.54 10.135 10.134 0 5.594-4.54 10.135-10.135 10.135-5.593 0-10.134-4.54-10.134-10.135 0-5.594 4.54-10.135 10.134-10.135zm-82.538 47.67c5.594 0 10.135 4.54 10.135 10.134 0 5.594-4.54 10.134-10.135 10.134-5.594 0-10.135-4.54-10.135-10.134 0-5.594 4.54-10.135 10.135-10.135zm165.622 0c5.594 0 10.135 4.54 10.135 10.134 0 5.594-4.54 10.134-10.135 10.134-5.593 0-10.135-4.54-10.135-10.134 0-5.594 4.542-10.135 10.135-10.135z" fill="currentColor"/>
-      </svg>
-    ),
-    d8: (
-      <svg viewBox="0 0 512 512" className="w-full h-full">
-        <path d="M256 23L89 256l167 233 167-233L256 23zm0 79l100 154-100 130-100-130 100-154z" fill="currentColor"/>
-      </svg>
-    ),
-    d10: (
-      <svg viewBox="0 0 512 512" className="w-full h-full">
-        <path d="M250.97 21.69L52.03 184.1 250.97 490.3V21.69zm10.06 0V490.3l198.94-306.2L261.03 21.69zM256 150.8l-88.2 99.1 88.2 135.8 88.2-135.8-88.2-99.1z" fill="currentColor"/>
-      </svg>
-    ),
-    d12: (
-      <svg viewBox="0 0 512 512" className="w-full h-full">
-        <path d="M256 18.4L62.87 119.9V358L256 493.6 449.1 358V119.9L256 18.4zm0 39.2l156.3 82.5H99.7L256 57.6zm-176 94.9h352V337L256 449.4 80 337V152.5zm176 2.1l-86.4 62.8 33 101.5h106.8l33-101.5L256 154.6z" fill="currentColor"/>
-      </svg>
-    ),
-    d20: (
-      <svg viewBox="0 0 512 512" className="w-full h-full">
-        <path d="M256 18.56L20.11 164.13V350.1L256 493.44l235.89-143.34V164.13L256 18.56zm0 37.56l188.57 114.7L256 243.25 67.43 170.82 256 56.12zm-204.63 139.7L236.3 259v181.88L51.37 328V195.82zm409.26 0V328l-184.93 112.88V259l184.93-63.18z" fill="currentColor"/>
-      </svg>
-    ),
-    d100: (
-      <svg viewBox="0 0 512 512" className="w-full h-full">
-        <path d="M256 26c-127 0-230 103-230 230s103 230 230 230 230-103 230-230S383 26 256 26zm0 30c110.5 0 200 89.5 200 200s-89.5 200-200 200S56 366.5 56 256 145.5 56 256 56zm0 50c-82.8 0-150 67.2-150 150s67.2 150 150 150 150-67.2 150-150-67.2-150-150-150zm0 30c66.3 0 120 53.7 120 120s-53.7 120-120 120-120-53.7-120-120 53.7-120 120-120z" fill="currentColor"/>
-      </svg>
-    ),
-  };
-
-  const getDiceIcon = () => {
-    const iconKey = `d${diceType}`;
-    return DiceIcons[iconKey] || DiceIcons.d20;
-  };
-
-  const getDiceColor = () => {
-    if (result === 20 && diceType === 20 && !rolling) return 'from-yellow-500 to-amber-600';
-    if (result === 1 && diceType === 20 && !rolling) return 'from-red-600 to-red-800';
-    return 'from-indigo-500 to-purple-600';
   };
   
   return (
@@ -244,54 +173,64 @@ const DiceRoller = () => {
             />
             
             {/* Animated Dice */}
-            <div className={`relative transition-all duration-200 ${rolling ? 'scale-95' : 'scale-100'}`}>
+            <div className={`relative transition-all duration-200 ${rolling ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' : ''}`}>
               {rolling ? (
-                // Rolling animation
-                <img 
-                  src={rollFrames[animFrame]}
-                  alt="Rolling..."
-                  className="w-28 h-28 object-contain"
-                  draggable={false}
-                />
-              ) : result && diceType === 20 && getResultSprite() ? (
-                // D20 result with sprite
+                // Rolling - show dice icon with cycling number
+                <div className="relative w-28 h-28">
+                  <img 
+                    src={getDiceIconPath(diceType)}
+                    alt={`Rolling d${diceType}...`}
+                    className="w-full h-full object-contain"
+                    draggable={false}
+                  />
+                  {/* Overlay number during roll */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-white drop-shadow-lg">{displayValue || '?'}</span>
+                  </div>
+                </div>
+              ) : result && result <= 20 && getResultSprite(result) ? (
+                // Result with sprite (works for all dice since results are 1-20 max)
                 <div className="relative">
                   <img 
-                    src={getResultSprite()}
+                    src={getResultSprite(result)}
                     alt={`Result: ${result}`}
                     className="w-28 h-28 object-contain"
                     draggable={false}
                   />
                   {/* Glow effect for nat 20 */}
-                  {result === 20 && (
+                  {result === 20 && diceType === 20 && (
                     <div className="absolute inset-0 bg-yellow-400/20 rounded-full blur-xl animate-pulse" />
                   )}
                   {/* Dark overlay for nat 1 */}
-                  {result === 1 && (
+                  {result === 1 && diceType === 20 && (
                     <div className="absolute inset-0 bg-red-900/30 rounded-full" />
                   )}
                 </div>
-              ) : (
-                // Other dice or no result - show icon with number
-                <div 
-                  className={`w-24 h-24 bg-gradient-to-br ${
-                    result === 20 && diceType === 20 ? 'from-yellow-500 to-amber-600' :
-                    result === 1 && diceType === 20 ? 'from-red-600 to-red-800' :
-                    'from-indigo-500 to-purple-600'
-                  } rounded-xl flex items-center justify-center shadow-2xl relative overflow-hidden`}
-                >
-                  {/* Dice shape outline */}
-                  <div className="absolute inset-2 text-white/20">
-                    {getDiceIcon()}
+              ) : result ? (
+                // Fallback for d100 or results > 20
+                <div className="relative w-28 h-28">
+                  <img 
+                    src={getDiceIconPath(diceType)}
+                    alt={`d${diceType}`}
+                    className="w-full h-full object-contain opacity-50"
+                    draggable={false}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-white drop-shadow-lg">{result}</span>
                   </div>
-                  
-                  {/* Result number */}
-                  <span className="text-4xl font-bold text-white drop-shadow-lg relative z-10">
-                    {result || '?'}
-                  </span>
-                  
-                  {/* Shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none" />
+                </div>
+              ) : (
+                // No result yet - show dice icon
+                <div className="relative w-28 h-28">
+                  <img 
+                    src={getDiceIconPath(diceType)}
+                    alt={`d${diceType}`}
+                    className="w-full h-full object-contain"
+                    draggable={false}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-white/50 drop-shadow-lg">?</span>
+                  </div>
                 </div>
               )}
             </div>
