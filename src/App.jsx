@@ -6373,58 +6373,53 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
       return score;
     };
     
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
     // Build-aware feat selection - returns feat ID (key) not name
     const getBestFeat = (level, currentPrimaryScore) => {
       // If primary ability is below 16, always prioritize ASI
       if (currentPrimaryScore < 16) return null;
       
-      // Class and build specific feat recommendations
+      // Class and build specific feat recommendations (arrays for randomization)
       const featRecommendations = {
         // Martial feats
         fighter: () => {
-          if (fightingStyle === 'great weapon fighting') return 'greatWeaponMaster';
-          if (fightingStyle === 'archery') return 'sharpshooter';
-          if (fightingStyle === 'dueling' || fightingStyle === 'defense') return 'sentinel';
-          return 'sentinel';
+          if (fightingStyle === 'great weapon fighting') return pick(['greatWeaponMaster', 'sentinel', 'polearmMaster']);
+          if (fightingStyle === 'archery') return pick(['sharpshooter', 'crossbowExpert', 'alert']);
+          if (fightingStyle === 'dueling' || fightingStyle === 'defense') return pick(['sentinel', 'shieldMaster', 'dualWielder']);
+          return pick(['sentinel', 'alert', 'tough']);
         },
-        barbarian: () => 'greatWeaponMaster',
+        barbarian: () => pick(['greatWeaponMaster', 'tough', 'savageAttacker', 'sentinel']),
         paladin: () => {
-          if (fightingStyle === 'great weapon fighting') return 'greatWeaponMaster';
-          return 'sentinel';
+          if (fightingStyle === 'great weapon fighting') return pick(['greatWeaponMaster', 'polearmMaster', 'sentinel']);
+          return pick(['sentinel', 'shieldMaster', 'lucky']);
         },
         ranger: () => {
-          if (fightingStyle === 'archery') return 'sharpshooter';
-          return 'alert';
+          if (fightingStyle === 'archery') return pick(['sharpshooter', 'crossbowExpert', 'alert']);
+          return pick(['alert', 'mobile', 'skulker']);
         },
-        monk: () => 'mobile',
-        rogue: () => currentPrimaryScore >= 18 ? 'alert' : null,
+        monk: () => pick(['mobile', 'alert', 'sentinel', 'lucky']),
+        rogue: () => pick(['alert', 'lucky', 'skulker', 'mobile']),
         
         // Caster feats
-        wizard: () => 'warCaster',
-        sorcerer: () => 'warCaster',
-        warlock: () => 'warCaster',
-        cleric: () => 'warCaster',
-        druid: () => 'warCaster',
-        bard: () => 'warCaster'
+        wizard: () => pick(['warCaster', 'alert', 'lucky', 'resilient']),
+        sorcerer: () => pick(['warCaster', 'alert', 'lucky', 'elementalAdept']),
+        warlock: () => pick(['warCaster', 'alert', 'spellSniper', 'lucky']),
+        cleric: () => pick(['warCaster', 'resilient', 'lucky', 'alert']),
+        druid: () => pick(['warCaster', 'resilient', 'alert', 'observant']),
+        bard: () => pick(['warCaster', 'lucky', 'alert', 'inspiring Leader'])
       };
       
-      // Only recommend feats at certain levels and scores
-      if (currentPrimaryScore >= 18) {
-        const getFeat = featRecommendations[classLowerCase];
-        if (getFeat) return getFeat();
-      }
+      // Randomly decide between feat and ASI when primary is high enough
+      // Higher scores = higher chance of choosing feat
+      const featChance = currentPrimaryScore >= 20 ? 0.8 : currentPrimaryScore >= 18 ? 0.5 : 0.2;
+      if (Math.random() > featChance) return null; // Choose ASI instead
       
-      // At level 8+, consider resilient for casters if primary is maxed
-      if (level >= 8 && isCaster && currentPrimaryScore >= 18) {
-        return 'resilient';
-      }
+      const getFeat = featRecommendations[classLowerCase];
+      if (getFeat) return getFeat();
       
-      // Lucky is always good if primary is maxed
-      if (currentPrimaryScore >= 20 && level >= 8) {
-        return 'lucky';
-      }
-      
-      return null;
+      // Generic good feats for any class
+      return pick(['lucky', 'alert', 'tough', 'resilient']);
     };
     
     asiLevels.forEach(level => {
@@ -6464,9 +6459,11 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
             }
           }
         } else {
-          // Both primary and secondary maxed, boost constitution
+          // Both primary and secondary maxed, boost constitution or another useful ability
           const conScore = getCurrentScore('constitution', level);
-          if (conScore < 20) {
+          const otherAbilities = ABILITY_NAMES.filter(a => a !== primaryAbility && a !== secondaryAbility);
+          const randomOther = otherAbilities[Math.floor(Math.random() * otherAbilities.length)];
+          if (conScore < 20 && Math.random() > 0.3) {
             abilityIncreases['constitution'] = Math.min(2, 20 - conScore);
           } else {
             // Everything important is maxed, just put +2 in something useful
@@ -9914,7 +9911,7 @@ const MulticlassStep = ({ character, updateCharacter }) => {
     const choices = (synergies[primaryId] || availableClasses.map(([id]) => id))
       .filter(id => id !== primaryId && !already.includes(id));
     if (choices.length === 0) return null;
-    const pickId = choices[0];
+    const pickId = choices[Math.floor(Math.random() * choices.length)];
     
     // Also pick a subclass for the multiclass
     const mcClassData = CLASSES[pickId];
@@ -10402,25 +10399,35 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       }
     };
     
-    // Pick cantrips intelligently
-    const cantripPriority = classSpellPriorities.cantrips[classLower] || [];
+    // Helper to shuffle array for randomization
+    const shuffle = (arr) => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+    
+    // Pick cantrips intelligently with randomization
+    const cantripPriority = shuffle(classSpellPriorities.cantrips[classLower] || []);
     const pickedCantrips = [];
     
-    // First, add prioritized cantrips that are available
+    // First, add some prioritized cantrips that are available (randomly selected)
+    const numPriorityCantrips = Math.max(1, Math.floor(maxCantrips * 0.6)); // ~60% priority, rest random
     for (const spellId of cantripPriority) {
-      if (pickedCantrips.length >= maxCantrips) break;
+      if (pickedCantrips.length >= numPriorityCantrips) break;
       const spell = availableCantrips.find(s => s.id === spellId);
       if (spell && !pickedCantrips.includes(spellId)) {
         pickedCantrips.push(spellId);
       }
     }
     
-    // Fill remaining slots with other available cantrips
-    for (const spell of availableCantrips) {
+    // Fill remaining slots with shuffled other available cantrips
+    const remainingCantrips = shuffle(availableCantrips.filter(s => !pickedCantrips.includes(s.id)));
+    for (const spell of remainingCantrips) {
       if (pickedCantrips.length >= maxCantrips) break;
-      if (!pickedCantrips.includes(spell.id)) {
-        pickedCantrips.push(spell.id);
-      }
+      pickedCantrips.push(spell.id);
     }
     
     // Pick spells intelligently based on level
@@ -10452,6 +10459,22 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       const distribution = {};
       let remaining = totalMaxSpells;
       
+      // Calculate total available spells across all levels
+      let totalAvailable = 0;
+      for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+        totalAvailable += spellsByLevel[spellLevel]?.length || 0;
+      }
+      
+      // If we have fewer spells available than max, distribute evenly
+      if (totalAvailable <= totalMaxSpells) {
+        for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+          const available = spellsByLevel[spellLevel]?.length || 0;
+          distribution[spellLevel] = available;
+        }
+        return distribution;
+      }
+      
+      // Distribute using floor to avoid exceeding total
       for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
         const available = spellsByLevel[spellLevel]?.length || 0;
         if (available === 0) continue;
@@ -10459,20 +10482,26 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
         // Higher level spells get fewer slots, lower levels get more
         let slots;
         if (spellLevel === 1) {
-          slots = Math.min(remaining, Math.ceil(totalMaxSpells * 0.4), available);
+          slots = Math.min(remaining, Math.floor(totalMaxSpells * 0.45), available);
         } else if (spellLevel === 2) {
-          slots = Math.min(remaining, Math.ceil(totalMaxSpells * 0.3), available);
+          slots = Math.min(remaining, Math.floor(totalMaxSpells * 0.3), available);
         } else {
-          slots = Math.min(remaining, Math.ceil(totalMaxSpells * 0.15), available);
+          slots = Math.min(remaining, Math.floor(totalMaxSpells * 0.15), available);
         }
+        
+        // Ensure we get at least 1 spell per level if available and we have room
+        if (slots === 0 && available > 0 && remaining > 0) slots = 1;
         
         distribution[spellLevel] = slots;
         remaining -= slots;
+        
+        if (remaining <= 0) break;
       }
       
-      // If we have remaining slots, add more level 1-2 spells
+      // If we have remaining slots, add more spells from lower levels
       if (remaining > 0) {
-        for (let spellLevel = 1; spellLevel <= 2; spellLevel++) {
+        for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+          if (remaining <= 0) break;
           const available = spellsByLevel[spellLevel]?.length || 0;
           const current = distribution[spellLevel] || 0;
           const canAdd = Math.min(remaining, available - current);
@@ -10488,19 +10517,24 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
     
     const distribution = getSpellDistribution();
     
-    // Pick spells for each level
+    // Pick spells for each level, respecting totalMaxSpells
     for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+      // Check if we've hit the overall limit
+      if (pickedSpells.length >= totalMaxSpells) break;
+      
       const slotsForLevel = distribution[spellLevel] || 0;
       if (slotsForLevel === 0) continue;
       
       const availableAtLevel = spellsByLevel[spellLevel] || [];
-      const priorityList = spellPriorities[spellLevel] || [];
+      const priorityList = shuffle(spellPriorities[spellLevel] || []);
       
       let pickedForLevel = 0;
+      const maxForThisLevel = Math.min(slotsForLevel, totalMaxSpells - pickedSpells.length);
       
-      // First, pick priority spells
+      // Pick some priority spells (randomly ordered)
+      const numPrioritySpells = Math.max(1, Math.floor(maxForThisLevel * 0.5)); // ~50% priority
       for (const spellId of priorityList) {
-        if (pickedForLevel >= slotsForLevel) break;
+        if (pickedForLevel >= numPrioritySpells || pickedSpells.length >= totalMaxSpells) break;
         const spell = availableAtLevel.find(s => s.id === spellId);
         if (spell && !pickedSpells.includes(spellId)) {
           pickedSpells.push(spellId);
@@ -10508,13 +10542,12 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
         }
       }
       
-      // Fill remaining with other available spells
-      for (const spell of availableAtLevel) {
-        if (pickedForLevel >= slotsForLevel) break;
-        if (!pickedSpells.includes(spell.id)) {
-          pickedSpells.push(spell.id);
-          pickedForLevel++;
-        }
+      // Fill remaining with shuffled other available spells
+      const remainingAtLevel = shuffle(availableAtLevel.filter(s => !pickedSpells.includes(s.id)));
+      for (const spell of remainingAtLevel) {
+        if (pickedForLevel >= maxForThisLevel || pickedSpells.length >= totalMaxSpells) break;
+        pickedSpells.push(spell.id);
+        pickedForLevel++;
       }
     }
     
@@ -11369,39 +11402,49 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
     const primaryAbility = character.abilities ? 
       Object.entries(character.abilities).sort((a, b) => b[1] - a[1])[0]?.[0] : 'strength';
     
-    // Build-aware equipment selection logic
+    // Helper to pick randomly from valid indices
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    // Build-aware equipment selection logic with randomization
     classEquipment.choices.forEach((choice, idx) => {
       const options = choice.options || [];
-      let selectedIdx = 0;
+      let validIndices = [];
       
       // Weapon choices based on fighting style and abilities
       if (choice.name?.toLowerCase().includes('weapon')) {
         if (fightingStyle === 'great weapon fighting') {
           // Prefer two-handed weapons
-          selectedIdx = options.findIndex(opt => 
-            opt?.toLowerCase().includes('greatsword') || 
+          validIndices = options.map((opt, i) => 
+            (opt?.toLowerCase().includes('greatsword') || 
             opt?.toLowerCase().includes('greataxe') ||
-            opt?.toLowerCase().includes('maul')
-          );
+            opt?.toLowerCase().includes('maul') ||
+            opt?.toLowerCase().includes('glaive') ||
+            opt?.toLowerCase().includes('halberd')) ? i : -1
+          ).filter(i => i >= 0);
         } else if (fightingStyle === 'archery') {
           // Prefer ranged weapons
-          selectedIdx = options.findIndex(opt => 
-            opt?.toLowerCase().includes('longbow') ||
-            opt?.toLowerCase().includes('crossbow')
-          );
+          validIndices = options.map((opt, i) => 
+            (opt?.toLowerCase().includes('longbow') ||
+            opt?.toLowerCase().includes('crossbow') ||
+            opt?.toLowerCase().includes('shortbow')) ? i : -1
+          ).filter(i => i >= 0);
         } else if (fightingStyle === 'dueling' || fightingStyle === 'defense') {
           // Prefer one-handed weapon and shield
-          selectedIdx = options.findIndex(opt => 
-            opt?.toLowerCase().includes('shield') ||
-            (opt?.toLowerCase().includes('sword') && !opt?.toLowerCase().includes('greatsword'))
-          );
+          validIndices = options.map((opt, i) => 
+            (opt?.toLowerCase().includes('shield') ||
+            (opt?.toLowerCase().includes('sword') && !opt?.toLowerCase().includes('greatsword')) ||
+            opt?.toLowerCase().includes('mace') ||
+            opt?.toLowerCase().includes('warhammer')) ? i : -1
+          ).filter(i => i >= 0);
         } else if (primaryAbility === 'dexterity') {
           // Dex-based: prefer finesse/ranged
-          selectedIdx = options.findIndex(opt => 
-            opt?.toLowerCase().includes('rapier') ||
+          validIndices = options.map((opt, i) => 
+            (opt?.toLowerCase().includes('rapier') ||
             opt?.toLowerCase().includes('shortbow') ||
-            opt?.toLowerCase().includes('dagger')
-          );
+            opt?.toLowerCase().includes('scimitar') ||
+            opt?.toLowerCase().includes('shortsword') ||
+            opt?.toLowerCase().includes('dagger')) ? i : -1
+          ).filter(i => i >= 0);
         }
       }
       
@@ -11410,34 +11453,47 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         const dexScore = character.abilities?.dexterity || 10;
         if (dexScore >= 14 && (classLower === 'rogue' || classLower === 'ranger' || classLower === 'monk')) {
           // High dex classes: prefer light armor
-          selectedIdx = options.findIndex(opt => 
-            opt?.toLowerCase().includes('leather') ||
-            opt?.toLowerCase().includes('studded')
-          );
+          validIndices = options.map((opt, i) => 
+            (opt?.toLowerCase().includes('leather') ||
+            opt?.toLowerCase().includes('studded')) ? i : -1
+          ).filter(i => i >= 0);
         } else if (classLower === 'paladin' || classLower === 'fighter') {
           // Heavy armor classes: prefer chain mail or better
-          selectedIdx = options.findIndex(opt => 
-            opt?.toLowerCase().includes('chain') ||
-            opt?.toLowerCase().includes('scale')
-          );
+          validIndices = options.map((opt, i) => 
+            (opt?.toLowerCase().includes('chain') ||
+            opt?.toLowerCase().includes('scale') ||
+            opt?.toLowerCase().includes('plate')) ? i : -1
+          ).filter(i => i >= 0);
         }
       }
       
       // Pack choices based on class role
       if (choice.name?.toLowerCase().includes('pack')) {
-        if (classLower === 'wizard' || classLower === 'cleric') {
-          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('scholar'));
-        } else if (classLower === 'ranger' || classLower === 'druid') {
-          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('explorer'));
-        } else if (classLower === 'rogue') {
-          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('burglar'));
-        } else if (classLower === 'fighter' || classLower === 'paladin' || classLower === 'barbarian') {
-          selectedIdx = options.findIndex(opt => opt?.toLowerCase().includes('dungeon'));
-        }
+        const packPreferences = {
+          wizard: ['scholar', 'explorer'],
+          cleric: ['scholar', 'priest'],
+          druid: ['explorer', 'priest'],
+          ranger: ['explorer', 'dungeoneer'],
+          rogue: ['burglar', 'explorer', 'dungeoneer'],
+          fighter: ['dungeoneer', 'explorer'],
+          paladin: ['priest', 'dungeoneer', 'explorer'],
+          barbarian: ['explorer', 'dungeoneer']
+        };
+        const prefs = packPreferences[classLower] || [];
+        validIndices = options.map((opt, i) => {
+          for (const pref of prefs) {
+            if (opt?.toLowerCase().includes(pref)) return i;
+          }
+          return -1;
+        }).filter(i => i >= 0);
       }
       
-      // Default to first option if no match found
-      choices[idx] = selectedIdx >= 0 ? selectedIdx : 0;
+      // Pick randomly from valid options, or random from all if no good matches
+      if (validIndices.length > 0) {
+        choices[idx] = pickRandom(validIndices);
+      } else {
+        choices[idx] = Math.floor(Math.random() * options.length);
+      }
     });
     
     setMethod('ideal');
@@ -11446,9 +11502,19 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
     setPurchasedItems([]);
   };
 
-  // Roll for gold and smartly buy equipment based on class
+  // Roll for gold and smartly buy equipment based on class (with randomization)
   const rollAndBuySmart = () => {
     if (!classGold) return;
+    
+    // Helper to shuffle array for randomization
+    const shuffle = (arr) => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
     
     // Roll for starting gold
     let totalGold = 0;
@@ -11478,62 +11544,55 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       return false;
     };
     
-    // Priority 1: Get a pack that's good for the class
-    const goodPacks = EQUIPMENT_SHOP.packs.filter(isGoodForClass).sort((a, b) => a.cost - b.cost);
+    // Priority 1: Get a pack that's good for the class (randomized from good options)
+    const goodPacks = shuffle(EQUIPMENT_SHOP.packs.filter(isGoodForClass));
     if (goodPacks.length > 0) {
-      tryBuy(goodPacks[0]);
+      // Try to buy one of the good packs randomly
+      for (const pack of goodPacks) {
+        if (tryBuy(pack)) break;
+      }
     } else {
-      // Default to Explorer's Pack as it's cheapest
-      const explorerPack = EQUIPMENT_SHOP.packs.find(p => p.name === "Explorer's Pack");
-      if (explorerPack) tryBuy(explorerPack);
+      // Default to a random affordable pack
+      const affordablePacks = shuffle(EQUIPMENT_SHOP.packs.filter(p => p.cost <= remainingGold));
+      if (affordablePacks.length > 0) tryBuy(affordablePacks[0]);
     }
     
-    // Priority 2: Get armor appropriate for class
-    const goodArmor = EQUIPMENT_SHOP.armor.filter(isGoodForClass);
-    // Sort by AC value (higher is better) but still affordable
-    goodArmor.sort((a, b) => {
-      const acA = parseInt(a.ac) || 11;
-      const acB = parseInt(b.ac) || 11;
-      return acB - acA;
-    });
-    
+    // Priority 2: Get armor appropriate for class (randomized from good options)
+    const goodArmor = shuffle(EQUIPMENT_SHOP.armor.filter(isGoodForClass));
     for (const armor of goodArmor) {
       if (tryBuy(armor)) break;
     }
     
-    // Priority 3: Get a weapon appropriate for class and fighting style
+    // Priority 3: Get a weapon appropriate for class and fighting style (randomized)
     let goodWeapons = EQUIPMENT_SHOP.weapons.filter(isGoodForClass);
     
     // Fighting style preferences
     if (fightingStyle === 'great weapon fighting') {
-      goodWeapons = goodWeapons.filter(w => w.properties?.includes('two-handed') || w.properties?.includes('Heavy'));
+      const twoHanded = goodWeapons.filter(w => w.properties?.includes('two-handed') || w.properties?.includes('Heavy'));
+      if (twoHanded.length > 0) goodWeapons = twoHanded;
     } else if (fightingStyle === 'archery') {
-      goodWeapons = goodWeapons.filter(w => w.properties?.includes('Ammunition'));
+      const ranged = goodWeapons.filter(w => w.properties?.includes('Ammunition'));
+      if (ranged.length > 0) goodWeapons = ranged;
     } else if (fightingStyle === 'dueling') {
-      goodWeapons = goodWeapons.filter(w => !w.properties?.includes('two-handed'));
+      const oneHanded = goodWeapons.filter(w => !w.properties?.includes('two-handed'));
+      if (oneHanded.length > 0) goodWeapons = oneHanded;
     }
     
-    // Sort by damage (prefer higher damage dice)
-    goodWeapons.sort((a, b) => {
-      const dmgA = parseInt(a.damage?.match(/\d+d(\d+)/)?.[1] || '4');
-      const dmgB = parseInt(b.damage?.match(/\d+d(\d+)/)?.[1] || '4');
-      return dmgB - dmgA;
-    });
-    
+    goodWeapons = shuffle(goodWeapons);
     for (const weapon of goodWeapons) {
       if (tryBuy(weapon)) break;
     }
     
-    // Priority 4: Shield for classes that benefit
-    if (['fighter', 'paladin', 'cleric'].includes(classLower) && fightingStyle !== 'great weapon fighting') {
+    // Priority 4: Shield for classes that benefit (50% chance to add variety)
+    if (['fighter', 'paladin', 'cleric'].includes(classLower) && fightingStyle !== 'great weapon fighting' && Math.random() > 0.5) {
       const shield = EQUIPMENT_SHOP.armor.find(a => a.name === 'Shield');
       if (shield) tryBuy(shield);
     }
     
-    // Priority 5: Class-specific gear
-    const classGear = EQUIPMENT_SHOP.gear.filter(isGoodForClass);
+    // Priority 5: Class-specific gear (shuffled)
+    const classGear = shuffle(EQUIPMENT_SHOP.gear.filter(isGoodForClass));
     for (const gear of classGear) {
-      tryBuy(gear);
+      if (Math.random() > 0.3) tryBuy(gear); // 70% chance to buy each good item
     }
     
     // Priority 6: Ammunition if we have a ranged weapon
@@ -11546,12 +11605,14 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       if (ammo) tryBuy(ammo);
     }
     
-    // Priority 7: Basic adventuring gear if we have gold left
-    const basicGear = ['Backpack', 'Bedroll', 'Rations (10 days)', 'Waterskin', 'Rope, 50 ft', 'Torch (10)'];
+    // Priority 7: Random basic adventuring gear
+    const basicGear = shuffle(['Backpack', 'Bedroll', 'Rations (10 days)', 'Waterskin', 'Rope, 50 ft', 'Torch (10)', 'Tinderbox', 'Crowbar']);
     for (const gearName of basicGear) {
-      const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
-      if (gear && !items.includes(gear.name)) {
-        tryBuy(gear);
+      if (Math.random() > 0.4) { // 60% chance each
+        const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+        if (gear && !items.includes(gear.name)) {
+          tryBuy(gear);
+        }
       }
     }
     
@@ -11673,9 +11734,9 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       {/* Method Selection */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => { setMethod('starting'); setGoldRolled(false); }}
+          onClick={() => { setMethod('starting'); setGoldRolled(false); setEquipmentChoices({}); }}
           className={`p-4 rounded-xl border text-left transition-all ${
-            method === 'starting' || method === 'ideal'
+            method === 'starting'
               ? 'bg-indigo-500/20 border-indigo-500/50'
               : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
           }`}
@@ -11683,14 +11744,14 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
           <div className="flex items-center gap-3">
             <div className="text-2xl">📦</div>
             <div>
-              <div className={`font-semibold ${method === 'starting' || method === 'ideal' ? 'text-indigo-300' : 'text-slate-200'}`}>
+              <div className={`font-semibold ${method === 'starting' ? 'text-indigo-300' : 'text-slate-200'}`}>
                 Starting Equipment
               </div>
               <div className="text-xs text-slate-500">
                 Take your {CLASSES[classId]?.name}'s default gear with choices
               </div>
             </div>
-            {(method === 'starting' || method === 'ideal') && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
+            {method === 'starting' && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
           </div>
         </button>
 
@@ -11742,9 +11803,15 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       {/* Starting Equipment */}
       {(method === 'starting' || method === 'ideal') && classEquipment && (
         <div className="space-y-4">
+          {method === 'ideal' && (
+            <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Optimal choices selected based on your class and fighting style. Click to change.
+            </div>
+          )}
           {/* Equipment Choices */}
           {classEquipment.choices.map((choice, choiceIndex) => (
-            <div key={choiceIndex} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <div key={choiceIndex} className={`p-4 rounded-xl border ${method === 'ideal' ? 'bg-cyan-500/5 border-cyan-500/30' : 'bg-slate-800/50 border-slate-700/50'}`}>
               <div className="text-sm font-medium text-slate-300 mb-3">{choice.name}</div>
               <div className="flex flex-wrap gap-2">
                 {choice.options.map((option, optionIndex) => (
@@ -11753,7 +11820,9 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                     onClick={() => selectChoice(choiceIndex, optionIndex)}
                     className={`px-3 py-2 rounded-lg border text-sm transition-all ${
                       equipmentChoices[choiceIndex] === optionIndex
-                        ? 'bg-green-500/20 border-green-500/50 text-green-300'
+                        ? method === 'ideal' 
+                          ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                          : 'bg-green-500/20 border-green-500/50 text-green-300'
                         : 'bg-slate-700/50 border-slate-600/50 text-slate-300 hover:border-green-500/30'
                     }`}
                   >
