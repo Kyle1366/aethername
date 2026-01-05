@@ -79,8 +79,122 @@ const LocalStorageUtil = {
 };
 
 // ============================================================================
-// DICE ROLLER COMPONENT
+// DICE ROLLER COMPONENT (Styled 2D Dice)
 // ============================================================================
+
+// Dice shape clip paths
+const DICE_SHAPE_CLIPS = {
+  d4: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+  d6: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)',
+  d8: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+  d10: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+  d12: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+  d20: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)',
+  d100: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+};
+
+const DICE_SHAPE_BORDERS = {
+  d4: 'polygon(50% 8%, 8% 92%, 92% 92%)',
+  d6: 'polygon(15% 15%, 85% 15%, 85% 85%, 15% 85%)',
+  d8: 'polygon(50% 8%, 92% 50%, 50% 92%, 8% 50%)',
+  d10: 'polygon(50% 8%, 92% 40%, 77% 92%, 23% 92%, 8% 40%)',
+  d12: 'polygon(28% 5%, 72% 5%, 95% 50%, 72% 95%, 28% 95%, 5% 50%)',
+  d20: 'polygon(50% 5%, 90% 27%, 90% 73%, 50% 95%, 10% 73%, 10% 27%)',
+  d100: 'polygon(50% 8%, 92% 40%, 77% 92%, 23% 92%, 8% 40%)',
+};
+
+// Styled single die component for dice roller
+const StyledDie = ({ sides, value, isRolling, size = 'lg' }) => {
+  const [displayValue, setDisplayValue] = useState(value || '?');
+  const diceKey = `d${sides}`;
+  const sizeClasses = size === 'lg' ? 'w-24 h-24' : size === 'md' ? 'w-16 h-16' : 'w-12 h-12';
+  const fontSize = size === 'lg' ? 'text-4xl' : size === 'md' ? 'text-2xl' : 'text-lg';
+  const labelSize = size === 'lg' ? 'text-xs' : 'text-[10px]';
+  
+  useEffect(() => {
+    if (isRolling) {
+      const interval = setInterval(() => {
+        setDisplayValue(Math.floor(Math.random() * sides) + 1);
+      }, 50);
+      return () => clearInterval(interval);
+    } else if (value !== undefined) {
+      setDisplayValue(value);
+    }
+  }, [isRolling, value, sides]);
+  
+  const isNat20 = sides === 20 && value === 20 && !isRolling;
+  const isNat1 = sides === 20 && value === 1 && !isRolling;
+  
+  return (
+    <div className={`relative ${sizeClasses}`} style={{ perspective: '500px' }}>
+      {/* Glow effect */}
+      <div 
+        className={`absolute -inset-2 transition-opacity duration-300 ${isRolling ? 'opacity-60 animate-pulse' : isNat20 ? 'opacity-80' : 'opacity-30'}`}
+        style={{
+          background: isNat20 ? '#fbbf24' : isNat1 ? '#ef4444' : '#a78bfa',
+          filter: 'blur(12px)',
+          clipPath: DICE_SHAPE_CLIPS[diceKey] || DICE_SHAPE_CLIPS.d20,
+        }}
+      />
+      
+      {/* Main die face */}
+      <div
+        className={`relative w-full h-full flex flex-col items-center transition-all ${
+          isRolling ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' : ''
+        }`}
+        style={{
+          background: isNat20 
+            ? 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)' 
+            : isNat1 
+              ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)'
+              : 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+          clipPath: DICE_SHAPE_CLIPS[diceKey] || DICE_SHAPE_CLIPS.d20,
+          justifyContent: diceKey === 'd4' ? 'flex-end' : 'center',
+          paddingBottom: diceKey === 'd4' ? '12px' : '0',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.2)',
+        }}
+      >
+        {/* Inner border */}
+        <div 
+          className="absolute inset-1 pointer-events-none"
+          style={{
+            border: '1px solid rgba(255,255,255,0.2)',
+            clipPath: DICE_SHAPE_BORDERS[diceKey] || DICE_SHAPE_BORDERS.d20,
+          }}
+        />
+        
+        {/* Die type label */}
+        <span 
+          className={`absolute ${labelSize} font-bold text-white/60 uppercase tracking-wider`}
+          style={{ top: diceKey === 'd4' ? '35%' : '8px' }}
+        >
+          d{sides}
+        </span>
+        
+        {/* Main number */}
+        <span 
+          className={`${fontSize} font-extrabold ${isNat20 ? 'text-gray-900' : 'text-white'}`}
+          style={{ 
+            textShadow: '0 2px 4px rgba(0,0,0,0.4)',
+            marginTop: diceKey === 'd4' ? '0' : '8px',
+          }}
+        >
+          {displayValue}
+        </span>
+      </div>
+      
+      {/* Particles for nat 20 */}
+      {isNat20 && (
+        <>
+          <div className="absolute top-0 left-2 text-yellow-400 animate-ping text-sm">✦</div>
+          <div className="absolute top-2 right-2 text-yellow-400 animate-ping text-sm" style={{animationDelay: '0.1s'}}>✦</div>
+          <div className="absolute bottom-2 left-4 text-yellow-400 animate-ping text-sm" style={{animationDelay: '0.2s'}}>✦</div>
+          <div className="absolute bottom-0 right-4 text-yellow-400 animate-ping text-sm" style={{animationDelay: '0.3s'}}>✦</div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const DiceRoller = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,51 +202,21 @@ const DiceRoller = () => {
   const [diceType, setDiceType] = useState(20);
   const [rolling, setRolling] = useState(false);
   const [history, setHistory] = useState([]);
-  const [displayValue, setDisplayValue] = useState(null);
-  
-  // Get dice icon image path
-  const getDiceIconPath = (sides) => {
-    const diceMap = { 4: 'D4', 6: 'D6', 8: 'D8', 10: 'D10', 12: 'D12', 20: 'D20', 100: 'D10' };
-    return `/dice/icons/${diceMap[sides] || 'D20'}_Shadow.png`;
-  };
-  
-  // Get result sprite path (works for any result 1-20)
-  const getResultSprite = (value) => {
-    if (value && value >= 1 && value <= 20) {
-      return `/dice/d20/DicePu_R_${value}.png`;
-    }
-    return null;
-  };
   
   const roll = (sides) => {
     setDiceType(sides);
     setRolling(true);
     setResult(null);
     
-    // Animate by cycling through random values
-    let frameCount = 0;
-    const animInterval = setInterval(() => {
-      setDisplayValue(Math.floor(Math.random() * sides) + 1);
-      frameCount++;
-      
-      if (frameCount > 25) { // ~1.25 seconds at 50ms
-        clearInterval(animInterval);
-        const finalResult = Math.floor(Math.random() * sides) + 1;
-        setResult(finalResult);
-        setDisplayValue(finalResult);
-        setRolling(false);
-        setHistory(prev => [{sides, result: finalResult, time: Date.now()}, ...prev.slice(0, 4)]);
-      }
-    }, 50);
-  };
-  
-  const getResultColor = () => {
-    if (rolling) return 'text-white';
-    if (diceType === 20) {
-      if (result === 20) return 'text-yellow-400'; // Nat 20
-      if (result === 1) return 'text-red-400'; // Nat 1
-    }
-    return 'text-white';
+    // Duration based on dice type for variety
+    const duration = 800 + Math.random() * 400;
+    
+    setTimeout(() => {
+      const finalResult = Math.floor(Math.random() * sides) + 1;
+      setResult(finalResult);
+      setRolling(false);
+      setHistory(prev => [{sides, result: finalResult, time: Date.now()}, ...prev.slice(0, 4)]);
+    }, duration);
   };
   
   return (
@@ -163,135 +247,50 @@ const DiceRoller = () => {
             </button>
           </div>
           
-          {/* Dice Display */}
-          <div className="relative h-36 flex items-center justify-center mb-3 overflow-hidden rounded-lg bg-slate-800/50 border border-slate-700/30">
-            {/* Dice shadow */}
-            <div 
-              className={`absolute bottom-3 w-20 h-5 bg-black/40 rounded-full blur-lg transition-all duration-300 ${
-                rolling ? 'scale-50 opacity-30' : 'scale-100 opacity-100'
-              }`}
+          {/* Styled Dice Display */}
+          <div className="relative h-36 flex items-center justify-center mb-3 overflow-visible rounded-lg bg-slate-800/50 border border-slate-700/30">
+            <StyledDie 
+              sides={diceType} 
+              value={result} 
+              isRolling={rolling}
+              size="lg"
             />
-            
-            {/* Animated Dice */}
-            <div className={`relative transition-all duration-200 ${rolling ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' : ''}`}>
-              {rolling ? (
-                // Rolling - show dice icon with cycling number
-                <div className="relative w-28 h-28">
-                  <img 
-                    src={getDiceIconPath(diceType)}
-                    alt={`Rolling d${diceType}...`}
-                    className="w-full h-full object-contain"
-                    draggable={false}
-                  />
-                  {/* Overlay number during roll */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white drop-shadow-lg">{displayValue || '?'}</span>
-                  </div>
-                </div>
-              ) : result && result <= 20 && getResultSprite(result) ? (
-                // Result with sprite (works for all dice since results are 1-20 max)
-                <div className="relative">
-                  <img 
-                    src={getResultSprite(result)}
-                    alt={`Result: ${result}`}
-                    className="w-28 h-28 object-contain"
-                    draggable={false}
-                  />
-                  {/* Glow effect for nat 20 */}
-                  {result === 20 && diceType === 20 && (
-                    <div className="absolute inset-0 bg-yellow-400/20 rounded-full blur-xl animate-pulse" />
-                  )}
-                  {/* Dark overlay for nat 1 */}
-                  {result === 1 && diceType === 20 && (
-                    <div className="absolute inset-0 bg-red-900/30 rounded-full" />
-                  )}
-                </div>
-              ) : result ? (
-                // Fallback for d100 or results > 20
-                <div className="relative w-28 h-28">
-                  <img 
-                    src={getDiceIconPath(diceType)}
-                    alt={`d${diceType}`}
-                    className="w-full h-full object-contain opacity-50"
-                    draggable={false}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white drop-shadow-lg">{result}</span>
-                  </div>
-                </div>
-              ) : (
-                // No result yet - show dice icon
-                <div className="relative w-28 h-28">
-                  <img 
-                    src={getDiceIconPath(diceType)}
-                    alt={`d${diceType}`}
-                    className="w-full h-full object-contain"
-                    draggable={false}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white/50 drop-shadow-lg">?</span>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Sparkles for nat 20 */}
-            {result === 20 && diceType === 20 && !rolling && (
-              <>
-                <div className="absolute top-3 left-6 text-xl text-yellow-400 animate-ping">✦</div>
-                <div className="absolute top-5 right-8 text-lg text-yellow-400 animate-ping" style={{animationDelay: '0.1s'}}>✦</div>
-                <div className="absolute bottom-5 left-10 text-lg text-yellow-400 animate-ping" style={{animationDelay: '0.2s'}}>✦</div>
-                <div className="absolute bottom-3 right-6 text-xl text-yellow-400 animate-ping" style={{animationDelay: '0.3s'}}>✦</div>
-                <div className="absolute top-1/2 left-3 text-sm text-yellow-300 animate-bounce">⭐</div>
-                <div className="absolute top-1/2 right-3 text-sm text-yellow-300 animate-bounce" style={{animationDelay: '0.15s'}}>⭐</div>
-              </>
-            )}
-            
-            {/* Skull for nat 1 */}
-            {result === 1 && diceType === 20 && !rolling && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="absolute inset-0 bg-red-900/20 animate-pulse" />
-              </div>
-            )}
           </div>
           
           {/* Result Text */}
           {result && !rolling && (
-            <div className={`text-center mb-3 ${getResultColor()}`}>
-              {result === 20 && diceType === 20 && (
-                <div className="text-yellow-400 font-bold text-sm animate-pulse">✨ NATURAL 20! ✨</div>
+            <div className="text-center mb-3">
+              {result === diceType && (
+                <div className="text-yellow-400 font-bold text-sm animate-pulse">✨ MAX ROLL! ✨</div>
               )}
-              {result === 1 && diceType === 20 && (
+              {result === 1 && (
                 <div className="text-red-400 font-bold text-sm">💀 Critical Fail!</div>
               )}
               <div className="text-xs text-slate-500 mt-1">d{diceType} → {result}</div>
             </div>
           )}
           
-          {/* Dice Buttons */}
+          {/* Dice Buttons - Styled shapes */}
           <div className="grid grid-cols-4 gap-2 mb-3">
             {[4, 6, 8, 10, 12, 20, 100].map(d => (
               <button
                 key={d}
                 onClick={() => roll(d)}
                 disabled={rolling}
-                className={`py-2.5 rounded-lg text-sm font-medium transition-all flex flex-col items-center justify-center gap-0.5 ${
+                className={`py-2 px-1 rounded-lg text-xs font-bold transition-all relative overflow-hidden ${
                   diceType === d && !rolling
                     ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-105'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-600 hover:border-indigo-500/50'
                 } ${rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
               >
-                <div className="w-4 h-4 text-current">
-                  {DiceIcons[`d${d}`]}
-                </div>
-                <span className="text-[10px]">d{d}</span>
+                d{d}
               </button>
             ))}
             {/* Roll Again Button */}
             <button
               onClick={() => roll(diceType)}
               disabled={rolling}
-              className={`py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center justify-center ${
+              className={`py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center justify-center ${
                 rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
               }`}
               title="Roll Again"
@@ -322,11 +321,6 @@ const DiceRoller = () => {
               </div>
             </div>
           )}
-          
-          {/* Attribution */}
-          <div className="mt-2 pt-2 border-t border-slate-700/30 text-[9px] text-slate-600 text-center">
-            Dice icons by <a href="https://game-icons.net" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-400">game-icons.net</a> (CC BY 3.0)
-          </div>
         </div>
       )}
     </div>
@@ -5626,48 +5620,71 @@ const formatBonusLine = (bonuses) => {
   return parts.length ? parts.join(', ') : 'No ability score bonuses';
 };
 
-// Animated D6 Die Component
-// Uses CSS animation for rolling, sprite images for results
-
+// Animated D6 Die Component (Styled 2D version)
 const AnimatedDie = ({ value, isRolling, isDropped = false }) => {
   const [displayValue, setDisplayValue] = useState(value || 1);
   
-  // During rolling, cycle through random d6 values for the display
+  // During rolling, cycle through random d6 values
   useEffect(() => {
     if (isRolling) {
       const interval = setInterval(() => {
         setDisplayValue(Math.floor(Math.random() * 6) + 1);
-      }, 80); // Change face every 80ms
+      }, 60);
       return () => clearInterval(interval);
     } else if (value) {
       setDisplayValue(value);
     }
   }, [isRolling, value]);
-
-  // Get the d6 result sprite (1-6)
-  const getD6Sprite = (val) => `/dice/d6/DicePu_R_${val}.png`;
   
   return (
     <div 
-      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden transition-all duration-200 ${
-        isRolling 
-          ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' 
-          : ''
-      } ${
-        isDropped 
-          ? 'opacity-50 scale-90 grayscale' 
-          : 'shadow-lg shadow-purple-500/30'
-      }`}
+      className={`relative w-10 h-10 md:w-11 md:h-11 transition-all duration-200 ${
+        isRolling ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' : ''
+      } ${isDropped ? 'opacity-40 scale-90' : ''}`}
     >
-      <img 
-        src={getD6Sprite(displayValue)}
-        alt={`D6: ${displayValue}`}
-        className="w-full h-full object-contain"
-        draggable={false}
+      {/* Glow */}
+      <div 
+        className={`absolute -inset-1 transition-opacity ${isRolling ? 'opacity-50 animate-pulse' : 'opacity-20'}`}
+        style={{
+          background: isDropped ? '#ef4444' : '#a78bfa',
+          filter: 'blur(8px)',
+          clipPath: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)',
+        }}
       />
+      
+      {/* Die face */}
+      <div
+        className="relative w-full h-full flex items-center justify-center"
+        style={{
+          background: isDropped 
+            ? 'linear-gradient(135deg, #6b7280 0%, #374151 100%)'
+            : 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+          clipPath: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Inner border */}
+        <div 
+          className="absolute inset-1 pointer-events-none"
+          style={{
+            border: '1px solid rgba(255,255,255,0.15)',
+            clipPath: 'polygon(15% 15%, 85% 15%, 85% 85%, 15% 85%)',
+          }}
+        />
+        
+        {/* Number */}
+        <span 
+          className={`text-lg md:text-xl font-bold ${isDropped ? 'text-gray-400' : 'text-white'}`}
+          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
+        >
+          {displayValue}
+        </span>
+      </div>
+      
+      {/* Dropped strikethrough */}
       {isDropped && (
-        <div className="absolute inset-0 flex items-center justify-center bg-red-900/40">
-          <div className="w-full h-0.5 bg-red-500 rotate-45 absolute" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full h-0.5 bg-red-500 rotate-45 absolute" style={{ clipPath: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)' }} />
         </div>
       )}
     </div>
