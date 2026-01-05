@@ -554,8 +554,8 @@ const ICONIC_BUILDS = {
       class: 'rogue',
       subclass: 'assassin',
       level: 5,
-      race: 'lightfoot',
-      subrace: null,
+      race: 'halfling',
+      subrace: 'lightfoot',
       background: 'criminal',
       alignment: 'chaoticNeutral',
       abilities: { strength: 8, dexterity: 16, constitution: 12, intelligence: 14, wisdom: 10, charisma: 12 },
@@ -579,8 +579,8 @@ const ICONIC_BUILDS = {
       class: 'wizard',
       subclass: 'evocation',
       level: 5,
-      race: 'highElf',
-      subrace: null,
+      race: 'elf',
+      subrace: 'highElf',
       background: 'sage',
       alignment: 'lawfulNeutral',
       abilities: { strength: 8, dexterity: 14, constitution: 14, intelligence: 16, wisdom: 10, charisma: 10 },
@@ -604,8 +604,8 @@ const ICONIC_BUILDS = {
       class: 'druid',
       subclass: 'moon',
       level: 5,
-      race: 'woodElf',
-      subrace: null,
+      race: 'elf',
+      subrace: 'woodElf',
       background: 'hermit',
       alignment: 'trueNeutral',
       abilities: { strength: 10, dexterity: 14, constitution: 14, intelligence: 10, wisdom: 16, charisma: 8 },
@@ -681,8 +681,8 @@ const ICONIC_BUILDS = {
       class: 'cleric',
       subclass: 'life',
       level: 5,
-      race: 'hillDwarf',
-      subrace: null,
+      race: 'dwarf',
+      subrace: 'hillDwarf',
       background: 'acolyte',
       alignment: 'lawfulGood',
       abilities: { strength: 14, dexterity: 8, constitution: 14, intelligence: 10, wisdom: 16, charisma: 10 },
@@ -15400,7 +15400,7 @@ const DevTools = ({ onQuickTest }) => {
           {/* Version Info */}
           <div className="mt-3 pt-3 border-t border-slate-700/50 text-center">
             <div className="text-[10px] text-slate-600">
-              v1.5.1 • Dev Build • {new Date().toLocaleDateString()}
+              v1.5.2 • Dev Build • {new Date().toLocaleDateString()}
             </div>
           </div>
         </div>
