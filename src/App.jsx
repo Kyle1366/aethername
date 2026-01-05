@@ -15486,7 +15486,10 @@ export default function AetherNames() {
   const [animateHeader, setAnimateHeader] = useState(false);
   
   // Tour state - at app level to work across both pages
+  // Disable tour on mobile devices (screen width < 768px)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const [showTour, setShowTour] = useState(() => {
+    if (isMobile) return false; // Don't auto-start tour on mobile
     return !LocalStorageUtil.getItem('aethernames_tour_complete', false);
   });
 
@@ -16220,9 +16223,10 @@ export default function AetherNames() {
               setCurrentPage={setCurrentPage} 
               theme={config.genre}
             />
+            {/* Hide tour button on mobile - tour doesn't work well on small screens */}
             <button
               onClick={() => setShowTour(true)}
-              className="p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/50 transition-all"
+              className="hidden md:block p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/50 transition-all"
               title="Show Tour / Help"
             >
               <HelpCircle className="w-5 h-5" />
