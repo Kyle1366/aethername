@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight, AlertCircle, FileText } from 'lucide-react';
+import { HelpCircle, Copy, Star, ChevronDown, ChevronUp, Sparkles, X, Check, Download, Wand2, RefreshCw, Zap, Globe, Music, Skull, Crown, Flame, TreePine, Cpu, Rocket, Scroll, Heart, Volume2, FlaskConical, Glasses, Menu, User, Sword, Search, Filter, ChevronLeft, ChevronRight, AlertCircle, FileText, Share2, Dices, Info, Lightbulb, BookOpen, Scale, Settings } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 // ============================================================================
@@ -76,6 +76,1792 @@ const LocalStorageUtil = {
       return false;
     }
   }
+};
+
+// ============================================================================
+// DICE ROLLER COMPONENT (Styled 2D Dice)
+// ============================================================================
+
+// Dice shape clip paths
+const DICE_SHAPE_CLIPS = {
+  d4: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+  d6: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)',
+  d8: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+  d10: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+  d12: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+  d20: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)',
+  d100: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+};
+
+const DICE_SHAPE_BORDERS = {
+  d4: 'polygon(50% 8%, 8% 92%, 92% 92%)',
+  d6: 'polygon(15% 15%, 85% 15%, 85% 85%, 15% 85%)',
+  d8: 'polygon(50% 8%, 92% 50%, 50% 92%, 8% 50%)',
+  d10: 'polygon(50% 8%, 92% 40%, 77% 92%, 23% 92%, 8% 40%)',
+  d12: 'polygon(28% 5%, 72% 5%, 95% 50%, 72% 95%, 28% 95%, 5% 50%)',
+  d20: 'polygon(50% 5%, 90% 27%, 90% 73%, 50% 95%, 10% 73%, 10% 27%)',
+  d100: 'polygon(50% 8%, 92% 40%, 77% 92%, 23% 92%, 8% 40%)',
+};
+
+// Styled single die component for dice roller
+const StyledDie = ({ sides, value, isRolling, size = 'lg' }) => {
+  const [displayValue, setDisplayValue] = useState(value || '?');
+  const diceKey = `d${sides}`;
+  const sizeClasses = size === 'lg' ? 'w-24 h-24' : size === 'md' ? 'w-16 h-16' : 'w-12 h-12';
+  const fontSize = size === 'lg' ? 'text-4xl' : size === 'md' ? 'text-2xl' : 'text-lg';
+  const labelSize = size === 'lg' ? 'text-xs' : 'text-[10px]';
+  
+  useEffect(() => {
+    if (isRolling) {
+      const interval = setInterval(() => {
+        setDisplayValue(Math.floor(Math.random() * sides) + 1);
+      }, 50);
+      return () => clearInterval(interval);
+    } else if (value !== undefined) {
+      setDisplayValue(value);
+    }
+  }, [isRolling, value, sides]);
+  
+  const isNat20 = sides === 20 && value === 20 && !isRolling;
+  const isNat1 = sides === 20 && value === 1 && !isRolling;
+  
+  return (
+    <div className={`relative ${sizeClasses}`} style={{ perspective: '500px' }}>
+      {/* Glow effect */}
+      <div 
+        className={`absolute -inset-2 transition-opacity duration-300 ${isRolling ? 'opacity-60 animate-pulse' : isNat20 ? 'opacity-80' : 'opacity-30'}`}
+        style={{
+          background: isNat20 ? '#fbbf24' : isNat1 ? '#ef4444' : '#a78bfa',
+          filter: 'blur(12px)',
+          clipPath: DICE_SHAPE_CLIPS[diceKey] || DICE_SHAPE_CLIPS.d20,
+        }}
+      />
+      
+      {/* Main die face */}
+      <div
+        className={`relative w-full h-full flex flex-col items-center transition-all ${
+          isRolling ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' : ''
+        }`}
+        style={{
+          background: isNat20 
+            ? 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)' 
+            : isNat1 
+              ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)'
+              : 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+          clipPath: DICE_SHAPE_CLIPS[diceKey] || DICE_SHAPE_CLIPS.d20,
+          justifyContent: diceKey === 'd4' ? 'flex-end' : 'center',
+          paddingBottom: diceKey === 'd4' ? '12px' : '0',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.2)',
+        }}
+      >
+        {/* Inner border */}
+        <div 
+          className="absolute inset-1 pointer-events-none"
+          style={{
+            border: '1px solid rgba(255,255,255,0.2)',
+            clipPath: DICE_SHAPE_BORDERS[diceKey] || DICE_SHAPE_BORDERS.d20,
+          }}
+        />
+        
+        {/* Die type label */}
+        <span 
+          className={`absolute ${labelSize} font-bold text-white/60 uppercase tracking-wider`}
+          style={{ top: diceKey === 'd4' ? '35%' : '8px' }}
+        >
+          d{sides}
+        </span>
+        
+        {/* Main number */}
+        <span 
+          className={`${fontSize} font-extrabold ${isNat20 ? 'text-gray-900' : 'text-white'}`}
+          style={{ 
+            textShadow: '0 2px 4px rgba(0,0,0,0.4)',
+            marginTop: diceKey === 'd4' ? '0' : '8px',
+          }}
+        >
+          {displayValue}
+        </span>
+      </div>
+      
+      {/* Particles for nat 20 */}
+      {isNat20 && (
+        <>
+          <div className="absolute top-0 left-2 text-yellow-400 animate-ping text-sm">✦</div>
+          <div className="absolute top-2 right-2 text-yellow-400 animate-ping text-sm" style={{animationDelay: '0.1s'}}>✦</div>
+          <div className="absolute bottom-2 left-4 text-yellow-400 animate-ping text-sm" style={{animationDelay: '0.2s'}}>✦</div>
+          <div className="absolute bottom-0 right-4 text-yellow-400 animate-ping text-sm" style={{animationDelay: '0.3s'}}>✦</div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const DiceRoller = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [result, setResult] = useState(null);
+  const [diceType, setDiceType] = useState(20);
+  const [rolling, setRolling] = useState(false);
+  const [history, setHistory] = useState([]);
+  
+  const roll = (sides) => {
+    setDiceType(sides);
+    setRolling(true);
+    setResult(null);
+    
+    // Duration based on dice type for variety
+    const duration = 800 + Math.random() * 400;
+    
+    setTimeout(() => {
+      const finalResult = Math.floor(Math.random() * sides) + 1;
+      setResult(finalResult);
+      setRolling(false);
+      setHistory(prev => [{sides, result: finalResult, time: Date.now()}, ...prev.slice(0, 4)]);
+    }, duration);
+  };
+  
+  return (
+    <div id="tour-dice-roller" className="fixed top-20 right-4 z-40">
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-all ${
+          isOpen 
+            ? 'bg-indigo-600 scale-110' 
+            : 'bg-slate-800/90 hover:bg-slate-700 border border-slate-600 hover:scale-105'
+        }`}
+        title="Dice Roller"
+      >
+        <Dices className={`w-5 h-5 text-white ${isOpen ? 'animate-pulse' : ''}`} />
+      </button>
+      
+      {/* Dice Panel */}
+      {isOpen && (
+        <div className="absolute top-14 right-0 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+              <Dices className="w-4 h-4 text-indigo-400" />
+              Dice Roller
+            </h3>
+            <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-slate-300 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Styled Dice Display */}
+          <div className="relative h-36 flex items-center justify-center mb-3 overflow-visible rounded-lg bg-slate-800/50 border border-slate-700/30">
+            <StyledDie 
+              sides={diceType} 
+              value={result} 
+              isRolling={rolling}
+              size="lg"
+            />
+          </div>
+          
+          {/* Result Text */}
+          {result && !rolling && (
+            <div className="text-center mb-3">
+              {result === diceType && (
+                <div className="text-yellow-400 font-bold text-sm animate-pulse">✨ MAX ROLL! ✨</div>
+              )}
+              {result === 1 && (
+                <div className="text-red-400 font-bold text-sm">💀 Critical Fail!</div>
+              )}
+              <div className="text-xs text-slate-500 mt-1">d{diceType} → {result}</div>
+            </div>
+          )}
+          
+          {/* Dice Buttons - Styled shapes */}
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            {[4, 6, 8, 10, 12, 20, 100].map(d => (
+              <button
+                key={d}
+                onClick={() => roll(d)}
+                disabled={rolling}
+                className={`py-2 px-1 rounded-lg text-xs font-bold transition-all relative overflow-hidden ${
+                  diceType === d && !rolling
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-105'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-600 hover:border-indigo-500/50'
+                } ${rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+              >
+                d{d}
+              </button>
+            ))}
+            {/* Roll Again Button */}
+            <button
+              onClick={() => roll(diceType)}
+              disabled={rolling}
+              className={`py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center justify-center ${
+                rolling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+              }`}
+              title="Roll Again"
+            >
+              <RefreshCw className={`w-4 h-4 ${rolling ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+          
+          {/* History */}
+          {history.length > 0 && (
+            <div className="border-t border-slate-700/50 pt-2">
+              <div className="text-xs text-slate-500 mb-1.5">Recent Rolls</div>
+              <div className="flex gap-1.5 flex-wrap">
+                {history.map((h, i) => (
+                  <span 
+                    key={i} 
+                    className={`text-xs px-2 py-1 rounded-md border ${
+                      h.result === h.sides 
+                        ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400' 
+                        : h.result === 1 
+                          ? 'bg-red-500/20 border-red-500/30 text-red-400'
+                          : 'bg-slate-800 border-slate-700 text-slate-400'
+                    }`}
+                  >
+                    d{h.sides}: <span className="font-semibold">{h.result}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// SMART SUGGESTIONS DATA
+// ============================================================================
+
+const CLASS_SYNERGIES = {
+  barbarian: {
+    primaryAbility: 'strength',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['halfOrc', 'goliath', 'dragonborn', 'human', 'dwarf'],
+    recommendedBackgrounds: ['outlander', 'soldier', 'folkHero'],
+    raceSynergies: {
+      halfOrc: "Savage Attacks + Relentless Endurance synergize with Rage",
+      dwarf: "Dwarven Toughness + resistance to poison",
+      goliath: "Stone's Endurance stacks with Rage damage reduction"
+    }
+  },
+  bard: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['dexterity', 'constitution'],
+    recommendedRaces: ['halfElf', 'human', 'tiefling', 'lightfoot'],
+    recommendedBackgrounds: ['entertainer', 'charlatan', 'noble'],
+    raceSynergies: {
+      halfElf: "+2 CHA and +1 to two others, extra skills",
+      tiefling: "+2 CHA, free spells enhance versatility"
+    }
+  },
+  cleric: {
+    primaryAbility: 'wisdom',
+    secondaryAbilities: ['constitution', 'strength'],
+    recommendedRaces: ['hillDwarf', 'human', 'firbolg', 'woodElf'],
+    recommendedBackgrounds: ['acolyte', 'hermit', 'sage'],
+    raceSynergies: {
+      hillDwarf: "+2 CON, +1 WIS, extra HP, armor proficiency",
+      human: "Flexible stats, bonus feat options"
+    }
+  },
+  druid: {
+    primaryAbility: 'wisdom',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['woodElf', 'firbolg', 'human', 'hillDwarf'],
+    recommendedBackgrounds: ['hermit', 'outlander', 'sage'],
+    raceSynergies: {
+      woodElf: "+2 DEX, +1 WIS, Mask of the Wild for stealth",
+      firbolg: "Hidden Step + Speech of Beast and Leaf"
+    }
+  },
+  fighter: {
+    primaryAbility: 'strength',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['human', 'halfOrc', 'dragonborn', 'dwarf', 'hobgoblin'],
+    recommendedBackgrounds: ['soldier', 'gladiator', 'outlander'],
+    raceSynergies: {
+      human: "Bonus feat at level 1 (variant)",
+      halfOrc: "Savage Attacks for critical hit damage"
+    }
+  },
+  monk: {
+    primaryAbility: 'dexterity',
+    secondaryAbilities: ['wisdom', 'constitution'],
+    recommendedRaces: ['woodElf', 'human', 'aarakocra', 'tabaxi'],
+    recommendedBackgrounds: ['hermit', 'outlander', 'acolyte'],
+    raceSynergies: {
+      woodElf: "+2 DEX, +1 WIS, increased speed (35 ft)",
+      aarakocra: "Flight + DEX bonus + 50 ft fly speed"
+    }
+  },
+  paladin: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['strength', 'constitution'],
+    recommendedRaces: ['human', 'halfElf', 'dragonborn', 'aasimar'],
+    recommendedBackgrounds: ['soldier', 'noble', 'acolyte'],
+    raceSynergies: {
+      halfElf: "+2 CHA, flexible +1s, extra skills",
+      dragonborn: "Breath weapon + STR/CHA bonuses"
+    }
+  },
+  ranger: {
+    primaryAbility: 'dexterity',
+    secondaryAbilities: ['wisdom', 'constitution'],
+    recommendedRaces: ['woodElf', 'human', 'halfling', 'firbolg'],
+    recommendedBackgrounds: ['outlander', 'folkHero', 'hermit'],
+    raceSynergies: {
+      woodElf: "+2 DEX, +1 WIS, Mask of the Wild",
+      human: "Variant human for Sharpshooter at level 1"
+    }
+  },
+  rogue: {
+    primaryAbility: 'dexterity',
+    secondaryAbilities: ['intelligence', 'charisma'],
+    recommendedRaces: ['lightfoot', 'halfElf', 'human', 'highElf'],
+    recommendedBackgrounds: ['criminal', 'urchin', 'charlatan'],
+    raceSynergies: {
+      lightfoot: "Naturally Stealthy lets you hide behind allies",
+      halfElf: "Extra skills + CHA for face skills"
+    }
+  },
+  sorcerer: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['halfElf', 'dragonborn', 'tiefling', 'human'],
+    recommendedBackgrounds: ['noble', 'hermit', 'sage'],
+    raceSynergies: {
+      dragonborn: "Draconic ancestry matches Draconic Bloodline",
+      halfElf: "+2 CHA and extra skills"
+    }
+  },
+  warlock: {
+    primaryAbility: 'charisma',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['halfElf', 'tiefling', 'human', 'aasimar'],
+    recommendedBackgrounds: ['charlatan', 'criminal', 'sage', 'noble'],
+    raceSynergies: {
+      tiefling: "+2 CHA, Infernal Legacy spells",
+      halfElf: "+2 CHA, Fey Ancestry for charm resistance"
+    }
+  },
+  wizard: {
+    primaryAbility: 'intelligence',
+    secondaryAbilities: ['constitution', 'dexterity'],
+    recommendedRaces: ['highElf', 'gnome', 'human', 'tiefling'],
+    recommendedBackgrounds: ['sage', 'acolyte', 'hermit'],
+    raceSynergies: {
+      highElf: "+1 INT, free wizard cantrip",
+      gnome: "Gnome Cunning: Advantage on INT/WIS/CHA saves vs magic"
+    }
+  }
+};
+
+// Helper function to get synergy info
+const getClassSynergy = (classId, raceId) => {
+  const synergies = CLASS_SYNERGIES[classId];
+  if (!synergies) return null;
+  
+  // Check direct race match
+  if (synergies.raceSynergies?.[raceId]) {
+    return { type: 'synergy', text: synergies.raceSynergies[raceId] };
+  }
+  
+  // Check if recommended
+  if (synergies.recommendedRaces?.includes(raceId)) {
+    return { type: 'recommended', text: 'Good stat match for this class' };
+  }
+  
+  return null;
+};
+
+const getBackgroundSynergy = (classId, backgroundId) => {
+  const synergies = CLASS_SYNERGIES[classId];
+  if (!synergies) return null;
+  
+  if (synergies.recommendedBackgrounds?.includes(backgroundId)) {
+    return { type: 'recommended', text: 'Thematic fit with useful skills' };
+  }
+  
+  return null;
+};
+
+// ============================================================================
+// ICONIC BUILD TEMPLATES
+// ============================================================================
+
+const ICONIC_BUILDS = {
+  holyAvenger: {
+    id: 'holyAvenger',
+    name: "The Holy Avenger",
+    description: "Classic Oath of Devotion Paladin. Heavy armor, divine smites, party auras.",
+    difficulty: "Beginner",
+    tags: ["Tank", "Support", "Melee"],
+    icon: "⚔️",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'paladin',
+      subclass: 'devotion',
+      level: 5,
+      race: 'human',
+      subrace: 'variant',
+      background: 'soldier',
+      alignment: 'lawfulGood',
+      abilities: { strength: 16, dexterity: 10, constitution: 14, intelligence: 8, wisdom: 12, charisma: 14 },
+      fightingStyle: 'defense',
+      asiChoices: { 4: { type: 'asi', asiType: 'double', doubleAbilities: ['strength', 'charisma'] } },
+      cantrips: [],
+      spells: ['bless', 'cureWounds', 'shieldOfFaith', 'divineFavor'],
+      equipment: ['Chain Mail', 'Longsword', 'Shield', 'Javelin (5)', 'Holy Symbol'],
+      gold: 10
+    }
+  },
+  blasterSorcerer: {
+    id: 'blasterSorcerer',
+    name: "The Inferno",
+    description: "Draconic Bloodline Sorcerer. Metamagic + Fireball = devastating AoE.",
+    difficulty: "Intermediate",
+    tags: ["Damage", "AoE", "Ranged"],
+    icon: "🔥",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'sorcerer',
+      subclass: 'draconicBloodline',
+      level: 5,
+      race: 'dragonborn',
+      subrace: null,
+      background: 'sage',
+      alignment: 'chaoticNeutral',
+      abilities: { strength: 8, dexterity: 14, constitution: 14, intelligence: 10, wisdom: 10, charisma: 16 },
+      metamagicOptions: ['quickenedSpell', 'twinnedSpell'],
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'charisma' } },
+      cantrips: ['fireBolt', 'prestidigitation', 'light', 'mageHand'],
+      spells: ['shield', 'magicMissile', 'scorchingRay', 'fireball'],
+      equipment: ['Quarterstaff', 'Component Pouch', 'Dungeoneer\'s Pack'],
+      gold: 15
+    }
+  },
+  sneakyRogue: {
+    id: 'sneakyRogue',
+    name: "The Shadow",
+    description: "Assassin Rogue. Stealth, surprise attacks, and devastating criticals.",
+    difficulty: "Beginner",
+    tags: ["Stealth", "Damage", "Utility"],
+    icon: "🗡️",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'rogue',
+      subclass: 'assassin',
+      level: 5,
+      race: 'lightfoot',
+      subrace: null,
+      background: 'criminal',
+      alignment: 'chaoticNeutral',
+      abilities: { strength: 8, dexterity: 16, constitution: 12, intelligence: 14, wisdom: 10, charisma: 12 },
+      asiChoices: { 4: { type: 'asi', asiType: 'double', doubleAbilities: ['dexterity', 'constitution'] } },
+      cantrips: [],
+      spells: [],
+      equipment: ['Rapier', 'Shortbow', 'Arrows (20)', 'Leather Armor', 'Thieves\' Tools', 'Burglar\'s Pack'],
+      gold: 25
+    }
+  },
+  battleWizard: {
+    id: 'battleWizard',
+    name: "The War Mage",
+    description: "School of Evocation Wizard. Tactical spellcasting, protecting allies from friendly fire.",
+    difficulty: "Intermediate",
+    tags: ["Damage", "Control", "Ranged"],
+    icon: "📘",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'wizard',
+      subclass: 'evocation',
+      level: 5,
+      race: 'highElf',
+      subrace: null,
+      background: 'sage',
+      alignment: 'lawfulNeutral',
+      abilities: { strength: 8, dexterity: 14, constitution: 14, intelligence: 16, wisdom: 10, charisma: 10 },
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'intelligence' } },
+      cantrips: ['fireBolt', 'mageHand', 'prestidigitation', 'light'],
+      spells: ['shield', 'magicMissile', 'mistyStep', 'fireball', 'counterspell'],
+      equipment: ['Quarterstaff', 'Spellbook', 'Component Pouch', 'Scholar\'s Pack'],
+      gold: 10
+    }
+  },
+  natureDruid: {
+    id: 'natureDruid',
+    name: "The Wildshaper",
+    description: "Circle of the Moon Druid. Transform into powerful beasts, nature magic.",
+    difficulty: "Intermediate",
+    tags: ["Tank", "Versatile", "Magic"],
+    icon: "🐻",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'druid',
+      subclass: 'moon',
+      level: 5,
+      race: 'woodElf',
+      subrace: null,
+      background: 'hermit',
+      alignment: 'trueNeutral',
+      abilities: { strength: 10, dexterity: 14, constitution: 14, intelligence: 10, wisdom: 16, charisma: 8 },
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'wisdom' } },
+      cantrips: ['produceFlame', 'shillelagh'],
+      spells: ['healingWord', 'entangle', 'moonbeam', 'callLightning'],
+      equipment: ['Wooden Shield', 'Scimitar', 'Leather Armor', 'Druidic Focus', 'Explorer\'s Pack'],
+      gold: 5
+    }
+  },
+  tankFighter: {
+    id: 'tankFighter',
+    name: "The Bulwark",
+    description: "Champion Fighter. Simple but effective. High HP, multiple attacks, reliable crits.",
+    difficulty: "Beginner",
+    tags: ["Tank", "Damage", "Melee"],
+    icon: "🛡️",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'fighter',
+      subclass: 'champion',
+      level: 5,
+      race: 'human',
+      subrace: 'variant',
+      background: 'soldier',
+      alignment: 'lawfulNeutral',
+      abilities: { strength: 16, dexterity: 12, constitution: 16, intelligence: 8, wisdom: 10, charisma: 10 },
+      fightingStyle: 'defense',
+      asiChoices: { 4: { type: 'feat', feat: 'sentinel' } },
+      cantrips: [],
+      spells: [],
+      equipment: ['Chain Mail', 'Longsword', 'Shield', 'Handaxe (2)', 'Javelin (4)'],
+      gold: 15
+    }
+  },
+  hexblade: {
+    id: 'hexblade',
+    name: "The Curseblade",
+    description: "Hexblade Warlock. CHA-based melee, Hexblade's Curse, Eldritch Smite.",
+    difficulty: "Intermediate",
+    tags: ["Damage", "Melee", "Magic"],
+    icon: "⚫",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'warlock',
+      subclass: 'hexblade',
+      level: 5,
+      race: 'halfElf',
+      subrace: null,
+      background: 'noble',
+      alignment: 'lawfulEvil',
+      abilities: { strength: 8, dexterity: 14, constitution: 14, intelligence: 10, wisdom: 10, charisma: 16 },
+      warlockInvocations: ['agonizingBlast', 'thirstingBlade'],
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'charisma' } },
+      cantrips: ['eldritchBlast', 'prestidigitation'],
+      spells: ['hex', 'armorOfAgathys', 'darkness', 'mistyStep'],
+      equipment: ['Longsword', 'Leather Armor', 'Shield', 'Component Pouch'],
+      gold: 20
+    }
+  },
+  healerCleric: {
+    id: 'healerCleric',
+    name: "The Divine Light",
+    description: "Life Domain Cleric. Ultimate healer, heavy armor, protective spells.",
+    difficulty: "Beginner",
+    tags: ["Healer", "Support", "Tank"],
+    icon: "✨",
+    character: {
+      name: '',
+      playerName: '',
+      class: 'cleric',
+      subclass: 'life',
+      level: 5,
+      race: 'hillDwarf',
+      subrace: null,
+      background: 'acolyte',
+      alignment: 'lawfulGood',
+      abilities: { strength: 14, dexterity: 8, constitution: 14, intelligence: 10, wisdom: 16, charisma: 10 },
+      asiChoices: { 4: { type: 'asi', asiType: 'single', singleAbility: 'wisdom' } },
+      cantrips: ['sacredFlame', 'guidance', 'light'],
+      spells: ['healingWord', 'cureWounds', 'bless', 'spiritGuardians', 'revivify'],
+      equipment: ['Chain Mail', 'Mace', 'Shield', 'Holy Symbol', 'Priest\'s Pack'],
+      gold: 15
+    }
+  }
+};
+
+// ============================================================================
+// ONBOARDING TOUR DATA
+// ============================================================================
+
+const TOUR_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Welcome to AetherNames! 🎲',
+    content: 'Create unique fantasy names and complete D&D 5e characters. Let me show you around!',
+    target: null,
+    page: 'generator',
+    action: null,
+  },
+  {
+    id: 'nav-generator',
+    title: 'Name Generator Tab',
+    content: 'This is where you generate unique names for characters, locations, factions, and more.',
+    target: 'tour-nav-generator',
+    page: 'generator',
+    position: 'bottom',
+  },
+  {
+    id: 'genre-select',
+    title: 'Choose Your Genre',
+    content: 'Pick Fantasy for swords & sorcery, Sci-Fi for space opera, or Mixed for both! Try clicking one now.',
+    target: 'tour-genre-buttons',
+    page: 'generator',
+    position: 'bottom',
+    interactive: true,
+  },
+  {
+    id: 'generate-button',
+    title: 'Generate Names!',
+    content: 'Click Generate to create 10 unique names based on your settings. Go ahead, try it!',
+    target: 'tour-generate-button',
+    page: 'generator',
+    position: 'top',
+    interactive: true,
+    waitForAction: 'generate',
+  },
+  {
+    id: 'name-results',
+    title: 'Your Generated Names',
+    content: 'Click any name to copy it. Use the ⭐ to save favorites, or the flask 🧪 to generate variations!',
+    target: 'tour-results-area',
+    page: 'generator',
+    position: 'left',
+    interactive: true,
+  },
+  {
+    id: 'send-to-character',
+    title: 'Create a Character!',
+    content: 'Like a name? Click the person icon 👤 to send it to the Character Creator and build a full D&D character!',
+    target: 'tour-send-to-character',
+    page: 'generator',
+    position: 'left',
+    interactive: true,
+    waitForAction: 'navigate-creator',
+  },
+  {
+    id: 'creator-intro',
+    title: 'Full Character Builder',
+    content: 'Create characters step-by-step with race, class, abilities, spells, and equipment. Export as a beautiful PDF character sheet!',
+    target: null,
+    page: 'character',
+  },
+  {
+    id: 'dice-roller',
+    title: 'Built-in Dice Roller 🎲',
+    content: 'Need to roll dice? Click the floating dice button anytime! It supports d4, d6, d8, d10, d12, d20, and d100.',
+    target: 'tour-dice-roller',
+    page: 'character',
+    position: 'left',
+  },
+];
+
+const DID_YOU_KNOW_TIPS = [
+  "Half-Elves get +2 CHA and +1 to two other abilities of your choice!",
+  "Variant Humans can start with a feat at level 1.",
+  "Fighters get more ASIs than any other class (7 total by level 20).",
+  "Rogues can use Sneak Attack once per turn, not once per round!",
+  "Paladins can use Divine Smite after seeing if an attack hits.",
+  "Warlocks recover spell slots on a short rest, not just long rests.",
+  "The Lucky feat is often considered one of the strongest in the game.",
+  "Multiclassing requires 13 in both your current class's primary ability AND the new class's.",
+  "Druids can't wear metal armor—it's a class restriction, not a mechanical one.",
+  "The Sentinel feat can reduce an enemy's speed to 0, even on a reaction attack!",
+];
+
+// ============================================================================
+// ONBOARDING TOUR COMPONENT
+// ============================================================================
+
+const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPage, onGenerate, hasGeneratedNames }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [targetRect, setTargetRect] = useState(null);
+  const [showTip, setShowTip] = useState(false);
+  const [generatedDuringTour, setGeneratedDuringTour] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Random tip for the end
+  const randomTip = useMemo(() => 
+    DID_YOU_KNOW_TIPS[Math.floor(Math.random() * DID_YOU_KNOW_TIPS.length)], 
+    []
+  );
+  
+  const step = TOUR_STEPS[currentStep];
+  const isLastStep = currentStep === TOUR_STEPS.length - 1;
+  const isSendToCharacterStep = step?.id === 'send-to-character';
+  
+  // Scroll to target element and update position
+  useEffect(() => {
+    if (!isOpen) {
+      setTargetRect(null);
+      setIsVisible(false);
+      return;
+    }
+    
+    // Fade out before scrolling
+    setIsVisible(false);
+    
+    // Temporarily unlock scroll to allow scrollIntoView
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    
+    const findElement = (target) => {
+      if (!target) return null;
+      // Try ID first, then class selector
+      return document.getElementById(target) || document.querySelector(`.${target}`);
+    };
+    
+    const scrollAndPosition = () => {
+      const el = findElement(step?.target);
+      
+      if (el) {
+        // Scroll element into view
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        
+        // After scroll completes, lock body and update position
+        setTimeout(() => {
+          const scrollY = window.scrollY;
+          document.body.style.position = 'fixed';
+          document.body.style.top = `-${scrollY}px`;
+          document.body.style.width = '100%';
+          document.body.style.overflow = 'hidden';
+          
+          // Update rect after scroll and lock
+          // Use a small delay to ensure layout is stable on mobile
+          requestAnimationFrame(() => {
+            const rect = el.getBoundingClientRect();
+            // Account for visual viewport offset on mobile (for address bar, keyboard, etc.)
+            const visualViewportOffsetTop = window.visualViewport?.offsetTop || 0;
+            const visualViewportOffsetLeft = window.visualViewport?.offsetLeft || 0;
+            
+            setTargetRect({
+              top: rect.top + visualViewportOffsetTop,
+              left: rect.left + visualViewportOffsetLeft,
+              width: rect.width,
+              height: rect.height,
+            });
+            
+            // Fade in after positioning
+            setTimeout(() => setIsVisible(true), 50);
+          });
+        }, 400);
+      } else {
+        // No target element, just lock scroll at current position
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        setTargetRect(null);
+        
+        // Fade in after positioning
+        setTimeout(() => setIsVisible(true), 50);
+      }
+    };
+    
+    // Small delay to let page render
+    const timer = setTimeout(scrollAndPosition, 50);
+    
+    // Update position on resize (including visual viewport changes on mobile)
+    const handleResize = () => {
+      const el = findElement(step?.target);
+      if (el) {
+        requestAnimationFrame(() => {
+          const rect = el.getBoundingClientRect();
+          // Account for visual viewport offset on mobile
+          const visualViewportOffsetTop = window.visualViewport?.offsetTop || 0;
+          const visualViewportOffsetLeft = window.visualViewport?.offsetLeft || 0;
+          
+          setTargetRect({
+            top: rect.top + visualViewportOffsetTop,
+            left: rect.left + visualViewportOffsetLeft,
+            width: rect.width,
+            height: rect.height,
+          });
+        });
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    // Also listen to visual viewport changes on mobile
+    window.visualViewport?.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('scroll', handleResize);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
+    };
+  }, [isOpen, step, currentStep, currentPage]);
+  
+  // Cleanup: restore scroll when tour closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Get the scroll position from the body top style
+      const scrollY = Math.abs(parseInt(document.body.style.top || '0', 10));
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY > 0) {
+        window.scrollTo(0, scrollY);
+      }
+    }
+  }, [isOpen]);
+  
+  // Navigate to correct page for step
+  useEffect(() => {
+    if (!isOpen || !step?.page) return;
+    if (step.page !== currentPage) {
+      setCurrentPage(step.page);
+    }
+  }, [isOpen, step, currentPage, setCurrentPage]);
+  
+  // Auto-advance when user generates names (only on step 4)
+  useEffect(() => {
+    if (step?.waitForAction === 'generate' && hasGeneratedNames && !generatedDuringTour) {
+      // Mark that we've advanced for this generation
+      setGeneratedDuringTour(true);
+      // User generated names, advance to next step
+      setTimeout(() => setCurrentStep(prev => prev + 1), 600);
+    }
+  }, [hasGeneratedNames, step, generatedDuringTour]);
+  
+  // Auto-advance when user navigates to character creator
+  useEffect(() => {
+    if (step?.waitForAction === 'navigate-creator' && currentPage === 'character') {
+      setTimeout(() => setCurrentStep(prev => prev + 1), 300);
+    }
+  }, [currentPage, step]);
+  
+  // Reset generated flag when going back to generate step
+  useEffect(() => {
+    if (step?.waitForAction === 'generate') {
+      // Only reset if we're on this step and names haven't been generated yet
+      if (!hasGeneratedNames) {
+        setGeneratedDuringTour(false);
+      }
+    }
+  }, [currentStep, step, hasGeneratedNames]);
+  
+  if (!isOpen) return null;
+  
+  const handleNext = () => {
+    if (isLastStep) {
+      if (!showTip) {
+        setShowTip(true);
+      } else {
+        LocalStorageUtil.setItem('aethernames_tour_complete', true);
+        onComplete?.();
+        onClose();
+      }
+    } else {
+      // Handle special actions
+      if (step.waitForAction === 'navigate-creator') {
+        setCurrentPage('character');
+      }
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+  
+  const handleSkip = () => {
+    LocalStorageUtil.setItem('aethernames_tour_complete', true);
+    onClose();
+  };
+  
+  // Calculate tooltip position based on target
+  const getTooltipStyle = () => {
+    if (!targetRect || !step?.position) {
+      return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+    }
+    
+    const padding = 16;
+    const tooltipWidth = Math.min(340, window.innerWidth - padding * 2); // Responsive width
+    const tooltipHeight = 280; // Approximate tooltip height
+    
+    // Calculate centered left position with bounds checking
+    const centeredLeft = Math.max(
+      padding, 
+      Math.min(
+        window.innerWidth - tooltipWidth - padding, 
+        targetRect.left + targetRect.width / 2 - tooltipWidth / 2
+      )
+    );
+    
+    switch (step.position) {
+      case 'bottom': {
+        // Check if there's room below
+        const hasRoomBelow = targetRect.top + targetRect.height + padding + tooltipHeight < window.innerHeight;
+        if (hasRoomBelow) {
+          return {
+            position: 'fixed',
+            top: `${targetRect.top + targetRect.height + padding}px`,
+            left: `${centeredLeft}px`,
+            maxWidth: `${tooltipWidth}px`,
+          };
+        }
+        // Fall through to show above if no room below
+      }
+      case 'top':
+        return {
+          position: 'fixed',
+          bottom: `${Math.max(padding, window.innerHeight - targetRect.top + padding)}px`,
+          left: `${centeredLeft}px`,
+          maxWidth: `${tooltipWidth}px`,
+        };
+      case 'left': {
+        // Check if there's room to the left
+        const hasRoomLeft = targetRect.left > tooltipWidth + padding;
+        if (hasRoomLeft) {
+          return {
+            position: 'fixed',
+            top: `${Math.max(padding, Math.min(window.innerHeight - tooltipHeight - padding, targetRect.top + targetRect.height / 2))}px`,
+            right: `${Math.max(padding, window.innerWidth - targetRect.left + padding)}px`,
+            transform: 'translateY(-50%)',
+            maxWidth: `${tooltipWidth}px`,
+          };
+        }
+        // Show centered if no room on left
+        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: `${tooltipWidth}px` };
+      }
+      case 'right': {
+        // Check if there's room to the right
+        const hasRoomRight = window.innerWidth - targetRect.right > tooltipWidth + padding;
+        if (hasRoomRight) {
+          return {
+            position: 'fixed',
+            top: `${Math.max(padding, Math.min(window.innerHeight - tooltipHeight - padding, targetRect.top + targetRect.height / 2))}px`,
+            left: `${targetRect.left + targetRect.width + padding}px`,
+            transform: 'translateY(-50%)',
+            maxWidth: `${tooltipWidth}px`,
+          };
+        }
+        // Show centered if no room on right
+        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: `${tooltipWidth}px` };
+      }
+      default:
+        return { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', maxWidth: `${tooltipWidth}px` };
+    }
+  };
+  
+  // Early return if step is undefined (prevents crashes)
+  if (!step) return null;
+  
+  return (
+    <div 
+      className="fixed inset-0 z-[100] transition-opacity duration-300" 
+      style={{ 
+        pointerEvents: 'none',
+        opacity: isVisible ? 1 : 0,
+      }}
+    >
+      {/* Disable person icons when not on send-to-character step */}
+      {!isSendToCharacterStep && (
+        <style>{`.tour-send-to-character { pointer-events: none !important; opacity: 0.3 !important; }`}</style>
+      )}
+      {/* Spotlight overlay with cutout - blocks clicks for non-interactive steps */}
+      {!step.interactive ? (
+        <svg 
+          className="absolute inset-0 w-full h-full"
+          style={{ pointerEvents: 'auto' }}
+        >
+          <defs>
+            <mask id="spotlight-mask">
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              {targetRect && (
+                <rect 
+                  x={Math.max(0, targetRect.left - 8)} 
+                  y={Math.max(0, targetRect.top - 8)} 
+                  width={targetRect.width + 16} 
+                  height={targetRect.height + 16} 
+                  rx="12"
+                  fill="black" 
+                />
+              )}
+            </mask>
+          </defs>
+          <rect 
+            x="0" y="0" 
+            width="100%" height="100%" 
+            fill="rgba(0,0,0,0.85)" 
+            mask="url(#spotlight-mask)" 
+          />
+        </svg>
+      ) : (
+        /* For interactive steps, use 4 blocking divs around the cutout, or full overlay if no target */
+        targetRect ? (
+          <>
+            {/* Semi-transparent overlay - top */}
+            <div 
+              className="absolute left-0 right-0 top-0"
+              style={{ 
+                height: Math.max(0, targetRect.top - 8),
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+            {/* Semi-transparent overlay - bottom */}
+            <div 
+              className="absolute left-0 right-0"
+              style={{ 
+                top: targetRect.top + targetRect.height + 8,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+            {/* Semi-transparent overlay - left */}
+            <div 
+              className="absolute left-0"
+              style={{ 
+                top: targetRect.top - 8,
+                height: targetRect.height + 16,
+                width: Math.max(0, targetRect.left - 8),
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+            {/* Semi-transparent overlay - right */}
+            <div 
+              className="absolute right-0"
+              style={{ 
+                top: targetRect.top - 8,
+                height: targetRect.height + 16,
+                left: targetRect.left + targetRect.width + 8,
+                backgroundColor: 'rgba(0,0,0,0.85)',
+                pointerEvents: 'auto' 
+              }}
+            />
+          </>
+        ) : (
+          /* Fallback: full overlay when interactive but no target found */
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              pointerEvents: 'auto' 
+            }}
+          />
+        )
+      )}
+      
+      {/* Highlight ring around target */}
+      {targetRect && (
+        <div 
+          className="absolute border-2 border-indigo-400 rounded-xl pointer-events-none animate-pulse"
+          style={{
+            top: targetRect.top - 8,
+            left: targetRect.left - 8,
+            width: targetRect.width + 16,
+            height: targetRect.height + 16,
+            boxShadow: '0 0 20px 4px rgba(99, 102, 241, 0.5)',
+          }}
+        />
+      )}
+      
+      {/* Tour tooltip */}
+      <div 
+        className="bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl w-[340px] overflow-hidden pointer-events-auto"
+        style={getTooltipStyle()}
+      >
+        {/* Progress dots */}
+        <div className="flex gap-1 p-3 bg-slate-800/50">
+          {TOUR_STEPS.map((_, idx) => (
+            <div 
+              key={idx}
+              className={`h-1.5 w-1.5 rounded-full transition-all ${
+                idx < currentStep ? 'bg-indigo-500' : idx === currentStep ? 'bg-indigo-400 scale-125' : 'bg-slate-700'
+              }`}
+            />
+          ))}
+        </div>
+        
+        <div className="p-5">
+          {!showTip ? (
+            <>
+              <h2 className="text-lg font-bold text-white mb-2">{step.title}</h2>
+              <p className="text-slate-400 text-sm mb-4 leading-relaxed">{step.content}</p>
+              
+              {step.interactive && (
+                <p className="text-xs text-indigo-400 mb-4 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-indigo-400 rounded-full animate-pulse" />
+                  {step.waitForAction === 'generate' ? 'Click Generate to continue...' : 
+                   step.waitForAction === 'navigate-creator' ? 'Click or press Next...' : 
+                   'Try it out, then click Next!'}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="text-2xl mb-2">💡</div>
+              <h2 className="text-lg font-bold text-white mb-2">Did You Know?</h2>
+              <p className="text-slate-400 text-sm mb-4 leading-relaxed">{randomTip}</p>
+            </>
+          )}
+          
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleSkip}
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              Skip tour
+            </button>
+            <div className="flex gap-2">
+              {currentStep > 0 && !showTip && (
+                <button
+                  onClick={() => setCurrentStep(prev => prev - 1)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-sm hover:bg-slate-700 transition-all flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-3 h-3" /> Back
+                </button>
+              )}
+              {/* Hide Next button when user must perform an action (like clicking Generate or person icon) */}
+              {!step?.waitForAction && (
+                <button
+                  onClick={handleNext}
+                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-1"
+                >
+                  {showTip ? 'Get Started!' : isLastStep ? 'Finish' : 'Next'}
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Step counter */}
+        <div className="px-5 pb-3 text-xs text-slate-600 text-center">
+          Step {currentStep + 1} of {TOUR_STEPS.length}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// RANDOMIZER POPOVER COMPONENT
+// ============================================================================
+
+const RandomizerPopover = ({ onRandomize, currentLevel = 1 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [levelRange, setLevelRange] = useState([1, 5]);
+  const [enableMulticlass, setEnableMulticlass] = useState(false);
+  const popoverRef = useRef(null);
+  
+  // Close on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+  
+  const handleQuickRandom = () => {
+    // Quick random with current settings
+    const randomLevel = Math.floor(Math.random() * (levelRange[1] - levelRange[0] + 1)) + levelRange[0];
+    onRandomize(randomLevel, enableMulticlass && randomLevel >= 2);
+    setIsOpen(false);
+  };
+  
+  const handleRandomWithOptions = () => {
+    const randomLevel = Math.floor(Math.random() * (levelRange[1] - levelRange[0] + 1)) + levelRange[0];
+    onRandomize(randomLevel, enableMulticlass && randomLevel >= 2);
+    setIsOpen(false);
+  };
+  
+  return (
+    <div ref={popoverRef} className="relative">
+      <div className="flex">
+        {/* Main random button */}
+        <button
+          onClick={handleQuickRandom}
+          className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-l-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Random</span>
+        </button>
+        {/* Options dropdown toggle */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="px-2 py-2.5 md:py-2 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-r-lg font-medium hover:from-pink-600 hover:to-pink-700 transition-all border-l border-pink-400/30"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+      
+      {/* Popover */}
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-white flex items-center gap-2">
+              <Settings className="w-4 h-4 text-purple-400" />
+              Random Character Options
+            </div>
+            
+            {/* Level Range */}
+            <div>
+              <label className="block text-xs text-slate-400 mb-2">
+                Level Range: {levelRange[0]} - {levelRange[1]}
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={levelRange[0]}
+                  onChange={(e) => {
+                    const min = parseInt(e.target.value);
+                    setLevelRange([min, Math.max(min, levelRange[1])]);
+                    if (min < 2) setEnableMulticlass(false);
+                  }}
+                  className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                >
+                  {[...Array(10)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                  ))}
+                </select>
+                <span className="text-slate-500">to</span>
+                <select
+                  value={levelRange[1]}
+                  onChange={(e) => {
+                    const max = parseInt(e.target.value);
+                    setLevelRange([Math.min(levelRange[0], max), max]);
+                  }}
+                  className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                >
+                  {[...Array(10)].map((_, i) => (
+                    <option key={i + 1} value={i + 1} disabled={i + 1 < levelRange[0]}>{i + 1}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            {/* Quick Level Presets */}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: 'Lvl 1', range: [1, 1] },
+                { label: '1-5', range: [1, 5] },
+                { label: '5-10', range: [5, 10] },
+              ].map(preset => (
+                <button
+                  key={preset.label}
+                  onClick={() => {
+                    setLevelRange(preset.range);
+                    if (preset.range[0] < 2) setEnableMulticlass(false);
+                  }}
+                  className={`px-2 py-1 text-xs rounded-md transition-all ${
+                    levelRange[0] === preset.range[0] && levelRange[1] === preset.range[1]
+                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
+                      : 'bg-slate-800/50 text-slate-400 hover:text-slate-200 border border-slate-700/50 hover:border-slate-600'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            
+            {/* Multiclass Option */}
+            <label className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${
+              levelRange[0] >= 2 
+                ? 'bg-slate-800/30 border-slate-700/50 hover:bg-slate-800/50' 
+                : 'bg-slate-800/20 border-slate-800 opacity-50 cursor-not-allowed'
+            }`}>
+              <input
+                type="checkbox"
+                checked={enableMulticlass}
+                onChange={(e) => setEnableMulticlass(e.target.checked)}
+                disabled={levelRange[0] < 2}
+                className="rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
+              />
+              <div>
+                <span className="text-sm text-slate-300">Enable Multiclass</span>
+                {levelRange[0] < 2 && (
+                  <span className="block text-[10px] text-slate-500">Requires level 2+</span>
+                )}
+              </div>
+            </label>
+            
+            {/* Generate Button */}
+            <button
+              onClick={handleRandomWithOptions}
+              className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-500 hover:to-pink-500 transition-all flex items-center justify-center gap-2"
+            >
+              <Dices className="w-4 h-4" />
+              Generate Character
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// TEMPLATES MODAL COMPONENT
+// ============================================================================
+
+const TemplatesModal = ({ isOpen, onClose, onSelectTemplate, currentCharacter, onSaveAsTemplate }) => {
+  const [tab, setTab] = useState('iconic'); // 'iconic', 'saved', 'import'
+  const [savedTemplates, setSavedTemplates] = useState([]);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [importJson, setImportJson] = useState('');
+  const [importError, setImportError] = useState('');
+  
+  // Load saved templates on mount
+  useEffect(() => {
+    if (isOpen) {
+      const saved = LocalStorageUtil.getItem('aethernames_templates', []);
+      setSavedTemplates(saved);
+    }
+  }, [isOpen]);
+  
+  const handleSaveTemplate = () => {
+    if (!newTemplateName.trim()) return;
+    
+    const template = {
+      id: `custom_${Date.now()}`,
+      name: newTemplateName.trim(),
+      description: `Custom ${currentCharacter.class ? CLASSES[currentCharacter.class]?.name : 'character'} build`,
+      difficulty: 'Custom',
+      tags: ['Custom'],
+      icon: '📝',
+      character: { ...currentCharacter, name: '', playerName: '' },
+      createdAt: Date.now()
+    };
+    
+    const updated = [...savedTemplates, template];
+    setSavedTemplates(updated);
+    LocalStorageUtil.setItem('aethernames_templates', updated);
+    setNewTemplateName('');
+  };
+  
+  const handleDeleteTemplate = (templateId) => {
+    const updated = savedTemplates.filter(t => t.id !== templateId);
+    setSavedTemplates(updated);
+    LocalStorageUtil.setItem('aethernames_templates', updated);
+  };
+  
+  const handleImport = () => {
+    try {
+      const data = JSON.parse(importJson);
+      if (data.character && typeof data.character === 'object') {
+        onSelectTemplate(data.character);
+        onClose();
+      } else {
+        setImportError('Invalid template format');
+      }
+    } catch (e) {
+      setImportError('Invalid JSON format');
+    }
+  };
+  
+  const handleExportTemplate = (template) => {
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_template.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Modal */}
+      <div className="relative bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-indigo-400" />
+            Build Templates
+          </h2>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex border-b border-slate-700/50">
+          {[
+            { id: 'iconic', label: 'Iconic Builds', icon: '⚔️' },
+            { id: 'saved', label: 'My Templates', icon: '📁' },
+            { id: 'import', label: 'Import', icon: '📥' }
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-all ${
+                tab === t.id
+                  ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <span className="mr-1.5">{t.icon}</span>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Content */}
+        <div className="p-4 overflow-y-auto max-h-[50vh]">
+          {tab === 'iconic' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {Object.values(ICONIC_BUILDS).map(build => (
+                <div
+                  key={build.id}
+                  className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800 transition-all text-left group relative"
+                >
+                  <button
+                    onClick={() => {
+                      onSelectTemplate(build.character);
+                      onClose();
+                    }}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{build.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                          {build.name}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-0.5 line-clamp-2">{build.description}</div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            build.difficulty === 'Beginner' ? 'bg-green-500/20 text-green-400' :
+                            build.difficulty === 'Intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {build.difficulty}
+                          </span>
+                          {build.tags.slice(0, 2).map(tag => (
+                            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  {/* Export button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportTemplate({ ...build, name: build.name });
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600/50 hover:text-slate-200 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Export as JSON"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {tab === 'saved' && (
+            <div className="space-y-4">
+              {/* Save Current */}
+              {currentCharacter?.class && (
+                <div className="p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/30">
+                  <div className="text-sm text-indigo-300 mb-2">Save current character as template:</div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newTemplateName}
+                      onChange={(e) => setNewTemplateName(e.target.value)}
+                      placeholder="Template name..."
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-indigo-500/50"
+                    />
+                    <button
+                      onClick={handleSaveTemplate}
+                      disabled={!newTemplateName.trim()}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {savedTemplates.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No saved templates yet.</p>
+                  <p className="text-xs mt-1">Create a character and save it as a template!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {savedTemplates.map(template => (
+                    <div
+                      key={template.id}
+                      className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 flex items-center gap-3"
+                    >
+                      <span className="text-xl">{template.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-white truncate">{template.name}</div>
+                        <div className="text-xs text-slate-500">{template.description}</div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => {
+                            onSelectTemplate(template.character);
+                            onClose();
+                          }}
+                          className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors"
+                          title="Load template"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleExportTemplate(template)}
+                          className="p-1.5 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600/50 transition-colors"
+                          title="Export as JSON"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTemplate(template.id)}
+                          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                          title="Delete template"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {tab === 'import' && (
+            <div className="space-y-4">
+              <div className="text-sm text-slate-400 mb-2">
+                Paste a template JSON to import a character build:
+              </div>
+              <textarea
+                value={importJson}
+                onChange={(e) => { setImportJson(e.target.value); setImportError(''); }}
+                placeholder='{"character": {...}}'
+                className="w-full h-40 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-600/50 text-white text-sm font-mono focus:outline-none focus:border-indigo-500/50 resize-none"
+              />
+              {importError && (
+                <div className="text-sm text-red-400">{importError}</div>
+              )}
+              <button
+                onClick={handleImport}
+                disabled={!importJson.trim()}
+                className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Import Template
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// SUBCLASS COMPARISON MODAL
+// ============================================================================
+
+const SubclassCompareModal = ({ isOpen, onClose, classId, onSelectSubclass }) => {
+  const [selectedSubclasses, setSelectedSubclasses] = useState([]);
+  
+  if (!isOpen || !classId) return null;
+  
+  const classData = CLASSES[classId];
+  if (!classData?.subclasses) return null;
+  
+  const subclassEntries = Object.entries(classData.subclasses);
+  
+  const toggleSubclass = (subclassId) => {
+    setSelectedSubclasses(prev => {
+      if (prev.includes(subclassId)) {
+        return prev.filter(id => id !== subclassId);
+      }
+      if (prev.length >= 3) {
+        return [...prev.slice(1), subclassId];
+      }
+      return [...prev, subclassId];
+    });
+  };
+  
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Modal */}
+      <div className="relative bg-slate-900/95 border border-slate-700/50 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <Scale className="w-5 h-5 text-indigo-400" />
+            Compare {classData.name} Subclasses
+          </h2>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-4 overflow-y-auto max-h-[70vh]">
+          {/* Selection */}
+          <div className="mb-4">
+            <div className="text-sm text-slate-400 mb-2">Select up to 3 subclasses to compare:</div>
+            <div className="flex flex-wrap gap-2">
+              {subclassEntries.map(([id, sub]) => (
+                <button
+                  key={id}
+                  onClick={() => toggleSubclass(id)}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                    selectedSubclasses.includes(id)
+                      ? 'bg-indigo-500/30 border border-indigo-500/50 text-indigo-300'
+                      : 'bg-slate-800/50 border border-slate-600/50 text-slate-300 hover:border-slate-500'
+                  }`}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Comparison Table */}
+          {selectedSubclasses.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="p-3 text-left text-sm font-semibold text-slate-400 bg-slate-800/50 border-b border-slate-700/50 sticky left-0">
+                      Feature
+                    </th>
+                    {selectedSubclasses.map(id => (
+                      <th key={id} className="p-3 text-left text-sm font-semibold text-indigo-300 bg-slate-800/50 border-b border-slate-700/50 min-w-[200px]">
+                        {classData.subclasses[id].name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="p-3 text-sm text-slate-500 border-b border-slate-700/30 sticky left-0 bg-slate-900/95">
+                      Description
+                    </td>
+                    {selectedSubclasses.map(id => (
+                      <td key={id} className="p-3 text-sm text-slate-300 border-b border-slate-700/30">
+                        {classData.subclasses[id].description || 'No description available.'}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 text-sm text-slate-500 border-b border-slate-700/30 sticky left-0 bg-slate-900/95">
+                      Features
+                    </td>
+                    {selectedSubclasses.map(id => {
+                      const sub = classData.subclasses[id];
+                      const features = sub.features || [];
+                      return (
+                        <td key={id} className="p-3 text-sm text-slate-300 border-b border-slate-700/30 align-top">
+                          {features.length > 0 ? (
+                            <ul className="space-y-1">
+                              {features.slice(0, 5).map((f, i) => (
+                                <li key={i} className="text-xs">
+                                  • <span className="text-indigo-300">{f.name}</span> (Lv {f.level})
+                                </li>
+                              ))}
+                              {features.length > 5 && (
+                                <li className="text-xs text-slate-500">+{features.length - 5} more...</li>
+                              )}
+                            </ul>
+                          ) : (
+                            <span className="text-slate-500">See class description</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  {/* Bonus Spells if applicable */}
+                  {selectedSubclasses.some(id => classData.subclasses[id].bonusSpells?.length > 0) && (
+                    <tr>
+                      <td className="p-3 text-sm text-slate-500 border-b border-slate-700/30 sticky left-0 bg-slate-900/95">
+                        Bonus Spells
+                      </td>
+                      {selectedSubclasses.map(id => {
+                        const spells = classData.subclasses[id].bonusSpells || [];
+                        return (
+                          <td key={id} className="p-3 text-sm text-slate-300 border-b border-slate-700/30 align-top">
+                            {spells.length > 0 ? (
+                              <div className="text-xs text-purple-300">
+                                {spells.slice(0, 4).join(', ')}
+                                {spells.length > 4 && ` +${spells.length - 4} more`}
+                              </div>
+                            ) : (
+                              <span className="text-slate-500">None</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+          
+          {selectedSubclasses.length === 0 && (
+            <div className="text-center py-12 text-slate-500">
+              <Scale className="w-10 h-10 mx-auto mb-3 opacity-50" />
+              <p>Select subclasses above to compare them side-by-side</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Footer with Select Button */}
+        {selectedSubclasses.length === 1 && (
+          <div className="p-4 border-t border-slate-700/50 bg-slate-800/30">
+            <button
+              onClick={() => {
+                onSelectSubclass(selectedSubclasses[0]);
+                onClose();
+              }}
+              className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-all"
+            >
+              Select {classData.subclasses[selectedSubclasses[0]].name}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 // ============================================================================
@@ -1785,7 +3571,7 @@ const NameCard = ({ name, syllables, isFavorite, onCopy, onFavorite, copied, met
               {onSendToCharacter ? (
                 <button 
                   onClick={onSendToCharacter} 
-                  className="p-1.5 rounded text-slate-600 hover:text-indigo-400 hover:scale-110 hover:bg-indigo-400/10 transition-all duration-200"
+                  className="tour-send-to-character p-1.5 rounded text-slate-600 hover:text-indigo-400 hover:scale-110 hover:bg-indigo-400/10 transition-all duration-200"
                   title="Send to Character Creator"
                 >
                   <User className="w-4 h-4" />
@@ -1953,6 +3739,7 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
   return (
     <div className="relative z-50">
       <button
+        id="tour-nav-generator"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-indigo-500/50 transition-all"
       >
@@ -1976,6 +3763,7 @@ const Navigation = ({ currentPage, setCurrentPage, theme }) => {
               return (
                 <button
                   key={page.id}
+                  id={page.id === 'character' ? 'tour-nav-creator' : undefined}
                   onClick={() => {
                     setCurrentPage(page.id);
                     setIsOpen(false);
@@ -2579,10 +4367,32 @@ const SPELL_SLOTS = {
   }
 };
 
+// ============================================================================
+// CANTRIPS KNOWN BY LEVEL (D&D 5e PHB)
+// ============================================================================
+const CANTRIPS_KNOWN = {
+  bard:     { 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4 },
+  cleric:   { 1: 3, 2: 3, 3: 3, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 5 },
+  druid:    { 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4 },
+  sorcerer: { 1: 4, 2: 4, 3: 4, 4: 5, 5: 5, 6: 5, 7: 5, 8: 5, 9: 5, 10: 6 },
+  warlock:  { 1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4 },
+  wizard:   { 1: 3, 2: 3, 3: 3, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 5 }
+};
+
+// ============================================================================
+// SPELLS KNOWN BY LEVEL (D&D 5e PHB) - For 'known' casters only
+// ============================================================================
+const SPELLS_KNOWN = {
+  bard:     { 1: 4, 2: 5, 3: 6, 4: 7, 5: 8, 6: 9, 7: 10, 8: 11, 9: 12, 10: 14 },
+  ranger:   { 1: 0, 2: 2, 3: 3, 4: 3, 5: 4, 6: 4, 7: 5, 8: 5, 9: 6, 10: 6 },
+  sorcerer: { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11 },
+  warlock:  { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 10 }
+};
+
 const getSpellSlots = (classId, level) => {
   const fullCasters = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard'];
   const halfCasters = ['paladin', 'ranger'];
-  const cappedLevel = Math.min(level, 20);
+  const cappedLevel = Math.min(level, 10);
   
   if (classId === 'warlock') return SPELL_SLOTS.warlock[cappedLevel];
   if (fullCasters.includes(classId)) return SPELL_SLOTS.full[cappedLevel];
@@ -2641,8 +4451,8 @@ const getMulticlassSpellSlots = (character) => {
     }
   });
   
-  // Cap at 20
-  totalCasterLevel = Math.min(totalCasterLevel, 20);
+  // Cap at 10
+  totalCasterLevel = Math.min(totalCasterLevel, 10);
   
   // If no caster levels, return null
   if (totalCasterLevel === 0) {
@@ -2661,13 +4471,13 @@ const getWarlockPactSlots = (character) => {
   if (character.class === 'warlock') {
     const multiclassLevelSum = multiclassEntries.reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
     const warlockLevel = Math.max(1, (character.level || 1) - multiclassLevelSum);
-    return SPELL_SLOTS.warlock[Math.min(warlockLevel, 20)];
+    return SPELL_SLOTS.warlock[Math.min(warlockLevel, 10)];
   }
   
   // Check if any multiclass is warlock
   const warlockMulticlass = multiclassEntries.find(mc => mc.classId === 'warlock');
   if (warlockMulticlass) {
-    return SPELL_SLOTS.warlock[Math.min(warlockMulticlass.level, 20)];
+    return SPELL_SLOTS.warlock[Math.min(warlockMulticlass.level, 10)];
   }
   
   return null;
@@ -3001,57 +4811,57 @@ const STARTING_GOLD = {
 
 const EQUIPMENT_SHOP = {
   weapons: [
-    { name: 'Club', cost: 0.1, damage: '1d4 bludgeoning', properties: 'Light' },
-    { name: 'Dagger', cost: 2, damage: '1d4 piercing', properties: 'Finesse, light, thrown (20/60)' },
-    { name: 'Handaxe', cost: 5, damage: '1d6 slashing', properties: 'Light, thrown (20/60)' },
-    { name: 'Javelin', cost: 0.5, damage: '1d6 piercing', properties: 'Thrown (30/120)' },
-    { name: 'Mace', cost: 5, damage: '1d6 bludgeoning', properties: '—' },
-    { name: 'Quarterstaff', cost: 0.2, damage: '1d6 bludgeoning', properties: 'Versatile (1d8)' },
-    { name: 'Shortbow', cost: 25, damage: '1d6 piercing', properties: 'Ammunition (80/320), two-handed' },
-    { name: 'Shortsword', cost: 10, damage: '1d6 piercing', properties: 'Finesse, light' },
-    { name: 'Longsword', cost: 15, damage: '1d8 slashing', properties: 'Versatile (1d10)' },
-    { name: 'Rapier', cost: 25, damage: '1d8 piercing', properties: 'Finesse' },
-    { name: 'Greataxe', cost: 30, damage: '1d12 slashing', properties: 'Heavy, two-handed' },
-    { name: 'Greatsword', cost: 50, damage: '2d6 slashing', properties: 'Heavy, two-handed' },
-    { name: 'Longbow', cost: 50, damage: '1d8 piercing', properties: 'Ammunition (150/600), heavy, two-handed' },
-    { name: 'Light Crossbow', cost: 25, damage: '1d8 piercing', properties: 'Ammunition (80/320), loading, two-handed' }
+    { name: 'Club', cost: 0.1, damage: '1d4 bludgeoning', properties: 'Light', goodFor: ['druid'] },
+    { name: 'Dagger', cost: 2, damage: '1d4 piercing', properties: 'Finesse, light, thrown (20/60)', goodFor: ['rogue', 'wizard', 'sorcerer', 'warlock', 'bard'] },
+    { name: 'Handaxe', cost: 5, damage: '1d6 slashing', properties: 'Light, thrown (20/60)', goodFor: ['barbarian', 'fighter', 'ranger'] },
+    { name: 'Javelin', cost: 0.5, damage: '1d6 piercing', properties: 'Thrown (30/120)', goodFor: ['fighter', 'paladin', 'barbarian'] },
+    { name: 'Mace', cost: 5, damage: '1d6 bludgeoning', properties: '—', goodFor: ['cleric', 'paladin'] },
+    { name: 'Quarterstaff', cost: 0.2, damage: '1d6 bludgeoning', properties: 'Versatile (1d8)', goodFor: ['monk', 'druid', 'wizard', 'cleric'] },
+    { name: 'Shortbow', cost: 25, damage: '1d6 piercing', properties: 'Ammunition (80/320), two-handed', goodFor: ['rogue', 'ranger', 'fighter'] },
+    { name: 'Shortsword', cost: 10, damage: '1d6 piercing', properties: 'Finesse, light', goodFor: ['rogue', 'ranger', 'fighter', 'monk'] },
+    { name: 'Longsword', cost: 15, damage: '1d8 slashing', properties: 'Versatile (1d10)', goodFor: ['fighter', 'paladin', 'cleric'] },
+    { name: 'Rapier', cost: 25, damage: '1d8 piercing', properties: 'Finesse', goodFor: ['rogue', 'bard', 'fighter', 'ranger'] },
+    { name: 'Greataxe', cost: 30, damage: '1d12 slashing', properties: 'Heavy, two-handed', goodFor: ['barbarian', 'fighter'] },
+    { name: 'Greatsword', cost: 50, damage: '2d6 slashing', properties: 'Heavy, two-handed', goodFor: ['fighter', 'paladin'] },
+    { name: 'Longbow', cost: 50, damage: '1d8 piercing', properties: 'Ammunition (150/600), heavy, two-handed', goodFor: ['ranger', 'fighter'] },
+    { name: 'Light Crossbow', cost: 25, damage: '1d8 piercing', properties: 'Ammunition (80/320), loading, two-handed', goodFor: ['rogue', 'wizard', 'sorcerer'] }
   ],
   armor: [
-    { name: 'Padded', cost: 5, ac: '11 + Dex', type: 'Light', stealth: 'Disadvantage' },
-    { name: 'Leather', cost: 10, ac: '11 + Dex', type: 'Light', stealth: '—' },
-    { name: 'Studded Leather', cost: 45, ac: '12 + Dex', type: 'Light', stealth: '—' },
-    { name: 'Hide', cost: 10, ac: '12 + Dex (max 2)', type: 'Medium', stealth: '—' },
-    { name: 'Chain Shirt', cost: 50, ac: '13 + Dex (max 2)', type: 'Medium', stealth: '—' },
-    { name: 'Scale Mail', cost: 50, ac: '14 + Dex (max 2)', type: 'Medium', stealth: 'Disadvantage' },
-    { name: 'Breastplate', cost: 400, ac: '14 + Dex (max 2)', type: 'Medium', stealth: '—' },
-    { name: 'Chain Mail', cost: 75, ac: '16', type: 'Heavy', stealth: 'Disadvantage', strReq: 13 },
-    { name: 'Plate', cost: 1500, ac: '18', type: 'Heavy', stealth: 'Disadvantage', strReq: 15 },
-    { name: 'Shield', cost: 10, ac: '+2', type: 'Shield', stealth: '—' }
+    { name: 'Padded', cost: 5, ac: '11 + Dex', type: 'Light', stealth: 'Disadvantage', goodFor: [] },
+    { name: 'Leather', cost: 10, ac: '11 + Dex', type: 'Light', stealth: '—', goodFor: ['rogue', 'bard', 'ranger', 'monk', 'warlock'] },
+    { name: 'Studded Leather', cost: 45, ac: '12 + Dex', type: 'Light', stealth: '—', goodFor: ['rogue', 'bard', 'ranger', 'warlock'] },
+    { name: 'Hide', cost: 10, ac: '12 + Dex (max 2)', type: 'Medium', stealth: '—', goodFor: ['druid', 'barbarian'] },
+    { name: 'Chain Shirt', cost: 50, ac: '13 + Dex (max 2)', type: 'Medium', stealth: '—', goodFor: ['cleric', 'ranger'] },
+    { name: 'Scale Mail', cost: 50, ac: '14 + Dex (max 2)', type: 'Medium', stealth: 'Disadvantage', goodFor: ['cleric', 'fighter'] },
+    { name: 'Breastplate', cost: 400, ac: '14 + Dex (max 2)', type: 'Medium', stealth: '—', goodFor: ['fighter', 'paladin', 'cleric', 'ranger'] },
+    { name: 'Chain Mail', cost: 75, ac: '16', type: 'Heavy', stealth: 'Disadvantage', strReq: 13, goodFor: ['fighter', 'paladin', 'cleric'] },
+    { name: 'Plate', cost: 1500, ac: '18', type: 'Heavy', stealth: 'Disadvantage', strReq: 15, goodFor: ['fighter', 'paladin'] },
+    { name: 'Shield', cost: 10, ac: '+2', type: 'Shield', stealth: '—', goodFor: ['fighter', 'paladin', 'cleric', 'druid'] }
   ],
   gear: [
-    { name: 'Backpack', cost: 2 },
-    { name: 'Bedroll', cost: 1 },
-    { name: 'Rope, 50 ft', cost: 1 },
-    { name: 'Torch (10)', cost: 0.1 },
-    { name: 'Rations (10 days)', cost: 5 },
-    { name: 'Waterskin', cost: 0.2 },
-    { name: 'Tinderbox', cost: 0.5 },
-    { name: 'Arrows (20)', cost: 1 },
-    { name: 'Bolts (20)', cost: 1 },
-    { name: 'Component Pouch', cost: 25 },
-    { name: 'Arcane Focus', cost: 10 },
-    { name: 'Holy Symbol', cost: 5 },
-    { name: 'Thieves\' Tools', cost: 25 },
-    { name: 'Healer\'s Kit', cost: 5 }
+    { name: 'Backpack', cost: 2, goodFor: ['all'] },
+    { name: 'Bedroll', cost: 1, goodFor: ['all'] },
+    { name: 'Rope, 50 ft', cost: 1, goodFor: ['all'] },
+    { name: 'Torch (10)', cost: 0.1, goodFor: ['all'] },
+    { name: 'Rations (10 days)', cost: 5, goodFor: ['all'] },
+    { name: 'Waterskin', cost: 0.2, goodFor: ['all'] },
+    { name: 'Tinderbox', cost: 0.5, goodFor: ['all'] },
+    { name: 'Arrows (20)', cost: 1, goodFor: ['ranger', 'fighter'] },
+    { name: 'Bolts (20)', cost: 1, goodFor: ['rogue', 'fighter'] },
+    { name: 'Component Pouch', cost: 25, goodFor: ['wizard', 'sorcerer', 'warlock', 'bard'] },
+    { name: 'Arcane Focus', cost: 10, goodFor: ['wizard', 'sorcerer', 'warlock'] },
+    { name: 'Holy Symbol', cost: 5, goodFor: ['cleric', 'paladin'] },
+    { name: 'Thieves\' Tools', cost: 25, goodFor: ['rogue'] },
+    { name: 'Healer\'s Kit', cost: 5, goodFor: ['cleric', 'druid', 'paladin', 'ranger'] }
   ],
   packs: [
-    { name: 'Burglar\'s Pack', cost: 16, contents: 'Backpack, ball bearings, string, bell, 5 candles, crowbar, hammer, 10 pitons, lantern, 2 oil flasks, rations, tinderbox, waterskin, 50 ft rope' },
-    { name: 'Diplomat\'s Pack', cost: 39, contents: 'Chest, 2 cases for maps, fine clothes, ink, pen, lamp, 2 oil flasks, 5 paper sheets, vial of perfume, sealing wax, soap' },
-    { name: 'Dungeoneer\'s Pack', cost: 12, contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft rope' },
-    { name: 'Entertainer\'s Pack', cost: 40, contents: 'Backpack, bedroll, 2 costumes, 5 candles, rations, waterskin, disguise kit' },
-    { name: 'Explorer\'s Pack', cost: 10, contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft rope' },
-    { name: 'Priest\'s Pack', cost: 19, contents: 'Backpack, blanket, 10 candles, tinderbox, alms box, 2 incense blocks, censer, vestments, rations, waterskin' },
-    { name: 'Scholar\'s Pack', cost: 40, contents: 'Backpack, book of lore, ink, pen, 10 parchment sheets, little bag of sand, small knife' }
+    { name: 'Burglar\'s Pack', cost: 16, contents: 'Backpack, ball bearings, string, bell, 5 candles, crowbar, hammer, 10 pitons, lantern, 2 oil flasks, rations, tinderbox, waterskin, 50 ft rope', goodFor: ['rogue'] },
+    { name: 'Diplomat\'s Pack', cost: 39, contents: 'Chest, 2 cases for maps, fine clothes, ink, pen, lamp, 2 oil flasks, 5 paper sheets, vial of perfume, sealing wax, soap', goodFor: ['bard', 'paladin', 'warlock'] },
+    { name: 'Dungeoneer\'s Pack', cost: 12, contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft rope', goodFor: ['fighter', 'barbarian', 'paladin'] },
+    { name: 'Entertainer\'s Pack', cost: 40, contents: 'Backpack, bedroll, 2 costumes, 5 candles, rations, waterskin, disguise kit', goodFor: ['bard'] },
+    { name: 'Explorer\'s Pack', cost: 10, contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft rope', goodFor: ['ranger', 'druid', 'monk'] },
+    { name: 'Priest\'s Pack', cost: 19, contents: 'Backpack, blanket, 10 candles, tinderbox, alms box, 2 incense blocks, censer, vestments, rations, waterskin', goodFor: ['cleric'] },
+    { name: 'Scholar\'s Pack', cost: 40, contents: 'Backpack, book of lore, ink, pen, 10 parchment sheets, little bag of sand, small knife', goodFor: ['wizard', 'sorcerer'] }
   ]
 };
 
@@ -3396,19 +5206,37 @@ const getSpellsForClass = (classId, spellLevel) => {
     .map(([id, spell]) => ({ id, ...spell }));
 };
 
-// Get spellcasting info for a class
+// Get spellcasting info for a class (with level-scaled cantrips/spells known)
 const getSpellcastingInfo = (classId, characterLevel = 1) => {
   const classData = CLASSES[classId];
   if (!classData?.spellcasting) return null;
   
   const sc = classData.spellcasting;
+  const cappedLevel = Math.min(characterLevel, 10);
   
   // Check if spellcasting starts at higher level
   if (sc.startsAtLevel && characterLevel < sc.startsAtLevel) {
     return { ...sc, available: false, startsAt: sc.startsAtLevel };
   }
   
-  return { ...sc, available: true };
+  // Calculate effective level for half-casters (Paladin, Ranger start at level 2)
+  const effectiveLevel = sc.startsAtLevel ? Math.max(1, cappedLevel - sc.startsAtLevel + 1) : cappedLevel;
+  
+  // Get scaled cantrips from table
+  const cantrips = CANTRIPS_KNOWN[classId]?.[cappedLevel] || sc.cantrips || 0;
+  
+  // Get scaled spells known from table (for 'known' and 'pact' casters)
+  let spellsKnown = 0;
+  if (sc.type === 'known' || sc.type === 'pact') {
+    spellsKnown = SPELLS_KNOWN[classId]?.[cappedLevel] || sc.spellsKnown || 0;
+  }
+  
+  return { 
+    ...sc, 
+    available: true,
+    cantrips,
+    spellsKnown
+  };
 };
 
 // ============================================================================
@@ -3792,48 +5620,71 @@ const formatBonusLine = (bonuses) => {
   return parts.length ? parts.join(', ') : 'No ability score bonuses';
 };
 
-// Animated D6 Die Component
+// Animated D6 Die Component (Styled 2D version)
 const AnimatedDie = ({ value, isRolling, isDropped = false }) => {
   const [displayValue, setDisplayValue] = useState(value || 1);
   
+  // During rolling, cycle through random d6 values
   useEffect(() => {
     if (isRolling) {
       const interval = setInterval(() => {
         setDisplayValue(Math.floor(Math.random() * 6) + 1);
-      }, 80);
+      }, 60);
       return () => clearInterval(interval);
-    } else {
+    } else if (value) {
       setDisplayValue(value);
     }
   }, [isRolling, value]);
-
-  const dotPositions = {
-    1: [[50, 50]],
-    2: [[25, 25], [75, 75]],
-    3: [[25, 25], [50, 50], [75, 75]],
-    4: [[25, 25], [75, 25], [25, 75], [75, 75]],
-    5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
-    6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]]
-  };
-
+  
   return (
     <div 
-      className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg transition-all duration-200 ${
-        isDropped 
-          ? 'bg-slate-700/50 border-2 border-red-500/30 opacity-50 scale-90' 
-          : 'bg-gradient-to-br from-white to-slate-200 shadow-lg'
-      } ${isRolling ? 'animate-bounce' : ''}`}
+      className={`relative w-10 h-10 md:w-11 md:h-11 transition-all duration-200 ${
+        isRolling ? 'animate-[diceShake_0.1s_ease-in-out_infinite]' : ''
+      } ${isDropped ? 'opacity-40 scale-90' : ''}`}
     >
-      {dotPositions[displayValue]?.map(([x, y], i) => (
-        <div
-          key={i}
-          className={`absolute w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${isDropped ? 'bg-red-400/50' : 'bg-slate-800'}`}
-          style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}
+      {/* Glow */}
+      <div 
+        className={`absolute -inset-1 transition-opacity ${isRolling ? 'opacity-50 animate-pulse' : 'opacity-20'}`}
+        style={{
+          background: isDropped ? '#ef4444' : '#a78bfa',
+          filter: 'blur(8px)',
+          clipPath: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)',
+        }}
+      />
+      
+      {/* Die face */}
+      <div
+        className="relative w-full h-full flex items-center justify-center"
+        style={{
+          background: isDropped 
+            ? 'linear-gradient(135deg, #6b7280 0%, #374151 100%)'
+            : 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+          clipPath: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Inner border */}
+        <div 
+          className="absolute inset-1 pointer-events-none"
+          style={{
+            border: '1px solid rgba(255,255,255,0.15)',
+            clipPath: 'polygon(15% 15%, 85% 15%, 85% 85%, 15% 85%)',
+          }}
         />
-      ))}
+        
+        {/* Number */}
+        <span 
+          className={`text-lg md:text-xl font-bold ${isDropped ? 'text-gray-400' : 'text-white'}`}
+          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
+        >
+          {displayValue}
+        </span>
+      </div>
+      
+      {/* Dropped strikethrough */}
       {isDropped && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full h-0.5 bg-red-500/60 rotate-45 absolute" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full h-0.5 bg-red-500 rotate-45 absolute" style={{ clipPath: 'polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)' }} />
         </div>
       )}
     </div>
@@ -3884,7 +5735,12 @@ const AbilityRollResult = ({ roll, index, onAssign, assignedTo }) => {
 // Main Ability Score Step
 const AbilityScoreStep = ({ character, updateCharacter }) => {
   const [method, setMethod] = useState(character.abilityMethod || null);
-  const [rolls, setRolls] = useState(character.abilityRolls || []);
+  // Validate and sanitize rolls data from storage
+  const sanitizeRolls = (rawRolls) => {
+    if (!Array.isArray(rawRolls)) return [];
+    return rawRolls.filter(r => r && Array.isArray(r.kept) && Array.isArray(r.all));
+  };
+  const [rolls, setRolls] = useState(sanitizeRolls(character.abilityRolls));
   const [isRolling, setIsRolling] = useState(false);
   const [assignments, setAssignments] = useState(character.abilityAssignments || {}); // Maps ability -> scoreIndex (not value!)
   const [selectedIndex, setSelectedIndex] = useState(null); // Index of selected score, not value
@@ -3911,6 +5767,27 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
   // Saving throws only from primary class per official 5e rules
   const savingThrowOrder = [];
   (primaryClassData?.savingThrows || []).forEach((a) => addUnique(savingThrowOrder, a));
+
+  const smartAssignAbilities = () => {
+    const priorities = [...primaryAbilityOrder, ...savingThrowOrder, ...ABILITY_NAMES].filter((v, i, arr) => v && arr.indexOf(v) === i);
+    const scores = [...STANDARD_ARRAY].sort((a, b) => b - a);
+    const newAssignments = {};
+    const newAbilities = { ...character.abilities };
+    priorities.forEach((ability, idx) => {
+      if (idx < scores.length) {
+        newAssignments[ability] = idx;
+        newAbilities[ability] = scores[idx];
+      }
+    });
+    setMethod('standard');
+    setAssignments(newAssignments);
+    setRolls([]);
+    setSelectedIndex(null);
+    updateCharacter('abilityMethod', 'standard');
+    updateCharacter('abilityAssignments', newAssignments);
+    updateCharacter('abilityRolls', []);
+    updateCharacter('abilities', newAbilities);
+  };
   
   // Calculate unassigned indices from assignments
   const getUnassignedIndices = () => {
@@ -3924,20 +5801,15 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     }
     return [];
   };
-  const [unassignedIndices, setUnassignedIndices] = useState(getUnassignedIndices);
-  
-  // Recalculate unassigned when assignments or rolls change
-  useEffect(() => {
-    setUnassignedIndices(getUnassignedIndices());
-  }, [assignments, rolls, method]);
-  
-  // Get the actual scores array based on method
+
+  // Get array of scores based on method
   const getScoresArray = () => {
     if (method === 'standard') return STANDARD_ARRAY;
-    if (method === 'roll') return rolls.map(r => r.kept.reduce((a, b) => a + b, 0));
+    if (method === 'roll') return rolls.map(r => r?.kept?.reduce((a, b) => a + b, 0) ?? 10);
     return [];
   };
   const scoresArray = getScoresArray();
+  const unassignedIndices = getUnassignedIndices();
 
   // Calculate point buy remaining
   const pointBuySpent = Object.values(pointBuyScores).reduce((sum, score) => sum + POINT_BUY_COSTS[score], 0);
@@ -3987,7 +5859,6 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
     updateCharacter('abilities', defaultAbilities);
     setAssignments({});
     setSelectedIndex(null);
-    setUnassignedIndices([]);
     setRolls([]);
     setPointBuyScores({
       strength: 8, dexterity: 8, constitution: 8,
@@ -4137,19 +6008,28 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
         <h3 className="text-xl font-bold text-white mb-1">Ability Scores</h3>
         {(primaryClassData || multiclassData.length > 0) && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-slate-500">Saving Throws:</span>
-            {savingThrowOrder.map((st) => (
-              <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
-                {ABILITY_LABELS[st]?.short}
-              </span>
-            ))}
             {primaryAbilityOrder.length > 0 && (
-              <span className="text-slate-600 text-xs ml-2">
-                Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
-              </span>
+              <>
+                <span className="text-slate-500">Primary:</span>
+                {primaryAbilityOrder.map((a) => (
+                  <span key={a} className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs">
+                    {ABILITY_LABELS[a]?.short}
+                  </span>
+                ))}
+              </>
+            )}
+            {savingThrowOrder.length > 0 && (
+              <>
+                <span className="text-slate-500 ml-2">Saves:</span>
+                {savingThrowOrder.map((st) => (
+                  <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
+                    {ABILITY_LABELS[st]?.short}
+                  </span>
+                ))}
+              </>
             )}
             {multiclassData.length > 0 && (
-              <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-full">
+              <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-full ml-2">
                 Multiclass active
               </span>
             )}
@@ -4214,6 +6094,7 @@ const AbilityScoreStep = ({ character, updateCharacter }) => {
           {rolls.length > 0 && !isRolling && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {rolls.map((roll, i) => {
+                if (!roll || !roll.kept || !roll.all) return null;
                 const total = roll.kept.reduce((a, b) => a + b, 0);
                 const assignedAbility = Object.entries(assignments).find(([_, idx]) => idx === i)?.[0];
                 const modifier = getModifier(total);
@@ -4465,6 +6346,140 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
   
   // Initialize ASI choices if not exist
   const asiChoices = character.asiChoices || {};
+
+  const smartFillASI = () => {
+    const primaryTargets = [...primaryAbilityOrder, ...savingThrowOrder, ...ABILITY_NAMES].filter((v, i, arr) => v && arr.indexOf(v) === i);
+    const updated = {};
+    
+    // Analyze build to determine feat vs ASI strategy
+    const classLowerCase = character.class?.toLowerCase() || '';
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
+    const isMartial = ['fighter', 'paladin', 'ranger', 'barbarian', 'monk'].includes(classLowerCase);
+    const isCaster = ['wizard', 'sorcerer', 'warlock', 'cleric', 'druid', 'bard'].includes(classLowerCase);
+    const isHalfCaster = ['paladin', 'ranger'].includes(classLowerCase);
+    const primaryAbility = primaryTargets[0] || 'constitution';
+    const secondaryAbility = primaryTargets[1] || 'constitution';
+    
+    // Calculate current scores considering all previous ASI increases
+    const getCurrentScore = (ability, upToLevel) => {
+      let score = character.abilities?.[ability] || 10;
+      // Add previous ASI bonuses
+      asiLevels.filter(l => l < upToLevel).forEach(l => {
+        const prevChoice = updated[l];
+        if (prevChoice?.type === 'asi' && prevChoice.abilityIncreases) {
+          score += prevChoice.abilityIncreases[ability] || 0;
+        }
+      });
+      return score;
+    };
+    
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    // Build-aware feat selection - returns feat ID (key) not name
+    const getBestFeat = (level, currentPrimaryScore) => {
+      // If primary ability is below 16, always prioritize ASI
+      if (currentPrimaryScore < 16) return null;
+      
+      // Class and build specific feat recommendations (arrays for randomization)
+      const featRecommendations = {
+        // Martial feats
+        fighter: () => {
+          if (fightingStyle === 'great weapon fighting') return pick(['greatWeaponMaster', 'sentinel', 'polearmMaster']);
+          if (fightingStyle === 'archery') return pick(['sharpshooter', 'crossbowExpert', 'alert']);
+          if (fightingStyle === 'dueling' || fightingStyle === 'defense') return pick(['sentinel', 'shieldMaster', 'dualWielder']);
+          return pick(['sentinel', 'alert', 'tough']);
+        },
+        barbarian: () => pick(['greatWeaponMaster', 'tough', 'savageAttacker', 'sentinel']),
+        paladin: () => {
+          if (fightingStyle === 'great weapon fighting') return pick(['greatWeaponMaster', 'polearmMaster', 'sentinel']);
+          return pick(['sentinel', 'shieldMaster', 'lucky']);
+        },
+        ranger: () => {
+          if (fightingStyle === 'archery') return pick(['sharpshooter', 'crossbowExpert', 'alert']);
+          return pick(['alert', 'mobile', 'skulker']);
+        },
+        monk: () => pick(['mobile', 'alert', 'sentinel', 'lucky']),
+        rogue: () => pick(['alert', 'lucky', 'skulker', 'mobile']),
+        
+        // Caster feats
+        wizard: () => pick(['warCaster', 'alert', 'lucky', 'resilient']),
+        sorcerer: () => pick(['warCaster', 'alert', 'lucky', 'elementalAdept']),
+        warlock: () => pick(['warCaster', 'alert', 'spellSniper', 'lucky']),
+        cleric: () => pick(['warCaster', 'resilient', 'lucky', 'alert']),
+        druid: () => pick(['warCaster', 'resilient', 'alert', 'observant']),
+        bard: () => pick(['warCaster', 'lucky', 'alert', 'inspiring Leader'])
+      };
+      
+      // Randomly decide between feat and ASI when primary is high enough
+      // Higher scores = higher chance of choosing feat
+      const featChance = currentPrimaryScore >= 20 ? 0.8 : currentPrimaryScore >= 18 ? 0.5 : 0.2;
+      if (Math.random() > featChance) return null; // Choose ASI instead
+      
+      const getFeat = featRecommendations[classLowerCase];
+      if (getFeat) return getFeat();
+      
+      // Generic good feats for any class
+      return pick(['lucky', 'alert', 'tough', 'resilient']);
+    };
+    
+    asiLevels.forEach(level => {
+      const currentPrimaryScore = getCurrentScore(primaryAbility, level);
+      const currentSecondaryScore = getCurrentScore(secondaryAbility, level);
+      const recommendedFeat = getBestFeat(level, currentPrimaryScore);
+      
+      if (recommendedFeat && currentPrimaryScore >= 18 && FEATS[recommendedFeat]) {
+        // Choose feat if primary is strong enough and feat exists
+        updated[level] = {
+          type: 'feat',
+          feat: recommendedFeat
+        };
+      } else {
+        // ASI logic - prioritize getting primary to 20, then secondary
+        const abilityIncreases = {};
+        
+        if (currentPrimaryScore < 20) {
+          // How much can we increase primary?
+          const primaryNeeded = Math.min(2, 20 - currentPrimaryScore);
+          abilityIncreases[primaryAbility] = primaryNeeded;
+          
+          // If we only needed 1 for primary (odd score), put 1 in secondary
+          if (primaryNeeded === 1 && currentSecondaryScore < 20) {
+            abilityIncreases[secondaryAbility] = 1;
+          }
+        } else if (currentSecondaryScore < 20) {
+          // Primary is maxed, work on secondary
+          const secondaryNeeded = Math.min(2, 20 - currentSecondaryScore);
+          abilityIncreases[secondaryAbility] = secondaryNeeded;
+          
+          // If we only needed 1 for secondary, put 1 in constitution
+          if (secondaryNeeded === 1) {
+            const conScore = getCurrentScore('constitution', level);
+            if (conScore < 20 && secondaryAbility !== 'constitution') {
+              abilityIncreases['constitution'] = 1;
+            }
+          }
+        } else {
+          // Both primary and secondary maxed, boost constitution or another useful ability
+          const conScore = getCurrentScore('constitution', level);
+          const otherAbilities = ABILITY_NAMES.filter(a => a !== primaryAbility && a !== secondaryAbility);
+          const randomOther = otherAbilities[Math.floor(Math.random() * otherAbilities.length)];
+          if (conScore < 20 && Math.random() > 0.3) {
+            abilityIncreases['constitution'] = Math.min(2, 20 - conScore);
+          } else {
+            // Everything important is maxed, just put +2 in something useful
+            abilityIncreases[primaryAbility] = 2; // Will be ignored if at 20 but shows intent
+          }
+        }
+        
+        updated[level] = {
+          type: 'asi',
+          abilityIncreases
+        };
+      }
+    });
+    
+    updateCharacter('asiChoices', updated);
+  };
   
   const updateASIChoice = (level, choice) => {
     const updated = { ...asiChoices, [level]: choice };
@@ -4484,26 +6499,37 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
   
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Ability Score Improvements & Feats</h3>
-        <p className="text-sm text-slate-500">
-          At certain levels, you can choose to increase ability scores OR gain a feat.
-        </p>
-        {(primaryClassData || multiclassData.length > 0) && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-slate-500">Saving Throws:</span>
-            {savingThrowOrder.map((st) => (
-              <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
-                {ABILITY_LABELS[st]?.short}
-              </span>
-            ))}
-            {primaryAbilityOrder.length > 0 && (
-              <span className="text-slate-600 text-xs ml-2">
-                Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
-              </span>
-            )}
-          </div>
-        )}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Ability Score Improvements & Feats</h3>
+          <p className="text-sm text-slate-500">
+            At certain levels, you can choose to increase ability scores OR gain a feat.
+          </p>
+          {(primaryClassData || multiclassData.length > 0) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-slate-500">Saving Throws:</span>
+              {savingThrowOrder.map((st) => (
+                <span key={st} className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs">
+                  {ABILITY_LABELS[st]?.short}
+                </span>
+              ))}
+              {primaryAbilityOrder.length > 0 && (
+                <span className="text-slate-600 text-xs ml-2">
+                  Primary: {primaryAbilityOrder.map((a) => ABILITY_LABELS[a]?.short).join('/')}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={smartFillASI}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+          title="Automatically fill ASI choices to boost your primary ability"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
       
       {asiLevels.map(level => {
@@ -4762,11 +6788,27 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Race</h3>
-        <p className="text-sm text-slate-500">
-          Racial bonuses are shown as a preview here. Your base ability scores stay unchanged.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Race</h3>
+          <p className="text-sm text-slate-500">
+            Racial bonuses are shown as a preview here. Your base ability scores stay unchanged.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            const { race, subrace } = smartChooseRace(character);
+            updateCharacter('race', race);
+            updateCharacter('subrace', subrace);
+            setShowAllRaces(false);
+          }}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+          title="Automatically select a synergistic race based on your class"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -4800,6 +6842,7 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
           <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 ${character.race && !showAllRaces ? 'hidden md:grid' : ''}`}>
             {Object.entries(RACES).map(([id, race]) => {
               const isSelected = selectedRaceId === id;
+              const synergy = character.class ? getClassSynergy(character.class, id) : null;
               return (
                 <button
                   key={id}
@@ -4807,15 +6850,31 @@ const RaceSelectionStep = ({ character, updateCharacter }) => {
                   className={`p-4 rounded-xl border text-left transition-all ${
                     isSelected
                       ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10'
-                      : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
+                      : synergy?.type === 'synergy'
+                        ? 'bg-green-500/10 border-green-500/30 hover:border-green-500/50'
+                        : synergy?.type === 'recommended'
+                          ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
+                          : 'bg-slate-800/50 border-slate-700/50 hover:border-indigo-500/30'
                   }`}
                 >
-                  <Tooltip content={race.description}>
+                  <Tooltip content={synergy ? `${race.description}\n\n💡 ${synergy.text}` : race.description}>
                     <div className="flex items-start gap-3">
                       <div className="text-2xl">{RACE_ICONS[id] || '🧙'}</div>
-                      <div className="min-w-0">
-                        <div className={`font-semibold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
-                          {race.name}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-semibold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>
+                            {race.name}
+                          </span>
+                          {synergy?.type === 'synergy' && (
+                            <span className="px-1 py-0.5 rounded text-[9px] bg-green-500/20 text-green-400 font-medium flex items-center gap-0.5">
+                              <Lightbulb className="w-2.5 h-2.5" /> Synergy
+                            </span>
+                          )}
+                          {synergy?.type === 'recommended' && (
+                            <span className="px-1 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-400 font-medium">
+                              ✓ Good
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10px] text-slate-500 mt-0.5">
                           Hover for details
@@ -5095,8 +7154,6 @@ const ReviewStep = ({
   onRandomize,
   onUndo,
   canUndo,
-  randomWithMulticlass,
-  setRandomWithMulticlass,
   onGoToStep,
   resetCharacter
 }) => {
@@ -5166,7 +7223,21 @@ const ReviewStep = ({
     return out;
   })();
 
-  const spellcastingInfo = character.class ? getSpellcastingInfo(character.class, totalLevel) : null;
+  // Get spellcasting info - check primary class and all multiclass entries
+  const spellcastingInfo = (() => {
+    // Check primary class first
+    const primaryInfo = character.class ? getSpellcastingInfo(character.class, primaryLevel) : null;
+    if (primaryInfo?.available) return primaryInfo;
+    
+    // Check multiclass entries
+    if (character.multiclass && character.multiclass.length > 0) {
+      for (const mc of character.multiclass) {
+        const mcInfo = getSpellcastingInfo(mc.classId, mc.level);
+        if (mcInfo?.available) return mcInfo;
+      }
+    }
+    return primaryInfo; // Return primary even if null/not available
+  })();
 
   // Calculate derived stats
   const proficiencyBonus = Math.ceil(totalLevel / 4) + 1; // +2 at level 1
@@ -5583,15 +7654,33 @@ const ReviewStep = ({
   };
 
   // Generate beautiful PDF character sheet
-  const generatePDFExport = () => {
+  const generatePDFExport = (printerFriendly = false) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
+    const maxY = pageHeight - 20; // Reserve space for footer
     let y = margin;
+    let currentPage = 1;
 
-    // Color palette - Dark Fantasy RPG theme
-    const colors = {
+    // Color palette - Dark Fantasy RPG theme OR Printer-Friendly B&W
+    const colors = printerFriendly ? {
+      // Printer-friendly black & white
+      pageBg: [255, 255, 255],
+      cardBg: [250, 250, 250],
+      gold: [60, 60, 60],
+      lightGold: [30, 30, 30],
+      bronze: [80, 80, 80],
+      darkPurple: [200, 200, 200],
+      headerBg: [230, 230, 230],
+      accentPurple: [80, 80, 80],
+      textLight: [20, 20, 20],
+      textMuted: [100, 100, 100],
+      textGold: [40, 40, 40],
+      silver: [60, 60, 60],
+      accentBlue: [60, 60, 60],
+      accentRed: [60, 60, 60]
+    } : {
       // Background colors
       pageBg: [35, 32, 45],           // Dark slate purple
       cardBg: [45, 42, 58],           // Slightly lighter card background
@@ -5613,12 +7702,65 @@ const ReviewStep = ({
       accentRed: [220, 100, 100]
     };
 
+    // Helper to check if we need a new page and add one
+    // Returns true if page was added
+    const checkPageBreak = (requiredSpace) => {
+      if (y + requiredSpace > maxY) {
+        addFooter(currentPage);
+        doc.addPage();
+        currentPage++;
+        y = margin;
+        addDecorativeBorder();
+        return true;
+      }
+      return false;
+    };
+    
+    // Check if section should move to next page (prevents orphaned content)
+    // Only moves the ENTIRE section if there's not enough room
+    const checkSectionBreak = (estimatedHeight, sectionName) => {
+      const remainingSpace = maxY - y;
+      // If we can't fit at least 40% of the content, move to next page
+      if (remainingSpace < Math.min(estimatedHeight * 0.4, 40)) {
+        // Add "continued on next page" note
+        doc.setFontSize(9);
+        doc.setFont('times', 'italic');
+        doc.setTextColor(...colors.textMuted);
+        doc.text(`${sectionName} on next page...`, margin + 3, maxY - 5);
+        
+        addFooter(currentPage);
+        doc.addPage();
+        currentPage++;
+        y = margin;
+        addDecorativeBorder();
+        return true;
+      }
+      return false;
+    };
+
+    // Footer helper
+    const addFooter = (pageNum) => {
+      doc.setFontSize(9);
+      doc.setFont('times', 'italic');
+      doc.setTextColor(...colors.lightGold);
+      doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      // Decorative footer line
+      doc.setDrawColor(...colors.gold);
+      doc.setLineWidth(0.5);
+      doc.line(margin + 5, pageHeight - 13, pageWidth - margin - 5, pageHeight - 13);
+    };
+
     // Dark background
     doc.setFillColor(...colors.pageBg);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
     // Helper functions
     const addDecorativeBorder = () => {
+      // Dark background for new pages
+      doc.setFillColor(...colors.pageBg);
+      doc.rect(0, 0, pageWidth, pageHeight, 'F');
+      
       // Outer decorative border
       doc.setDrawColor(...colors.gold);
       doc.setLineWidth(2);
@@ -5634,9 +7776,9 @@ const ReviewStep = ({
       [
         [8, 8], [pageWidth - 8, 8], 
         [8, pageHeight - 8], [pageWidth - 8, pageHeight - 8]
-      ].forEach(([x, y]) => {
+      ].forEach(([x, yPos]) => {
         doc.setFillColor(...colors.gold);
-        doc.circle(x, y, 1.5, 'F');
+        doc.circle(x, yPos, 1.5, 'F');
       });
     };
 
@@ -5714,7 +7856,7 @@ const ReviewStep = ({
       const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
       doc.setFontSize(14);
       doc.setFont('times', 'bold');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(...(printerFriendly ? [0, 0, 0] : [255, 255, 255]));
       const modWidth = doc.getTextWidth(modStr);
       doc.text(modStr, x + (width - modWidth) / 2, circleY + 2);
       
@@ -5747,12 +7889,14 @@ const ReviewStep = ({
       doc.setLineWidth(0.5);
       doc.line(margin, yPos + headerHeight, pageWidth - margin, yPos + headerHeight);
       
-      // Section title with drop shadow
+      // Section title with drop shadow (skip shadow for printer-friendly)
       doc.setFontSize(12);
       doc.setFont('times', 'bold');
-      // Shadow
-      doc.setTextColor(20, 15, 30);
-      doc.text(text, margin + 4.5, yPos + 6);
+      if (!printerFriendly) {
+        // Shadow
+        doc.setTextColor(20, 15, 30);
+        doc.text(text, margin + 4.5, yPos + 6);
+      }
       // Main text
       doc.setTextColor(...colors.lightGold);
       doc.text(text, margin + 4, yPos + 5.5);
@@ -5796,9 +7940,11 @@ const ReviewStep = ({
     const charName = character.name || 'Unnamed Character';
     const nameWidth = doc.getTextWidth(charName);
     const nameX = (pageWidth - nameWidth) / 2;
-    // Subtle shadow
-    doc.setTextColor(25, 22, 35);
-    doc.text(charName, nameX + 0.5, margin + 11.5);
+    // Subtle shadow (skip for printer-friendly)
+    if (!printerFriendly) {
+      doc.setTextColor(25, 22, 35);
+      doc.text(charName, nameX + 0.5, margin + 11.5);
+    }
     // Main text
     doc.setTextColor(...colors.lightGold);
     doc.text(charName, nameX, margin + 11);
@@ -5821,11 +7967,31 @@ const ReviewStep = ({
     } else {
       classText = primaryClassText;
     }
-    doc.setFontSize(14);
+    
+    // Auto-size class text to fit within margins
+    let classFontSize = 14;
     doc.setFont('times', 'italic');
-    doc.setTextColor(255, 255, 255);
-    const classWidth = doc.getTextWidth(classText);
-    doc.text(classText, (pageWidth - classWidth) / 2, margin + 18);
+    doc.setFontSize(classFontSize);
+    let classWidth = doc.getTextWidth(classText);
+    const maxClassWidth = pageWidth - 2 * margin - 20; // Leave some padding
+    
+    while (classWidth > maxClassWidth && classFontSize > 8) {
+      classFontSize -= 1;
+      doc.setFontSize(classFontSize);
+      classWidth = doc.getTextWidth(classText);
+    }
+    
+    // If still too long, wrap to multiple lines
+    doc.setTextColor(...(printerFriendly ? [0, 0, 0] : [255, 255, 255]));
+    if (classWidth > maxClassWidth) {
+      const classLines = doc.splitTextToSize(classText, maxClassWidth);
+      classLines.forEach((line, idx) => {
+        const lineWidth = doc.getTextWidth(line);
+        doc.text(line, (pageWidth - lineWidth) / 2, margin + 18 + idx * 4);
+      });
+    } else {
+      doc.text(classText, (pageWidth - classWidth) / 2, margin + 18);
+    }
     
     // Race & Background - centered below class
     const raceText = `${race?.name || 'Unknown'}${subrace ? ` (${subrace.name})` : ''}`;
@@ -5893,89 +8059,117 @@ const ReviewStep = ({
 
     y += 34;
 
-    // ============== PROFICIENCIES ==============
-    y = drawSectionHeader('PROFICIENCIES', y) + 3;
+    // ============== PROFICIENCIES (4-column compact layout) ==============
+    y = drawSectionHeader('PROFICIENCIES', y) + 2;
     
-    // Three-column layout: Saves | Skills (2 cols)
-    const saveColX = margin + 3;
-    const skillCol1X = margin + 55;
-    const skillCol2X = margin + 115;
+    // 4 columns: Saves | Skills | Languages | Physical
+    const profColWidth = (pageWidth - 2 * margin - 9) / 4;
+    const profCol1X = margin + 2;  // Saves
+    const profCol2X = margin + 2 + profColWidth + 3;  // Skills
+    const profCol3X = margin + 2 + 2 * (profColWidth + 3);  // Languages
+    const profCol4X = margin + 2 + 3 * (profColWidth + 3);  // Physical
     
-    // Saving Throws header
-    doc.setFontSize(11);
+    const profStartY = y;
+    let maxProfY = profStartY;
+    
+    // Column 1: Saving Throws
+    doc.setFontSize(8);
     doc.setFont('times', 'bold');
     doc.setTextColor(...colors.accentPurple);
-    doc.text('SAVING THROWS', saveColX, y);
-    doc.setDrawColor(...colors.gold);
-    doc.setLineWidth(0.5);
-    doc.line(saveColX, y + 1.5, saveColX + 38, y + 1.5);
+    doc.text('SAVES', profCol1X, profStartY);
     
-    // Skills header
-    doc.setTextColor(...colors.accentPurple);
-    doc.text('SKILLS', skillCol1X, y);
-    doc.line(skillCol1X, y + 1.5, skillCol1X + 18, y + 1.5);
-    
-    const profStartY = y + 6;
-    
-    // Saving Throws list
-    doc.setFontSize(11);
+    let saveY = profStartY + 4;
+    doc.setFontSize(8);
     doc.setFont('times', 'normal');
     doc.setTextColor(...colors.textLight);
-    
-    proficiencies.savingThrows.forEach((save, idx) => {
+    proficiencies.savingThrows.forEach((save) => {
       doc.setFillColor(...colors.gold);
-      doc.circle(saveColX + 2, profStartY + idx * 5, 1, 'F');
-      doc.text(save, saveColX + 6, profStartY + idx * 5 + 1.5);
+      doc.circle(profCol1X + 1, saveY, 0.8, 'F');
+      doc.text(save, profCol1X + 4, saveY + 1);
+      saveY += 3.5;
     });
+    maxProfY = Math.max(maxProfY, saveY);
     
-    // Skills - two columns
-    const skillsPerCol = Math.ceil(proficiencies.skills.length / 2);
-    proficiencies.skills.forEach((skill, idx) => {
-      const col = idx < skillsPerCol ? 0 : 1;
-      const rowIdx = col === 0 ? idx : idx - skillsPerCol;
-      const skillX = col === 0 ? skillCol1X : skillCol2X;
-      const bulletY = profStartY + rowIdx * 5;
-      
+    // Column 2: Skills
+    doc.setFontSize(8);
+    doc.setFont('times', 'bold');
+    doc.setTextColor(...colors.accentPurple);
+    doc.text('SKILLS', profCol2X, profStartY);
+    
+    let skillY = profStartY + 4;
+    doc.setFontSize(8);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...colors.textLight);
+    proficiencies.skills.forEach((skill) => {
       doc.setFillColor(...colors.accentPurple);
-      doc.circle(skillX + 2, bulletY, 1, 'F');
-      doc.text(skill, skillX + 6, bulletY + 1.5);
+      doc.circle(profCol2X + 1, skillY, 0.8, 'F');
+      doc.text(skill, profCol2X + 4, skillY + 1);
+      skillY += 3.5;
     });
+    maxProfY = Math.max(maxProfY, skillY);
     
-    y = profStartY + Math.max(proficiencies.savingThrows.length * 5, skillsPerCol * 5) + 2;
+    // Column 3: Languages
+    doc.setFontSize(8);
+    doc.setFont('times', 'bold');
+    doc.setTextColor(...colors.accentPurple);
+    doc.text('LANGUAGES', profCol3X, profStartY);
     
-    // Languages
-    if (proficiencies.languages && proficiencies.languages.length > 0) {
-      doc.setFontSize(10);
+    let langY = profStartY + 4;
+    doc.setFontSize(8);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...colors.textLight);
+    (proficiencies.languages || []).forEach((lang) => {
+      doc.setFillColor(...colors.gold);
+      doc.circle(profCol3X + 1, langY, 0.8, 'F');
+      doc.text(lang, profCol3X + 4, langY + 1);
+      langY += 3.5;
+    });
+    maxProfY = Math.max(maxProfY, langY);
+    
+    // Column 4: Physical Characteristics
+    const physCharsLocal = character.physicalCharacteristics || {};
+    const physTraits = [
+      physCharsLocal.age ? `Age: ${physCharsLocal.age}` : null,
+      physCharsLocal.height ? `Ht: ${physCharsLocal.height}` : null,
+      physCharsLocal.weight ? `Wt: ${physCharsLocal.weight}` : null,
+      physCharsLocal.eyes ? `Eyes: ${physCharsLocal.eyes}` : null,
+      physCharsLocal.hair ? `Hair: ${physCharsLocal.hair}` : null,
+      physCharsLocal.skin ? `Skin: ${physCharsLocal.skin}` : null
+    ].filter(Boolean);
+    
+    if (physTraits.length > 0) {
+      doc.setFontSize(8);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
-      doc.text('LANGUAGES', margin + 3, y);
+      doc.text('PHYSICAL', profCol4X, profStartY);
       
-      doc.setDrawColor(...colors.gold);
-      doc.line(margin + 3, y + 1.5, margin + 33, y + 1.5);
-      
-      y += 5;
-      doc.setFontSize(11);
+      let physY = profStartY + 4;
+      doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
-      const langText = proficiencies.languages.join(', ');
-      const langLines = doc.splitTextToSize(langText, pageWidth - 2 * margin - 6);
-      langLines.forEach((line, idx) => {
-        doc.text(line, margin + 5, y + idx * 4);
+      physTraits.forEach((trait) => {
+        doc.text(trait, profCol4X + 1, physY + 1);
+        physY += 3.5;
       });
-      y += langLines.length * 4 + 2;
+      maxProfY = Math.max(maxProfY, physY);
     }
-
-    y += 3;
-
-    // ============== TWO-COLUMN LAYOUT FOR BOTTOM SECTIONS ==============
-    const twoColStartY = y;
-    const bottomLeftX = margin;
-    const bottomRightX = pageWidth / 2 + 4;
-    const leftColWidth = pageWidth / 2 - margin - 6;
-    const rightColWidth = pageWidth / 2 - margin - 6;
     
-    let leftY = twoColStartY;
-    let rightY = twoColStartY;
+    y = maxProfY + 3;
+
+    // ============== THREE-COLUMN LAYOUT FOR BOTTOM SECTIONS ==============
+    const threeColStartY = y;
+    const colGap = 4;
+    const colWidth = (pageWidth - 2 * margin - 2 * colGap) / 3;
+    
+    // Column X positions
+    const col1X = margin;
+    const col2X = margin + colWidth + colGap;
+    const col3X = margin + 2 * (colWidth + colGap);
+    
+    // Track Y position for each column
+    let col1Y = threeColStartY;
+    let col2Y = threeColStartY;
+    let col3Y = threeColStartY;
     
     // Column header helper - now supports optional right-side text
     const drawColumnHeader = (text, yPos, xPos, width, rightText = null) => {
@@ -5987,26 +8181,20 @@ const ReviewStep = ({
       doc.line(xPos, yPos, xPos + width, yPos);
       doc.setLineWidth(0.4);
       doc.line(xPos, yPos + headerHeight, xPos + width, yPos + headerHeight);
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.lightGold);
-      doc.text(text, xPos + 3, yPos + 4.5);
+      doc.text(text, xPos + 2, yPos + 4.5);
       // Optional right-side text (for GP, etc)
       if (rightText) {
         doc.setFont('times', 'bolditalic');
         const rtWidth = doc.getTextWidth(rightText);
-        doc.text(rightText, xPos + width - rtWidth - 3, yPos + 4.5);
+        doc.text(rightText, xPos + width - rtWidth - 2, yPos + 4.5);
       }
       return yPos + headerHeight + 2;
     };
 
-    // ============== LEFT COLUMN: FEATURES & TRAITS ==============
-    leftY = drawColumnHeader('FEATURES & TRAITS', leftY, bottomLeftX, leftColWidth);
-    
-    doc.setFontSize(9);
-    doc.setFont('times', 'normal');
-    doc.setTextColor(...colors.textLight);
-    
+    // ============== COLUMN 1: FEATURES + CLASS OPTIONS ==============
     const features = [];
     if (race?.traits) features.push(...race.traits.map(t => ({ text: t, type: 'Racial' })));
     
@@ -6027,32 +8215,126 @@ const ReviewStep = ({
     
     if (background?.feature) features.push({ text: background.feature, type: 'Background' });
     
-    features.forEach((feat, idx) => {
+    col1Y = drawColumnHeader('FEATURES & TRAITS', col1Y, col1X, colWidth);
+    
+    doc.setFontSize(8);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(...colors.textLight);
+    
+    features.forEach((feat) => {
+      const wrappedText = doc.splitTextToSize(feat.text, colWidth - 15);
+      const requiredSpace = Math.max(4, wrappedText.length * 3) + 1;
+      
+      if (col1Y + requiredSpace > maxY) return;
+      
       // Type badge
       doc.setFillColor(...colors.headerBg);
-      doc.setFontSize(6);
-      const typeWidth = doc.getTextWidth(feat.type) + 3;
-      doc.roundedRect(bottomLeftX + 1, leftY - 1, typeWidth, 4, 0.8, 0.8, 'F');
+      doc.setFontSize(5);
+      const typeWidth = doc.getTextWidth(feat.type) + 2;
+      doc.roundedRect(col1X + 1, col1Y - 1, typeWidth, 3.5, 0.5, 0.5, 'F');
       
       doc.setFont('times', 'bold');
-      doc.setTextColor(255, 255, 255);
-      doc.text(feat.type, bottomLeftX + 2.5, leftY + 1.5);
+      doc.setTextColor(...(printerFriendly ? [0, 0, 0] : [255, 255, 255]));
+      doc.text(feat.type, col1X + 2, col1Y + 1);
       
-      // Feature text
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
-      const wrappedText = doc.splitTextToSize(feat.text, leftColWidth - typeWidth - 4);
       wrappedText.forEach((line, lineIdx) => {
-        doc.text(line, bottomLeftX + typeWidth + 3, leftY + 1.5 + lineIdx * 3.5);
+        doc.text(line, col1X + typeWidth + 2, col1Y + 1 + lineIdx * 3);
       });
       
-      leftY += Math.max(4, wrappedText.length * 3.5) + 1;
+      col1Y += requiredSpace;
     });
     
-    leftY += 3;
+    // Level Advancements in column 1
+    const levelAdvancements = [];
+    if (character.asiChoices && Object.keys(character.asiChoices).length > 0) {
+      Object.entries(character.asiChoices).forEach(([level, choice]) => {
+        if (!choice) return;
+        if (choice.type === 'feat' && choice.feat) {
+          const featData = FEATS[choice.feat];
+          if (featData) levelAdvancements.push(`Lv${level}: ${featData.name}`);
+        } else if (choice.type === 'asi') {
+          if (choice.asiType === 'single' && choice.singleAbility) {
+            levelAdvancements.push(`Lv${level}: ${ABILITY_LABELS[choice.singleAbility]?.short || choice.singleAbility} +2`);
+          } else if (choice.asiType === 'double' && Array.isArray(choice.doubleAbilities)) {
+            const asiText = choice.doubleAbilities.map(a => `${ABILITY_LABELS[a]?.short || a} +1`).join(', ');
+            if (asiText) levelAdvancements.push(`Lv${level}: ${asiText}`);
+          }
+        }
+      });
+    }
+    
+    if (levelAdvancements.length > 0 && col1Y + 10 < maxY) {
+      col1Y += 2;
+      col1Y = drawColumnHeader('LEVEL ADV', col1Y, col1X, colWidth);
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      levelAdvancements.forEach((adv) => {
+        if (col1Y + 4 > maxY) return;
+        doc.setFillColor(...colors.accentPurple);
+        doc.circle(col1X + 2, col1Y + 1, 0.8, 'F');
+        doc.text(adv, col1X + 5, col1Y + 2);
+        col1Y += 4;
+      });
+    }
+    
+    // Battle Master Maneuvers in column 1
+    if (character.battleMasterManeuvers && character.battleMasterManeuvers.length > 0 && col1Y + 10 < maxY) {
+      col1Y += 2;
+      col1Y = drawColumnHeader('MANEUVERS', col1Y, col1X, colWidth);
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      character.battleMasterManeuvers.forEach((manKey) => {
+        if (col1Y + 4 > maxY) return;
+        const man = BATTLE_MASTER_MANEUVERS[manKey];
+        if (man) {
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(col1X + 2, col1Y + 1, 0.8, 'F');
+          doc.text(man.name, col1X + 5, col1Y + 2);
+          col1Y += 4;
+        }
+      });
+    }
+    
+    // Fighting Style in column 1 (compact)
+    if (character.fightingStyle && col1Y + 6 < maxY) {
+      const fs = FIGHTING_STYLES[character.fightingStyle];
+      if (fs) {
+        col1Y += 2;
+        doc.setFontSize(7);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.textMuted);
+        doc.text('STYLE:', col1X + 2, col1Y + 1);
+        doc.setTextColor(...colors.textGold);
+        doc.text(fs.name, col1X + 16, col1Y + 1);
+        col1Y += 4;
+      }
+    }
+    
+    // Metamagic in column 1
+    if (character.metamagicOptions && character.metamagicOptions.length > 0 && col1Y + 10 < maxY) {
+      col1Y += 2;
+      col1Y = drawColumnHeader('METAMAGIC', col1Y, col1X, colWidth);
+      doc.setFontSize(8);
+      doc.setFont('times', 'normal');
+      doc.setTextColor(...colors.textLight);
+      character.metamagicOptions.forEach((metaKey) => {
+        if (col1Y + 4 > maxY) return;
+        const meta = METAMAGIC_OPTIONS[metaKey];
+        if (meta) {
+          doc.setFillColor(...colors.accentPurple);
+          doc.circle(col1X + 2, col1Y + 1, 0.8, 'F');
+          doc.text(`${meta.name} (${meta.cost}SP)`, col1X + 5, col1Y + 2);
+          col1Y += 4;
+        }
+      });
+    }
 
-    // ============== LEFT COLUMN: EQUIPMENT ==============
+    // ============== COLUMN 2: EQUIPMENT ONLY ==============
     if (equipment.length > 0) {
       // Calculate total GP from equipment items (background gold) + character.gold
       let totalGP = character.gold || 0;
@@ -6067,256 +8349,167 @@ const ReviewStep = ({
       
       // Show GP in header if any
       const gpText = totalGP > 0 ? `${totalGP} GP` : null;
-      leftY = drawColumnHeader('EQUIPMENT', leftY, bottomLeftX, leftColWidth, gpText) + 1;
+      col2Y = drawColumnHeader('EQUIPMENT', col2Y, col2X, colWidth, gpText);
       
-      doc.setFontSize(10);
+      doc.setFontSize(7);
       doc.setFont('times', 'normal');
       doc.setTextColor(...colors.textLight);
+      
+      // 2-column layout for equipment within column 2
+      const equipColWidth = (colWidth - 4) / 2;
+      const equipCol1X = col2X + 1;
+      const equipCol2X = col2X + equipColWidth + 3;
+      let equipCol1Y = col2Y;
+      let equipCol2Y = col2Y;
       
       equipmentNoGP.forEach((item, idx) => {
-        const cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
+        let cleanItem = item.replace(/\s*\(if proficient\)/gi, '');
+        // Shorten long items - remove parenthetical details first
+        const maxItemWidth = equipColWidth - 4;
+        let displayItem = cleanItem;
+        // If too long, try removing parenthetical content
+        if (doc.getTextWidth(displayItem) > maxItemWidth && displayItem.includes('(')) {
+          displayItem = displayItem.replace(/\s*\([^)]+\)/g, '').trim();
+        }
+        // If still too long, truncate
+        while (doc.getTextWidth(displayItem) > maxItemWidth && displayItem.length > 5) {
+          displayItem = displayItem.slice(0, -1);
+        }
+        if (displayItem !== cleanItem && !cleanItem.startsWith(displayItem.replace('…', ''))) {
+          displayItem = displayItem.trim();
+        } else if (displayItem.length < cleanItem.length && !displayItem.endsWith('…')) {
+          displayItem = displayItem.trim() + '…';
+        }
         
-        doc.setFillColor(...colors.gold);
-        doc.circle(bottomLeftX + 3, leftY + 1, 1, 'F');
-        doc.text(cleanItem, bottomLeftX + 7, leftY + 2);
-        leftY += 4.5;
-      });
-    }
-    
-    // ============== LEFT COLUMN: LEVEL ADVANCEMENTS ==============
-    const levelAdvancements = [];
-    if (character.feats && character.feats.length > 0) {
-      character.feats.forEach(feat => {
-        if (feat.choices && feat.choices.length > 0) {
-          feat.choices.forEach(choice => {
-            if (choice.type === 'feat' && choice.featId) {
-              const featData = FEATS.find(f => f.id === choice.featId);
-              if (featData) {
-                levelAdvancements.push(`Lv${feat.level}: ${featData.name}`);
-              }
-            } else if (choice.type === 'asi') {
-              const asiText = Object.entries(choice.abilities || {})
-                .filter(([_, val]) => val > 0)
-                .map(([ability, val]) => `${ABILITY_LABELS[ability].short} +${val}`)
-                .join(', ');
-              if (asiText) {
-                levelAdvancements.push(`Lv${feat.level}: ${asiText}`);
-              }
-            }
-          });
+        // Alternate between columns
+        if (idx % 2 === 0) {
+          if (equipCol1Y + 3.5 > maxY) return;
+          doc.setFillColor(...colors.gold);
+          doc.circle(equipCol1X + 1, equipCol1Y + 0.8, 0.6, 'F');
+          doc.text(displayItem, equipCol1X + 3, equipCol1Y + 1.5);
+          equipCol1Y += 3.5;
+        } else {
+          if (equipCol2Y + 3.5 > maxY) return;
+          doc.setFillColor(...colors.gold);
+          doc.circle(equipCol2X + 1, equipCol2Y + 0.8, 0.6, 'F');
+          doc.text(displayItem, equipCol2X + 3, equipCol2Y + 1.5);
+          equipCol2Y += 3.5;
         }
       });
-    }
-    
-    if (levelAdvancements.length > 0) {
-      leftY += 3;
-      leftY = drawColumnHeader('LEVEL ADV', leftY, bottomLeftX, leftColWidth) + 1;
       
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      
-      levelAdvancements.forEach((adv) => {
-        doc.setFillColor(...colors.accentPurple);
-        doc.circle(bottomLeftX + 3, leftY + 1, 1, 'F');
-        doc.text(adv, bottomLeftX + 7, leftY + 2);
-        leftY += 4.5;
-      });
-    }
-    
-    // ============== LEFT COLUMN: FIGHTING STYLE ==============
-    if (character.fightingStyle) {
-      leftY += 3;
-      doc.setFontSize(10);
-      doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.accentPurple);
-      doc.text('FIGHTING STYLE', bottomLeftX + 2, leftY);
-      leftY += 4;
-      
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      const styleName = FIGHTING_STYLES[character.fightingStyle]?.name || character.fightingStyle;
-      doc.text(styleName, bottomLeftX + 5, leftY);
-      leftY += 5;
-    }
-    
-    // ============== LEFT COLUMN: PHYSICAL CHARACTERISTICS ==============
-    const hasPhysicalTraits = character.age || character.height || character.weight || 
-                              character.eyes || character.hair || character.skin;
-    
-    if (hasPhysicalTraits) {
-      leftY += 3;
-      const physicalTraits = [
-        { label: 'Age', value: character.age },
-        { label: 'Height', value: character.height },
-        { label: 'Weight', value: character.weight },
-        { label: 'Eyes', value: character.eyes },
-        { label: 'Hair', value: character.hair },
-        { label: 'Skin', value: character.skin }
-      ].filter(t => t.value);
-      
-      doc.setFontSize(8);
-      doc.setFont('times', 'bolditalic');
-      doc.setTextColor(...colors.textMuted);
-      
-      physicalTraits.forEach((trait, idx) => {
-        if (idx % 2 === 0 && idx > 0) leftY += 6;
-        const xPos = bottomLeftX + (idx % 2) * (leftColWidth / 2);
-        doc.text(trait.label.toUpperCase(), xPos, leftY);
-        doc.setFontSize(9);
-        doc.setFont('times', 'normal');
-        doc.setTextColor(...colors.textLight);
-        doc.text(String(trait.value), xPos, leftY + 3);
-        doc.setFontSize(8);
-        doc.setFont('times', 'bolditalic');
-        doc.setTextColor(...colors.textMuted);
-      });
+      col2Y = Math.max(equipCol1Y, equipCol2Y) + 1;
     }
 
-    // ============== RIGHT COLUMN: SPELLCASTING ==============
+    // ============== COLUMN 3: SPELLCASTING ==============
     if (spellcastingInfo?.available && (spellList.cantrips.length > 0 || spellList.spells.length > 0)) {
-      rightY = drawColumnHeader('SPELLCASTING', rightY, bottomRightX, rightColWidth) + 2;
-      
-      // Multiclass disclaimer
-      if (character.multiclass && character.multiclass.length > 1) {
-        const hasMultipleCasters = character.multiclass.filter(mc => {
-          const mcClass = CLASSES[mc.classId];
-          return mcClass?.spellcasting;
-        }).length > 1;
-        
-        if (hasMultipleCasters) {
-          doc.setFontSize(8);
-          doc.setFont('times', 'italic');
-          doc.setTextColor(...colors.accentBlue);
-          doc.text('Multiclass spells: primary class only', bottomRightX + 2, rightY);
-          rightY += 4;
-        }
-      }
+      col3Y = drawColumnHeader('SPELLCASTING', col3Y, col3X, colWidth);
+      col3Y += 1; // Extra space after header
       
       const spellDC = 8 + proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       const spellAttack = proficiencyBonus + getModifier(finalAbilities[spellcastingInfo.ability]);
       
-      // Spell stats - smaller font to prevent clipping
-      doc.setFontSize(10);
+      // Spell stats
+      doc.setFontSize(7);
       doc.setFont('times', 'bold');
       doc.setTextColor(...colors.accentPurple);
-      doc.text(`DC ${spellDC} • ATK +${spellAttack} • ${ABILITY_LABELS[spellcastingInfo.ability]?.name.toUpperCase()}`, bottomRightX + 2, rightY);
-      rightY += 6;
+      doc.text(`DC ${spellDC} • ATK +${spellAttack}`, col3X + 2, col3Y);
+      col3Y += 4;
       
       // Spell slots
       const slots = getSpellSlots(character.class, totalLevel);
       if (slots) {
-        doc.setFontSize(10);
-        doc.setFont('times', 'bold');
-        doc.setTextColor(...colors.accentPurple);
-        doc.text('Slots:', bottomRightX + 2, rightY);
-        rightY += 4;
-        
-        doc.setFontSize(10);
+        doc.setFontSize(7);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
         
         if (character.class === 'warlock') {
-          doc.text(`${slots.slots} × Lv${slots.level}`, bottomRightX + 4, rightY);
-          rightY += 5;
+          doc.text(`Pact: ${slots.slots}×Lv${slots.level}`, col3X + 2, col3Y);
+          col3Y += 4;
         } else {
           const slotText = Object.entries(slots)
             .filter(([_, count]) => count > 0)
             .map(([lvl, count]) => `${lvl}:${count}`)
-            .join(' • ');
+            .join(' ');
           if (slotText) {
-            const wrappedSlots = doc.splitTextToSize(slotText, rightColWidth - 6);
+            const wrappedSlots = doc.splitTextToSize(slotText, colWidth - 4);
             wrappedSlots.forEach((line, idx) => {
-              doc.text(line, bottomRightX + 4, rightY + idx * 4);
+              doc.text(line, col3X + 2, col3Y + idx * 3);
             });
-            rightY += wrappedSlots.length * 4 + 2;
+            col3Y += wrappedSlots.length * 3 + 1;
           }
         }
       }
       
       // Cantrips
       if (spellList.cantrips.length > 0) {
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('CANTRIPS', bottomRightX + 2, rightY);
-        rightY += 5;
+        doc.text('Cantrips', col3X + 2, col3Y);
+        col3Y += 4;
         
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
-        spellList.cantrips.forEach((spell, idx) => {
+        spellList.cantrips.forEach((spell) => {
+          if (col3Y + 4 > maxY) return;
           doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
-          doc.text(spell, bottomRightX + 8, rightY + 2);
-          rightY += 4.5;
+          doc.circle(col3X + 3, col3Y + 0.5, 0.8, 'F');
+          doc.text(spell, col3X + 6, col3Y + 1.5);
+          col3Y += 3.5;
         });
-        rightY += 2;
+        col3Y += 2;
       }
       
       // Prepared/Known Spells
       if (spellList.spells.length > 0) {
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'bold');
         doc.setTextColor(...colors.accentPurple);
-        doc.text('KNOWN/PREPARED', bottomRightX + 2, rightY);
-        rightY += 5;
+        doc.text('Spells', col3X + 2, col3Y);
+        col3Y += 4;
         
-        doc.setFontSize(10);
+        doc.setFontSize(8);
         doc.setFont('times', 'normal');
         doc.setTextColor(...colors.textLight);
-        spellList.spells.forEach((spell, idx) => {
+        spellList.spells.forEach((spell) => {
+          if (col3Y + 4 > maxY) return;
           doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
-          doc.text(spell, bottomRightX + 8, rightY + 2);
-          rightY += 4.5;
+          doc.circle(col3X + 3, col3Y + 0.5, 0.8, 'F');
+          doc.text(spell, col3X + 6, col3Y + 1.5);
+          col3Y += 3.5;
         });
       }
     }
     
-    // ============== RIGHT COLUMN: ELDRITCH INVOCATIONS ==============
+    // Eldritch Invocations in column 3 (right after spells)
     if (character.warlockInvocations && character.warlockInvocations.length > 0) {
-      rightY += 4;
-      doc.setFontSize(10);
-      doc.setFont('times', 'bold');
-      doc.setTextColor(...colors.accentPurple);
-      doc.text('INVOCATIONS', bottomRightX + 2, rightY);
-      rightY += 5;
-      
-      doc.setFontSize(10);
-      doc.setFont('times', 'normal');
-      doc.setTextColor(...colors.textLight);
-      character.warlockInvocations.forEach((invKey) => {
-        const invocation = WARLOCK_INVOCATIONS[invKey];
-        if (invocation) {
-          doc.setFillColor(...colors.accentPurple);
-          doc.circle(bottomRightX + 4, rightY + 0.5, 1, 'F');
-          doc.text(invocation.name, bottomRightX + 8, rightY + 2);
-          rightY += 4.5;
-        }
-      });
+      if (col3Y + 10 < maxY) {
+        col3Y += 3;
+        doc.setFontSize(8);
+        doc.setFont('times', 'bold');
+        doc.setTextColor(...colors.accentPurple);
+        doc.text('Invocations', col3X + 2, col3Y);
+        col3Y += 4;
+        
+        doc.setFontSize(8);
+        doc.setFont('times', 'normal');
+        doc.setTextColor(...colors.textLight);
+        character.warlockInvocations.forEach((invKey) => {
+          if (col3Y + 4 > maxY) return;
+          const invocation = WARLOCK_INVOCATIONS[invKey];
+          if (invocation) {
+            doc.setFillColor(...colors.accentPurple);
+            doc.circle(col3X + 3, col3Y + 0.5, 0.8, 'F');
+            doc.text(invocation.name, col3X + 6, col3Y + 1.5);
+            col3Y += 3.5;
+          }
+        });
+      }
     }
-
-    // Footer
-    const addFooter = (pageNum) => {
-      doc.setFontSize(9);
-      doc.setFont('times', 'italic');
-      doc.setTextColor(...colors.lightGold);
-      doc.text('Generated by AetherNames Character Creator', pageWidth / 2, pageHeight - 10, { align: 'center' });
-      
-      // Decorative footer line
-      doc.setDrawColor(...colors.gold);
-      doc.setLineWidth(0.5);
-      doc.line(margin + 5, pageHeight - 13, pageWidth - margin - 5, pageHeight - 13);
-    };
     
-    // Add footer to all pages
-    const totalPages = doc.internal.pages.length - 1;
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      addFooter(i);
-    }
+    // Add footer to current page
+    addFooter(currentPage);
     
     return doc;
   };
@@ -6327,8 +8520,15 @@ const ReviewStep = ({
       
       if (format === 'pdf') {
         // Generate and download PDF
-        const doc = generatePDFExport();
+        const doc = generatePDFExport(false);
         doc.save(`${character.name || 'character'}.pdf`);
+        return;
+      }
+      
+      if (format === 'pdf-print') {
+        // Generate and download printer-friendly PDF
+        const doc = generatePDFExport(true);
+        doc.save(`${character.name || 'character'}-printable.pdf`);
         return;
       }
       
@@ -6363,6 +8563,53 @@ const ReviewStep = ({
     navigator.clipboard.writeText(generateTextExport());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Generate share text (condensed version)
+  const generateShareText = () => {
+    const charName = character.name || 'Unnamed';
+    const raceName = character.race ? (character.subrace && RACES[character.race]?.subraces?.[character.subrace]?.name 
+      ? RACES[character.race].subraces[character.subrace].name 
+      : RACES[character.race]?.name) : 'Unknown';
+    const className = character.class ? CLASSES[character.class]?.name : 'Unknown';
+    const subclassName = character.subclass && classData?.subclasses?.[character.subclass] 
+      ? classData.subclasses[character.subclass].name : '';
+    const level = character.level || 1;
+    
+    return `⚔️ ${charName}\n📜 Level ${level} ${raceName} ${className}${subclassName ? ` (${subclassName})` : ''}\n\nCreated with AetherNames Character Creator`;
+  };
+
+  // Share to Twitter
+  const shareToTwitter = () => {
+    const text = encodeURIComponent(generateShareText() + '\n\nhttps://aethernames.com');
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+  };
+
+  // Share to Discord (copy formatted text)
+  const [discordCopied, setDiscordCopied] = useState(false);
+  const shareToDiscord = () => {
+    const charName = character.name || 'Unnamed';
+    const raceName = character.race ? (character.subrace && RACES[character.race]?.subraces?.[character.subrace]?.name 
+      ? RACES[character.race].subraces[character.subrace].name 
+      : RACES[character.race]?.name) : 'Unknown';
+    const className = character.class ? CLASSES[character.class]?.name : 'Unknown';
+    const subclassName = character.subclass && classData?.subclasses?.[character.subclass] 
+      ? classData.subclasses[character.subclass].name : '';
+    const level = character.level || 1;
+    
+    // Discord markdown formatted
+    const discordText = `**${charName}**
+Level ${level} ${raceName} ${className}${subclassName ? ` (${subclassName})` : ''}
+
+__Ability Scores__
+STR: ${finalAbilities?.strength || 10} | DEX: ${finalAbilities?.dexterity || 10} | CON: ${finalAbilities?.constitution || 10}
+INT: ${finalAbilities?.intelligence || 10} | WIS: ${finalAbilities?.wisdom || 10} | CHA: ${finalAbilities?.charisma || 10}
+
+*Created with AetherNames* • https://aethernames.com`;
+    
+    navigator.clipboard.writeText(discordText);
+    setDiscordCopied(true);
+    setTimeout(() => setDiscordCopied(false), 2000);
   };
 
   // Check completion status
@@ -6475,32 +8722,10 @@ const ReviewStep = ({
             {completionCount}/{totalRequired} Complete
           </div>
 
-          <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
-            <input
-              type="checkbox"
-              checked={!!randomWithMulticlass}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                if (typeof setRandomWithMulticlass === 'function') {
-                  setRandomWithMulticlass(checked);
-                }
-                if (checked && (character.level || 1) < 2) {
-                  updateCharacter('level', 2);
-                }
-              }}
-              className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-            />
-            <span>Multiclass (Random)</span>
-          </label>
-          <button
-            onClick={onRandomize}
-            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
-            title="Generate a new random character"
-          >
-            <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
-            <span className="hidden xs:inline">Randomize</span>
-            <span className="xs:hidden">Random</span>
-          </button>
+          <RandomizerPopover 
+            onRandomize={(level, multiclass) => onRandomize(level, multiclass)}
+            currentLevel={character.level || 1}
+          />
           {/* Undo */}
           <button
             onClick={onUndo}
@@ -7509,6 +9734,13 @@ const ReviewStep = ({
             Download PDF
           </button>
           <button
+            onClick={() => handleExport('pdf-print')}
+            className="px-4 py-2 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 hover:bg-white transition-colors flex items-center gap-2 font-medium"
+          >
+            <FileText className="w-4 h-4" />
+            Print-Friendly
+          </button>
+          <button
             onClick={() => handleExport('txt')}
             className="px-4 py-2 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 hover:bg-slate-600/50 transition-colors flex items-center gap-2"
           >
@@ -7534,6 +9766,35 @@ const ReviewStep = ({
             {copied ? 'Copied!' : 'Copy to Clipboard'}
           </button>
         </div>
+        
+        {/* Share Section */}
+        <div className="mt-3 pt-3 border-t border-slate-700/50">
+          <h5 className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+            <Share2 className="w-3.5 h-3.5" />
+            Share Your Character
+          </h5>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={shareToTwitter}
+              className="px-3 py-1.5 rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-300 hover:bg-sky-500/30 transition-colors flex items-center gap-2 text-sm"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Twitter/X
+            </button>
+            <button
+              onClick={shareToDiscord}
+              className={`px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-2 text-sm ${
+                discordCopied
+                  ? 'bg-green-500/20 border-green-500/50 text-green-300'
+                  : 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/30'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              {discordCopied ? 'Copied for Discord!' : 'Discord'}
+            </button>
+          </div>
+        </div>
+        
         <div className="mt-3 pt-3 border-t border-slate-700/50">
           <button
             onClick={resetCharacter}
@@ -7628,6 +9889,57 @@ const MulticlassStep = ({ character, updateCharacter }) => {
   
   // Get all available classes except the primary class
   const availableClasses = Object.entries(CLASSES).filter(([id]) => id !== character.class);
+
+  const smartAddMulticlass = () => {
+    if (totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2) return null;
+    const synergies = {
+      fighter: ['rogue', 'warlock', 'wizard', 'cleric'],
+      rogue: ['fighter', 'ranger', 'warlock', 'bard'],
+      paladin: ['warlock', 'sorcerer', 'bard'],
+      warlock: ['paladin', 'sorcerer', 'fighter', 'bard'],
+      sorcerer: ['warlock', 'paladin', 'bard'],
+      bard: ['warlock', 'paladin', 'rogue', 'sorcerer'],
+      ranger: ['rogue', 'fighter', 'druid', 'cleric'],
+      cleric: ['fighter', 'paladin', 'druid'],
+      druid: ['cleric', 'monk', 'ranger'],
+      monk: ['rogue', 'fighter', 'druid'],
+      barbarian: ['fighter', 'rogue', 'druid'],
+      wizard: ['fighter', 'cleric']
+    };
+    const primaryId = character.class;
+    const already = multiclassEntries.map(mc => mc.classId);
+    const choices = (synergies[primaryId] || availableClasses.map(([id]) => id))
+      .filter(id => id !== primaryId && !already.includes(id));
+    if (choices.length === 0) return null;
+    const pickId = choices[Math.floor(Math.random() * choices.length)];
+    
+    // Also pick a subclass for the multiclass
+    const mcClassData = CLASSES[pickId];
+    let mcSubclass = null;
+    if (mcClassData && mcClassData.subclassLevel <= totalLevel) {
+      const subclasses = SUBCLASSES[pickId];
+      if (subclasses) {
+        const subclassKeys = Object.keys(subclasses);
+        mcSubclass = subclassKeys[Math.floor(Math.random() * subclassKeys.length)];
+      }
+    }
+    
+    // Pick fighting style for multiclass if applicable
+    let mcFightingStyle = null;
+    if (['fighter', 'paladin', 'ranger'].includes(pickId)) {
+      const styles = Object.keys(FIGHTING_STYLES);
+      mcFightingStyle = styles[Math.floor(Math.random() * styles.length)];
+    }
+    
+    const newMulticlass = [...multiclassEntries, { 
+      classId: pickId, 
+      level: 1, 
+      subclass: mcSubclass,
+      fightingStyle: mcFightingStyle
+    }];
+    updateCharacter('multiclass', newMulticlass);
+    return { classId: pickId, subclass: mcSubclass, fightingStyle: mcFightingStyle };
+  };
   
   // Multi-class rules: need to be at least level 2 to multi-class
   if (totalLevel < 2) {
@@ -7677,11 +9989,27 @@ const MulticlassStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Multi-classing (Optional)</h3>
-        <p className="text-sm text-slate-500">
-          Split your total character level across multiple classes. Your primary class gets any unassigned levels.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Multi-classing (Optional)</h3>
+          <p className="text-sm text-slate-500">
+            Split your total character level across multiple classes. Your primary class gets any unassigned levels.
+          </p>
+        </div>
+        <button
+          onClick={smartAddMulticlass}
+          disabled={totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
+            totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2
+              ? 'bg-slate-800/50 border border-slate-700/50 text-slate-500 cursor-not-allowed'
+              : 'bg-cyan-600/80 hover:bg-cyan-500/80 text-white'
+          }`}
+          title="Add a synergistic multiclass automatically"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
 
       {/* Level Summary */}
@@ -7837,6 +10165,91 @@ const MulticlassStep = ({ character, updateCharacter }) => {
           <h4 className="text-sm font-semibold text-slate-300 mb-3">
             {multiclassEntries.length === 0 ? 'Add a Class' : 'Add Another Class'}
           </h4>
+          
+          {/* Synergy Recommendations */}
+          {primaryClass && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-300">Synergy Recommendations</span>
+              </div>
+              <div className="text-xs text-slate-400 space-y-1">
+                {(() => {
+                  // Define multiclass synergies
+                  const synergies = {
+                    fighter: ['rogue', 'warlock', 'wizard', 'cleric'],
+                    rogue: ['fighter', 'ranger', 'warlock', 'bard'],
+                    paladin: ['warlock', 'sorcerer', 'bard'],
+                    warlock: ['paladin', 'sorcerer', 'fighter', 'bard'],
+                    sorcerer: ['warlock', 'paladin', 'bard'],
+                    bard: ['warlock', 'paladin', 'rogue', 'sorcerer'],
+                    ranger: ['rogue', 'fighter', 'druid', 'cleric'],
+                    cleric: ['fighter', 'paladin', 'druid'],
+                    druid: ['cleric', 'monk', 'ranger'],
+                    monk: ['rogue', 'fighter', 'druid'],
+                    barbarian: ['fighter', 'rogue', 'druid'],
+                    wizard: ['fighter', 'cleric', 'artificer']
+                  };
+                  const reasons = {
+                    'fighter-rogue': 'Action Surge + Sneak Attack for devastating burst damage',
+                    'fighter-warlock': 'Eldritch Blast + Action Surge, Hexblade for CHA attacks',
+                    'fighter-wizard': 'War Magic + Heavy Armor for a tanky spellcaster',
+                    'fighter-cleric': 'Divine Strike + Fighting Style, heavy armor proficiency',
+                    'rogue-fighter': 'Extra Attack helps land Sneak Attack, Action Surge',
+                    'rogue-ranger': 'Nature skills + Hunter\'s Mark + Sneak Attack',
+                    'rogue-warlock': 'Devil\'s Sight + darkness, Hexblade for CHA attacks',
+                    'rogue-bard': 'Expertise stacking, Jack of All Trades, spellcasting',
+                    'paladin-warlock': 'Hexblade: CHA attacks + smite slots on short rest',
+                    'paladin-sorcerer': 'Quicken Spell + smites, more spell slots',
+                    'paladin-bard': 'Inspirations + healing + smite fuel',
+                    'warlock-sorcerer': 'Quicken Eldritch Blast, font of magic flexibility',
+                    'warlock-bard': 'Short rest slots + Bardic Inspiration',
+                    'warlock-fighter': 'Hexblade + Action Surge + Eldritch Smite',
+                    'sorcerer-warlock': 'Coffeelock: convert short rest slots to sorcery points',
+                    'sorcerer-bard': 'Metamagic + Bardic spells, great face character',
+                    'bard-warlock': 'Hex + Bardic Inspiration, short rest synergy',
+                    'bard-paladin': 'CHA synergy, healing + smites',
+                    'bard-rogue': 'Double Expertise, Jack of All Trades',
+                    'ranger-rogue': 'Hunter\'s Mark + Sneak Attack, great scouts',
+                    'ranger-fighter': 'Fighting Style + Extra Attack progression',
+                    'ranger-druid': 'Nature casting synergy, Wild Shape utility',
+                    'ranger-cleric': 'Healing + nature spells, divine ranger',
+                    'cleric-fighter': 'Heavy armor + healing + Spirit Guardians',
+                    'cleric-druid': 'Full WIS caster with Wild Shape utility',
+                    'cleric-paladin': 'Channel Divinity options, smite flexibility',
+                    'druid-cleric': 'WIS synergy, expanded healing options',
+                    'druid-monk': 'WIS synergy, Unarmored Defense in Wild Shape',
+                    'druid-ranger': 'Nature spell overlap, tracking abilities',
+                    'monk-rogue': 'Mobile melee, bonus action flexibility',
+                    'monk-fighter': 'Action Surge + Flurry, Fighting Style',
+                    'monk-druid': 'Wild Shape + Martial Arts (certain forms)',
+                    'barbarian-fighter': 'Rage + Action Surge, multiple Extra Attacks',
+                    'barbarian-rogue': 'Reckless Attack = easy Sneak Attack',
+                    'barbarian-druid': 'Rage in Wild Shape for massive HP',
+                    'wizard-fighter': 'Bladesinger or War Magic + armor/weapons',
+                    'wizard-cleric': 'Expanded ritual casting, armor proficiency'
+                  };
+                  
+                  const primaryId = character.class;
+                  const recs = synergies[primaryId] || [];
+                  const alreadyTaken = multiclassEntries.map(mc => mc.classId);
+                  
+                  return recs.filter(r => !alreadyTaken.includes(r)).slice(0, 3).map(recId => {
+                    const key = `${primaryId}-${recId}`;
+                    const reason = reasons[key] || 'Good synergy';
+                    return (
+                      <div key={recId} className="flex items-center gap-2">
+                        <span className="text-emerald-400">{CLASS_ICONS[recId] || '⚔️'}</span>
+                        <span className="text-emerald-200 font-medium">{CLASSES[recId]?.name}:</span>
+                        <span>{reason}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
             {availableClasses.map(([classId, classData]) => {
               const isAlreadySelected = multiclassEntries.some(mc => mc.classId === classId);
@@ -7900,30 +10313,275 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const [showConcentrationOnly, setShowConcentrationOnly] = useState(false);
   const [selectedSchools, setSelectedSchools] = useState(new Set());
 
-  // Use the primary class spellcasting if available; otherwise fall back to the first spellcasting multiclass.
-  const getSpellcastingClassId = () => {
-    if (spellcastingInfo?.available) return classId;
+  // Get all spellcasting classes (primary + multiclass)
+  const getSpellcastingClasses = () => {
+    const classes = [];
+    
+    // Check primary class
+    if (classId && spellcastingInfo?.available) {
+      const multiclassLevelSum = (character.multiclass || []).reduce((sum, mc) => sum + (Number(mc?.level) || 0), 0);
+      const primaryLevel = Math.max(1, (character.level || 1) - multiclassLevelSum);
+      const info = getSpellcastingInfo(classId, primaryLevel);
+      if (info?.available) {
+        classes.push({ classId, level: primaryLevel, info });
+      }
+    }
+    
+    // Check multiclass
     for (const mc of character.multiclass || []) {
       if (!mc?.classId) continue;
-      const mcSpellcasting = getSpellcastingInfo(mc.classId, character.level);
-      if (mcSpellcasting?.available) return mc.classId;
+      const mcInfo = getSpellcastingInfo(mc.classId, mc.level);
+      if (mcInfo?.available) {
+        classes.push({ classId: mc.classId, level: mc.level, info: mcInfo });
+      }
     }
-    return classId;
+    
+    return classes;
+  };
+  
+  const spellcastingClasses = getSpellcastingClasses();
+  const hasSpellcasting = spellcastingClasses.length > 0;
+  const isMulticlassCaster = spellcastingClasses.length > 1;
+
+  // Smart spell selection based on class, level, and build
+  const autoSelectSpells = () => {
+    if (!hasSpellcasting) return;
+    
+    const classLower = character.class?.toLowerCase() || '';
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
+    const level = character.level || 1;
+    
+    // Define spell priorities for each class - most important spells first
+    const classSpellPriorities = {
+      // Cantrip priorities by class
+      cantrips: {
+        wizard: ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'shockingGrasp'],
+        sorcerer: ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'rayOfFrost'],
+        warlock: ['eldritchBlast', 'mageHand', 'prestidigitation', 'minorIllusion', 'chillTouch'],
+        cleric: ['sacredFlame', 'guidance', 'thaumaturgy', 'spareTheDying', 'light', 'mending'],
+        druid: ['produceFlame', 'guidance', 'druidcraft', 'shillelagh', 'thornWhip', 'resistance'],
+        bard: ['viciousMockery', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'message'],
+        paladin: [],
+        ranger: []
+      },
+      // Level 1 spell priorities by class
+      level1: {
+        wizard: ['mageArmor', 'shield', 'magicMissile', 'detectMagic', 'findFamiliar', 'sleep', 'burningHands'],
+        sorcerer: ['mageArmor', 'shield', 'magicMissile', 'detectMagic', 'sleep', 'burningHands', 'chromationOrb'],
+        warlock: ['hex', 'armorOfAgathys', 'hellishRebuke', 'charmPerson', 'expeditiousRetreat'],
+        cleric: ['healingWord', 'bless', 'cureWounds', 'guidingBolt', 'detectMagic', 'sanctuary', 'shieldOfFaith'],
+        druid: ['healingWord', 'goodberry', 'entangle', 'faerieFire', 'cureWounds', 'fogCloud'],
+        bard: ['healingWord', 'faerieFire', 'dissonantWhispers', 'heroism', 'sleep', 'cureWounds'],
+        paladin: ['bless', 'cureWounds', 'divineFavor', 'shieldOfFaith', 'compelledDuel'],
+        ranger: ['huntersMark', 'goodberry', 'cureWounds', 'fogCloud', 'alarm']
+      },
+      // Level 2 spell priorities by class
+      level2: {
+        wizard: ['invisibility', 'mistyStep', 'web', 'holdPerson', 'scorchingRay', 'blur'],
+        sorcerer: ['invisibility', 'mistyStep', 'holdPerson', 'scorchingRay', 'blur', 'enhanceAbility'],
+        warlock: ['invisibility', 'mistyStep', 'holdPerson', 'darkness', 'suggestion'],
+        cleric: ['spiritualWeapon', 'lesserRestoration', 'aid', 'holdPerson', 'silenceSpell'],
+        druid: ['moonbeam', 'lesserRestoration', 'barkskin', 'holdPerson', 'enhanceAbility'],
+        bard: ['invisibility', 'holdPerson', 'lesserRestoration', 'enhanceAbility', 'heat_metal'],
+        paladin: ['aid', 'lesserRestoration', 'findSteed', 'brandingSmite'],
+        ranger: ['lesserRestoration', 'silenceSpell', 'barkskin', 'darkvision']
+      },
+      // Level 3 spell priorities 
+      level3: {
+        wizard: ['fireball', 'counterspell', 'fly', 'haste', 'dispelMagic'],
+        sorcerer: ['fireball', 'counterspell', 'fly', 'haste', 'dispelMagic'],
+        warlock: ['counterspell', 'fly', 'hypnoticPattern', 'dispelMagic'],
+        cleric: ['spiritGuardians', 'revivify', 'dispelMagic', 'massCureWounds'],
+        druid: ['callLightning', 'conjureAnimals', 'dispelMagic', 'waterBreathing'],
+        bard: ['hypnoticPattern', 'dispelMagic', 'fear', 'massHealingWord'],
+        paladin: ['revivify', 'dispelMagic', 'auraOfVitality'],
+        ranger: ['conjureAnimals', 'waterBreathing', 'windWall']
+      }
+    };
+    
+    // Helper to shuffle array for randomization
+    const shuffle = (arr) => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+    
+    // Pick cantrips intelligently with randomization
+    const cantripPriority = shuffle(classSpellPriorities.cantrips[classLower] || []);
+    const pickedCantrips = [];
+    
+    // First, add some prioritized cantrips that are available (randomly selected)
+    const numPriorityCantrips = Math.max(1, Math.floor(maxCantrips * 0.6)); // ~60% priority, rest random
+    for (const spellId of cantripPriority) {
+      if (pickedCantrips.length >= numPriorityCantrips) break;
+      const spell = availableCantrips.find(s => s.id === spellId);
+      if (spell && !pickedCantrips.includes(spellId)) {
+        pickedCantrips.push(spellId);
+      }
+    }
+    
+    // Fill remaining slots with shuffled other available cantrips
+    const remainingCantrips = shuffle(availableCantrips.filter(s => !pickedCantrips.includes(s.id)));
+    for (const spell of remainingCantrips) {
+      if (pickedCantrips.length >= maxCantrips) break;
+      pickedCantrips.push(spell.id);
+    }
+    
+    // Pick spells intelligently based on level
+    const pickedSpells = [];
+    const spellsByLevel = {
+      1: availableLevel1Spells,
+      2: availableLevel2Spells,
+      3: availableLevel3Spells,
+      4: availableLevel4Spells,
+      5: availableLevel5Spells,
+      6: availableLevel6Spells,
+      7: availableLevel7Spells,
+      8: availableLevel8Spells,
+      9: availableLevel9Spells
+    };
+    
+    const spellPriorities = {
+      1: classSpellPriorities.level1[classLower] || [],
+      2: classSpellPriorities.level2[classLower] || [],
+      3: classSpellPriorities.level3[classLower] || []
+    };
+    
+    // Distribute spells across levels - prioritize lower levels first for usability
+    // At level 1-2: mostly level 1 spells
+    // At level 3-4: some level 2 spells
+    // At level 5+: distribute across available levels
+    
+    const getSpellDistribution = () => {
+      const distribution = {};
+      let remaining = totalMaxSpells;
+      
+      // Calculate total available spells across all levels
+      let totalAvailable = 0;
+      for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+        totalAvailable += spellsByLevel[spellLevel]?.length || 0;
+      }
+      
+      // If we have fewer spells available than max, distribute evenly
+      if (totalAvailable <= totalMaxSpells) {
+        for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+          const available = spellsByLevel[spellLevel]?.length || 0;
+          distribution[spellLevel] = available;
+        }
+        return distribution;
+      }
+      
+      // Distribute using floor to avoid exceeding total
+      for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+        const available = spellsByLevel[spellLevel]?.length || 0;
+        if (available === 0) continue;
+        
+        // Higher level spells get fewer slots, lower levels get more
+        let slots;
+        if (spellLevel === 1) {
+          slots = Math.min(remaining, Math.floor(totalMaxSpells * 0.45), available);
+        } else if (spellLevel === 2) {
+          slots = Math.min(remaining, Math.floor(totalMaxSpells * 0.3), available);
+        } else {
+          slots = Math.min(remaining, Math.floor(totalMaxSpells * 0.15), available);
+        }
+        
+        // Ensure we get at least 1 spell per level if available and we have room
+        if (slots === 0 && available > 0 && remaining > 0) slots = 1;
+        
+        distribution[spellLevel] = slots;
+        remaining -= slots;
+        
+        if (remaining <= 0) break;
+      }
+      
+      // If we have remaining slots, add more spells from lower levels
+      if (remaining > 0) {
+        for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+          if (remaining <= 0) break;
+          const available = spellsByLevel[spellLevel]?.length || 0;
+          const current = distribution[spellLevel] || 0;
+          const canAdd = Math.min(remaining, available - current);
+          if (canAdd > 0) {
+            distribution[spellLevel] = current + canAdd;
+            remaining -= canAdd;
+          }
+        }
+      }
+      
+      return distribution;
+    };
+    
+    const distribution = getSpellDistribution();
+    
+    // Pick spells for each level, respecting totalMaxSpells
+    for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+      // Check if we've hit the overall limit
+      if (pickedSpells.length >= totalMaxSpells) break;
+      
+      const slotsForLevel = distribution[spellLevel] || 0;
+      if (slotsForLevel === 0) continue;
+      
+      const availableAtLevel = spellsByLevel[spellLevel] || [];
+      const priorityList = shuffle(spellPriorities[spellLevel] || []);
+      
+      let pickedForLevel = 0;
+      const maxForThisLevel = Math.min(slotsForLevel, totalMaxSpells - pickedSpells.length);
+      
+      // Pick some priority spells (randomly ordered)
+      const numPrioritySpells = Math.max(1, Math.floor(maxForThisLevel * 0.5)); // ~50% priority
+      for (const spellId of priorityList) {
+        if (pickedForLevel >= numPrioritySpells || pickedSpells.length >= totalMaxSpells) break;
+        const spell = availableAtLevel.find(s => s.id === spellId);
+        if (spell && !pickedSpells.includes(spellId)) {
+          pickedSpells.push(spellId);
+          pickedForLevel++;
+        }
+      }
+      
+      // Fill remaining with shuffled other available spells
+      const remainingAtLevel = shuffle(availableAtLevel.filter(s => !pickedSpells.includes(s.id)));
+      for (const spell of remainingAtLevel) {
+        if (pickedForLevel >= maxForThisLevel || pickedSpells.length >= totalMaxSpells) break;
+        pickedSpells.push(spell.id);
+        pickedForLevel++;
+      }
+    }
+    
+    setSelectedCantrips(pickedCantrips);
+    setSelectedSpells(pickedSpells);
+    setActiveTab('selected'); // Switch to selected tab to show chosen spells
+  };
+  
+  // Merge available spells from all spellcasting classes (removing duplicates)
+  const getMergedSpells = (spellLevel) => {
+    const spellMap = new Map();
+    for (const sc of spellcastingClasses) {
+      const spells = getSpellsForClass(sc.classId, spellLevel);
+      for (const spell of spells) {
+        if (!spellMap.has(spell.id)) {
+          spellMap.set(spell.id, { ...spell, fromClasses: [sc.classId] });
+        } else {
+          spellMap.get(spell.id).fromClasses.push(sc.classId);
+        }
+      }
+    }
+    return Array.from(spellMap.values());
   };
 
-  const spellcastingClassId = getSpellcastingClassId();
-  const effectiveSpellcasting = spellcastingClassId ? getSpellcastingInfo(spellcastingClassId, character.level) : null;
-
-  const availableCantrips = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 0) : [];
-  const availableLevel1Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 1) : [];
-  const availableLevel2Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 2) : [];
-  const availableLevel3Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 3) : [];
-  const availableLevel4Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 4) : [];
-  const availableLevel5Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 5) : [];
-  const availableLevel6Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 6) : [];
-  const availableLevel7Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 7) : [];
-  const availableLevel8Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 8) : [];
-  const availableLevel9Spells = spellcastingClassId ? getSpellsForClass(spellcastingClassId, 9) : [];
+  const availableCantrips = hasSpellcasting ? getMergedSpells(0) : [];
+  const availableLevel1Spells = hasSpellcasting ? getMergedSpells(1) : [];
+  const availableLevel2Spells = hasSpellcasting ? getMergedSpells(2) : [];
+  const availableLevel3Spells = hasSpellcasting ? getMergedSpells(3) : [];
+  const availableLevel4Spells = hasSpellcasting ? getMergedSpells(4) : [];
+  const availableLevel5Spells = hasSpellcasting ? getMergedSpells(5) : [];
+  const availableLevel6Spells = hasSpellcasting ? getMergedSpells(6) : [];
+  const availableLevel7Spells = hasSpellcasting ? getMergedSpells(7) : [];
+  const availableLevel8Spells = hasSpellcasting ? getMergedSpells(8) : [];
+  const availableLevel9Spells = hasSpellcasting ? getMergedSpells(9) : [];
   
   // Filter spells based on search query and filters
   const filterSpells = (spellObjects) => {
@@ -7983,19 +10641,38 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   };
   const maxSpellLevel = getMaxSpellLevel();
 
-  const maxCantrips = effectiveSpellcasting?.cantrips || 0;
-  const maxSpellsKnown = effectiveSpellcasting?.spellsKnown || 0;
-  const spellcastingType = effectiveSpellcasting?.type; // 'known', 'prepared', 'pact'
+  // Calculate total cantrips from all spellcasting classes
+  const maxCantrips = spellcastingClasses.reduce((total, sc) => total + (sc.info?.cantrips || 0), 0);
   
-  // Calculate max prepared spells for prepared casters (Wizard, Cleric, Druid, Paladin)
-  const getMaxPreparedSpells = () => {
-    if (spellcastingType !== 'prepared') return null;
-    const abilityMod = getModifier(character.abilities[effectiveSpellcasting?.ability] || 10);
-    const level = character.level || 1;
-    // Prepared = ability mod + class level (minimum 1)
-    return Math.max(1, abilityMod + level);
+  // Calculate total spells known/prepared
+  // For multiclass: each class has its own limit based on type
+  const getMaxSpells = () => {
+    let totalKnown = 0;
+    let hasPrepared = false;
+    let maxPrepared = 0;
+    
+    for (const sc of spellcastingClasses) {
+      if (sc.info?.type === 'prepared') {
+        hasPrepared = true;
+        const abilityMod = getModifier(character.abilities[sc.info?.ability] || 10);
+        // Prepared = ability mod + class level (minimum 1)
+        maxPrepared += Math.max(1, abilityMod + sc.level);
+      } else if (sc.info?.type === 'known' || sc.info?.type === 'pact') {
+        totalKnown += sc.info?.spellsKnown || 0;
+      }
+    }
+    
+    return { totalKnown, hasPrepared, maxPrepared };
   };
-  const maxPreparedSpells = getMaxPreparedSpells();
+  
+  const spellLimits = getMaxSpells();
+  const maxSpellsKnown = spellLimits.totalKnown;
+  const maxPreparedSpells = spellLimits.hasPrepared ? spellLimits.maxPrepared : null;
+  const hasKnownCaster = spellLimits.totalKnown > 0;
+  const hasPreparedCaster = spellLimits.hasPrepared;
+  
+  // Total max spells (known + prepared)
+  const totalMaxSpells = (maxSpellsKnown || 0) + (maxPreparedSpells || 0);
 
   // Update character when selections change
   useEffect(() => {
@@ -8018,14 +10695,8 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       if (prev.includes(spellId)) {
         return prev.filter(id => id !== spellId);
       }
-      // For 'known' casters, limit spells
-      if (spellcastingType === 'known' || spellcastingType === 'pact') {
-        if (prev.length >= maxSpellsKnown) return prev;
-      }
-      // For 'prepared' casters, limit to max prepared
-      if (spellcastingType === 'prepared' && maxPreparedSpells !== null) {
-        if (prev.length >= maxPreparedSpells) return prev;
-      }
+      // Check against total max spells
+      if (prev.length >= totalMaxSpells) return prev;
       return [...prev, spellId];
     });
   };
@@ -8055,8 +10726,8 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
     );
   }
 
-  // Non-spellcaster
-  if (!effectiveSpellcasting || !effectiveSpellcasting.available) {
+  // Non-spellcaster (no spellcasting classes at all)
+  if (!hasSpellcasting) {
     return (
       <div className="text-center py-20 text-slate-500">
         <Sword className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -8068,14 +10739,32 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       </div>
     );
   }
+  
+  // Get primary spellcasting ability for display
+  const primarySpellcastingAbility = spellcastingClasses[0]?.info?.ability || 'charisma';
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Spells</h3>
-        <p className="text-sm text-slate-500">
-          Spellcasting Ability: {ABILITY_LABELS[effectiveSpellcasting.ability]?.name}
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Spells</h3>
+          <p className="text-sm text-slate-500">
+            {isMulticlassCaster ? (
+              <>Spellcasting Classes: {spellcastingClasses.map(sc => `${CLASSES[sc.classId]?.name} (${ABILITY_LABELS[sc.info?.ability]?.short})`).join(', ')}</>
+            ) : (
+              <>Spellcasting Ability: {ABILITY_LABELS[primarySpellcastingAbility]?.name}</>
+            )}
+          </p>
+        </div>
+        <button
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          onClick={autoSelectSpells}
+          disabled={!hasSpellcasting || (maxCantrips === 0 && totalMaxSpells === 0)}
+          title="Intelligently select optimal spells for your class and level"
+        >
+          <Sparkles className="w-4 h-4" />
+          Choose for me
+        </button>
       </div>
 
       {/* Spellcasting Summary */}
@@ -8086,35 +10775,35 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
             {selectedCantrips.length} / {maxCantrips}
           </div>
         </div>
-        {(spellcastingType === 'known' || spellcastingType === 'pact') && (
+        {hasKnownCaster && (
           <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
             <div className="text-xs text-indigo-300">Spells Known</div>
             <div className="text-xl font-bold text-indigo-400">
-              {selectedSpells.length} / {maxSpellsKnown}
+              {Math.min(selectedSpells.length, maxSpellsKnown)} / {maxSpellsKnown}
             </div>
           </div>
         )}
-        {spellcastingType === 'prepared' && maxPreparedSpells !== null && (
+        {hasPreparedCaster && maxPreparedSpells !== null && (
           <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
             <div className="text-xs text-indigo-300">Prepared Spells</div>
             <div className="text-xl font-bold text-indigo-400">
-              {selectedSpells.length} / {maxPreparedSpells}
+              {hasKnownCaster ? Math.max(0, selectedSpells.length - maxSpellsKnown) : selectedSpells.length} / {maxPreparedSpells}
             </div>
             <div className="text-xs text-slate-500">
-              {ABILITY_LABELS[effectiveSpellcasting?.ability]?.short} mod ({getModifier(character.abilities[effectiveSpellcasting?.ability])}) + Total Level ({character.level})
+              Ability mod + class level
             </div>
           </div>
         )}
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
           <div className="text-xs text-amber-300">Spell Save DC</div>
           <div className="text-xl font-bold text-amber-400">
-            {8 + 2 + getModifier(character.abilities[effectiveSpellcasting?.ability] || 10)}
+            {8 + 2 + getModifier(character.abilities[primarySpellcastingAbility] || 10)}
           </div>
         </div>
         <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
           <div className="text-xs text-green-300">Spell Attack</div>
           <div className="text-xl font-bold text-green-400">
-            +{2 + getModifier(character.abilities[effectiveSpellcasting?.ability] || 10)}
+            +{2 + getModifier(character.abilities[primarySpellcastingAbility] || 10)}
           </div>
         </div>
       </div>
@@ -8459,9 +11148,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
 
           {activeTab === 'level1' && filteredLevel1Spells.map(spell => {
             const isSelected = selectedSpells.includes(spell.id);
-            const isDisabledKnown = (spellcastingType === 'known' || spellcastingType === 'pact') && selectedSpells.length >= maxSpellsKnown;
-            const isDisabledPrepared = spellcastingType === 'prepared' && maxPreparedSpells !== null && selectedSpells.length >= maxPreparedSpells;
-            const isDisabled = !isSelected && (isDisabledKnown || isDisabledPrepared);
+            const isDisabled = !isSelected && selectedSpells.length >= totalMaxSpells;
             
             return (
               <div
@@ -8530,9 +11217,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
             
             return spellList.map(spell => {
               const isSelected = selectedSpells.includes(spell.id);
-              const isDisabledKnown = (spellcastingType === 'known' || spellcastingType === 'pact') && selectedSpells.length >= maxSpellsKnown;
-              const isDisabledPrepared = spellcastingType === 'prepared' && maxPreparedSpells !== null && selectedSpells.length >= maxPreparedSpells;
-              const isDisabled = !isSelected && (isDisabledKnown || isDisabledPrepared);
+              const isDisabled = !isSelected && selectedSpells.length >= totalMaxSpells;
               
               return (
                 <div
@@ -8583,6 +11268,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
                   <div className="text-xs text-purple-400 font-medium mb-2">Cantrips</div>
                   {selectedCantrips.map(spellId => {
                     const spell = SPELLS[spellId];
+                    if (!spell) return null; // Skip invalid spell IDs
                     return (
                       <div
                         key={spellId}
@@ -8604,9 +11290,10 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
               )}
               {selectedSpells.length > 0 && (
                 <div>
-                  <div className="text-xs text-indigo-400 font-medium mb-2">1st Level Spells</div>
+                  <div className="text-xs text-indigo-400 font-medium mb-2">Spells</div>
                   {selectedSpells.map(spellId => {
                     const spell = SPELLS[spellId];
+                    if (!spell) return null; // Skip invalid spell IDs
                     return (
                       <div
                         key={spellId}
@@ -8687,6 +11374,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   const [method, setMethod] = useState(character.equipmentMethod || null);
   const [equipmentChoices, setEquipmentChoices] = useState(character.equipmentChoices || {});
   const [gold, setGold] = useState(character.gold || 0);
+  const [totalGoldRolled, setTotalGoldRolled] = useState(0);
   const [goldRolled, setGoldRolled] = useState(false);
   const [purchasedItems, setPurchasedItems] = useState(character.purchasedItems || []);
   const [shopCategory, setShopCategory] = useState('weapons');
@@ -8695,6 +11383,343 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   const classEquipment = classId ? STARTING_EQUIPMENT[classId] : null;
   const classGold = classId ? STARTING_GOLD[classId] : null;
   const backgroundEquipment = character.background ? BACKGROUNDS[character.background]?.equipment : null;
+
+  const autoSelectEquipment = () => {
+    if (!classEquipment) return;
+    const choices = {};
+    classEquipment.choices.forEach((_, idx) => {
+      choices[idx] = 0;
+    });
+    setMethod('starting');
+    setEquipmentChoices(choices);
+    setGoldRolled(false);
+    setPurchasedItems([]);
+  };
+
+  const selectIdealEquipment = () => {
+    if (!classGold) return;
+    
+    const classLower = character.class?.toLowerCase() || '';
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
+    const primaryAbility = character.abilities ? 
+      Object.entries(character.abilities).sort((a, b) => b[1] - a[1])[0]?.[0] : 'strength';
+    const dexScore = character.abilities?.dexterity || 10;
+    
+    // Helper to shuffle array for randomization
+    const shuffle = (arr) => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+    
+    // Roll for starting gold
+    let totalGold = 0;
+    for (let i = 0; i < classGold.dice; i++) {
+      totalGold += Math.floor(Math.random() * classGold.sides) + 1;
+    }
+    totalGold *= classGold.multiplier;
+    
+    const items = [];
+    let remainingGold = totalGold;
+    
+    // Helper to check if item is good for this class
+    const isGoodForClass = (item) => {
+      const goodFor = item.goodFor || [];
+      return goodFor.includes('all') || goodFor.includes(classLower);
+    };
+    
+    // Helper to buy item if affordable
+    const tryBuy = (item) => {
+      if (remainingGold >= item.cost && !items.includes(item.name)) {
+        items.push(item.name);
+        remainingGold = Math.round((remainingGold - item.cost) * 100) / 100;
+        return true;
+      }
+      return false;
+    };
+    
+    // === RANDOM BUILD APPROPRIATE: Prioritize good items for this class/build ===
+    
+    // 1. WEAPON - Most important, get the best weapon for the build
+    let idealWeapons = EQUIPMENT_SHOP.weapons.filter(isGoodForClass);
+    
+    // Filter by fighting style
+    if (fightingStyle === 'great weapon fighting') {
+      const heavy = idealWeapons.filter(w => w.properties?.includes('Heavy') || w.properties?.includes('two-handed'));
+      if (heavy.length > 0) idealWeapons = heavy;
+    } else if (fightingStyle === 'archery') {
+      const ranged = idealWeapons.filter(w => w.properties?.includes('Ammunition'));
+      if (ranged.length > 0) idealWeapons = ranged;
+    } else if (fightingStyle === 'dueling' || fightingStyle === 'defense') {
+      const versatile = idealWeapons.filter(w => !w.properties?.includes('two-handed') && !w.properties?.includes('Heavy'));
+      if (versatile.length > 0) idealWeapons = versatile;
+    } else if (primaryAbility === 'dexterity') {
+      const finesse = idealWeapons.filter(w => w.properties?.includes('Finesse') || w.properties?.includes('Ammunition'));
+      if (finesse.length > 0) idealWeapons = finesse;
+    }
+    
+    // Sort by damage (higher is better) and pick best affordable
+    idealWeapons.sort((a, b) => {
+      const dmgA = parseInt(a.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+      const dmgB = parseInt(b.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+      return dmgB - dmgA;
+    });
+    
+    for (const weapon of idealWeapons) {
+      if (tryBuy(weapon)) break;
+    }
+    
+    // 2. ARMOR - Get the best armor the class can use
+    let idealArmor = EQUIPMENT_SHOP.armor.filter(isGoodForClass).filter(a => a.name !== 'Shield');
+    
+    // Sort by AC (higher is better)
+    idealArmor.sort((a, b) => {
+      const acA = parseInt(a.ac?.match(/(\d+)/)?.[1] || '10');
+      const acB = parseInt(b.ac?.match(/(\d+)/)?.[1] || '10');
+      return acB - acA;
+    });
+    
+    // For high DEX characters, prefer armor that benefits from DEX
+    if (dexScore >= 14 && ['rogue', 'ranger', 'monk', 'bard'].includes(classLower)) {
+      const lightArmor = idealArmor.filter(a => a.ac?.includes('+ Dex'));
+      if (lightArmor.length > 0) idealArmor = lightArmor;
+    }
+    
+    for (const armor of idealArmor) {
+      if (tryBuy(armor)) break;
+    }
+    
+    // 3. SHIELD - For non-two-handed builds
+    if (!fightingStyle?.includes('great weapon') && !fightingStyle?.includes('two-weapon')) {
+      if (['fighter', 'paladin', 'cleric', 'ranger'].includes(classLower)) {
+        const shield = EQUIPMENT_SHOP.armor.find(a => a.name === 'Shield');
+        if (shield) tryBuy(shield);
+      }
+    }
+    
+    // 4. Secondary weapon (backup or ranged option)
+    const hasRanged = items.some(i => {
+      const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return w?.properties?.includes('Ammunition');
+    });
+    const hasMelee = items.some(i => {
+      const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return w && !w.properties?.includes('Ammunition');
+    });
+    
+    if (!hasRanged && remainingGold >= 25) {
+      // Get a ranged backup
+      const rangedBackups = shuffle(EQUIPMENT_SHOP.weapons.filter(w => 
+        w.properties?.includes('Ammunition') && w.cost <= remainingGold && isGoodForClass(w)
+      ));
+      if (rangedBackups.length > 0) tryBuy(rangedBackups[0]);
+    }
+    
+    if (!hasMelee && remainingGold >= 10) {
+      // Get a melee backup
+      const meleeBackups = shuffle(EQUIPMENT_SHOP.weapons.filter(w => 
+        !w.properties?.includes('Ammunition') && w.cost <= remainingGold && isGoodForClass(w)
+      ));
+      if (meleeBackups.length > 0) tryBuy(meleeBackups[0]);
+    }
+    
+    // 5. Ammunition if needed
+    if (items.some(i => {
+      const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return w?.properties?.includes('Ammunition');
+    })) {
+      const arrows = EQUIPMENT_SHOP.gear.find(g => g.name === 'Arrows (20)');
+      const bolts = EQUIPMENT_SHOP.gear.find(g => g.name === 'Bolts (20)');
+      if (arrows) tryBuy(arrows);
+      if (bolts) tryBuy(bolts);
+    }
+    
+    // 6. PACK - Get the best pack for the class
+    const packPriority = {
+      wizard: ["Scholar's Pack", "Explorer's Pack"],
+      sorcerer: ["Explorer's Pack", "Dungeoneer's Pack"],
+      warlock: ["Scholar's Pack", "Dungeoneer's Pack"],
+      cleric: ["Priest's Pack", "Explorer's Pack"],
+      druid: ["Explorer's Pack", "Priest's Pack"],
+      bard: ["Entertainer's Pack", "Explorer's Pack"],
+      rogue: ["Burglar's Pack", "Explorer's Pack", "Dungeoneer's Pack"],
+      ranger: ["Explorer's Pack", "Dungeoneer's Pack"],
+      fighter: ["Dungeoneer's Pack", "Explorer's Pack"],
+      paladin: ["Priest's Pack", "Explorer's Pack"],
+      barbarian: ["Explorer's Pack", "Dungeoneer's Pack"],
+      monk: ["Explorer's Pack", "Dungeoneer's Pack"]
+    };
+    
+    const preferredPacks = packPriority[classLower] || ["Explorer's Pack"];
+    for (const packName of preferredPacks) {
+      const pack = EQUIPMENT_SHOP.packs.find(p => p.name === packName);
+      if (pack && tryBuy(pack)) break;
+    }
+    
+    // 7. Class-specific essential gear
+    const classEssentials = {
+      wizard: ['Component Pouch', 'Spellbook'],
+      sorcerer: ['Component Pouch'],
+      warlock: ['Component Pouch'],
+      cleric: ['Holy Symbol'],
+      druid: ['Druidic Focus'],
+      bard: ['Musical Instrument'],
+      rogue: ["Thieves' Tools"],
+      ranger: ['Rope, 50 ft'],
+      fighter: [],
+      paladin: ['Holy Symbol'],
+      barbarian: [],
+      monk: []
+    };
+    
+    for (const gearName of (classEssentials[classLower] || [])) {
+      const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+      if (gear) tryBuy(gear);
+    }
+    
+    // 8. Fill with useful adventuring gear
+    const usefulGear = shuffle(['Rope, 50 ft', 'Torch (10)', 'Tinderbox', 'Rations (10 days)', 'Waterskin', 'Crowbar', 'Grappling Hook', 'Oil (flask)']);
+    for (const gearName of usefulGear) {
+      if (remainingGold < 1) break;
+      const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+      if (gear && !items.includes(gear.name)) {
+        tryBuy(gear);
+      }
+    }
+    
+    // Set state - use 'ideal' method which will show gold/purchased UI
+    setMethod('ideal');
+    setGold(remainingGold);
+    setTotalGoldRolled(totalGold);
+    setGoldRolled(true);
+    setPurchasedItems(items);
+    setEquipmentChoices({});
+  };
+
+  // Roll for gold and smartly buy equipment based on class (with randomization)
+  const rollAndBuySmart = () => {
+    if (!classGold) return;
+    
+    // Helper to shuffle array for randomization
+    const shuffle = (arr) => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+    
+    // Roll for starting gold
+    let totalGold = 0;
+    for (let i = 0; i < classGold.dice; i++) {
+      totalGold += Math.floor(Math.random() * classGold.sides) + 1;
+    }
+    totalGold *= classGold.multiplier;
+    
+    const classLower = character.class?.toLowerCase() || '';
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
+    const items = [];
+    let remainingGold = totalGold;
+    
+    // Helper to check if item is good for this class
+    const isGoodForClass = (item) => {
+      const goodFor = item.goodFor || [];
+      return goodFor.includes('all') || goodFor.includes(classLower);
+    };
+    
+    // Helper to buy item if affordable
+    const tryBuy = (item) => {
+      if (remainingGold >= item.cost && !items.includes(item.name)) {
+        items.push(item.name);
+        remainingGold = Math.round((remainingGold - item.cost) * 100) / 100;
+        return true;
+      }
+      return false;
+    };
+    
+    // Priority 1: Get a pack that's good for the class (randomized from good options)
+    const goodPacks = shuffle(EQUIPMENT_SHOP.packs.filter(isGoodForClass));
+    if (goodPacks.length > 0) {
+      // Try to buy one of the good packs randomly
+      for (const pack of goodPacks) {
+        if (tryBuy(pack)) break;
+      }
+    } else {
+      // Default to a random affordable pack
+      const affordablePacks = shuffle(EQUIPMENT_SHOP.packs.filter(p => p.cost <= remainingGold));
+      if (affordablePacks.length > 0) tryBuy(affordablePacks[0]);
+    }
+    
+    // Priority 2: Get armor appropriate for class (randomized from good options)
+    const goodArmor = shuffle(EQUIPMENT_SHOP.armor.filter(isGoodForClass));
+    for (const armor of goodArmor) {
+      if (tryBuy(armor)) break;
+    }
+    
+    // Priority 3: Get a weapon appropriate for class and fighting style (randomized)
+    let goodWeapons = EQUIPMENT_SHOP.weapons.filter(isGoodForClass);
+    
+    // Fighting style preferences
+    if (fightingStyle === 'great weapon fighting') {
+      const twoHanded = goodWeapons.filter(w => w.properties?.includes('two-handed') || w.properties?.includes('Heavy'));
+      if (twoHanded.length > 0) goodWeapons = twoHanded;
+    } else if (fightingStyle === 'archery') {
+      const ranged = goodWeapons.filter(w => w.properties?.includes('Ammunition'));
+      if (ranged.length > 0) goodWeapons = ranged;
+    } else if (fightingStyle === 'dueling') {
+      const oneHanded = goodWeapons.filter(w => !w.properties?.includes('two-handed'));
+      if (oneHanded.length > 0) goodWeapons = oneHanded;
+    }
+    
+    goodWeapons = shuffle(goodWeapons);
+    for (const weapon of goodWeapons) {
+      if (tryBuy(weapon)) break;
+    }
+    
+    // Priority 4: Shield for classes that benefit (50% chance to add variety)
+    if (['fighter', 'paladin', 'cleric'].includes(classLower) && fightingStyle !== 'great weapon fighting' && Math.random() > 0.5) {
+      const shield = EQUIPMENT_SHOP.armor.find(a => a.name === 'Shield');
+      if (shield) tryBuy(shield);
+    }
+    
+    // Priority 5: Class-specific gear (shuffled)
+    const classGear = shuffle(EQUIPMENT_SHOP.gear.filter(isGoodForClass));
+    for (const gear of classGear) {
+      if (Math.random() > 0.3) tryBuy(gear); // 70% chance to buy each good item
+    }
+    
+    // Priority 6: Ammunition if we have a ranged weapon
+    const hasRanged = items.some(i => {
+      const weapon = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return weapon?.properties?.includes('Ammunition');
+    });
+    if (hasRanged) {
+      const ammo = EQUIPMENT_SHOP.gear.find(g => g.name === 'Arrows (20)' || g.name === 'Bolts (20)');
+      if (ammo) tryBuy(ammo);
+    }
+    
+    // Priority 7: Random basic adventuring gear
+    const basicGear = shuffle(['Backpack', 'Bedroll', 'Rations (10 days)', 'Waterskin', 'Rope, 50 ft', 'Torch (10)', 'Tinderbox', 'Crowbar']);
+    for (const gearName of basicGear) {
+      if (Math.random() > 0.4) { // 60% chance each
+        const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+        if (gear && !items.includes(gear.name)) {
+          tryBuy(gear);
+        }
+      }
+    }
+    
+    // Set state
+    setMethod('gold');
+    setGold(remainingGold);
+    setGoldRolled(true);
+    setPurchasedItems(items);
+    setEquipmentChoices({});
+  };
 
   // Update character when equipment changes
   useEffect(() => {
@@ -8752,17 +11777,61 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Equipment</h3>
-        <p className="text-sm text-slate-500">
-          Take your class starting equipment or roll for gold to buy your own.
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Equipment</h3>
+          <p className="text-sm text-slate-500">
+            Take your class starting equipment, roll for gold, or get random build-appropriate gear.
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => {
+              // Reset and select first options
+              if (!classEquipment) return;
+              const choices = {};
+              classEquipment.choices.forEach((_, idx) => {
+                choices[idx] = 0;
+              });
+              setMethod('starting');
+              setEquipmentChoices(choices);
+              setGoldRolled(false);
+              setPurchasedItems([]);
+            }}
+            className="px-4 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!classEquipment}
+            title="Select first option for each starting equipment choice"
+          >
+            Quick pick
+          </button>
+          <button
+            onClick={() => {
+              // Reset and select ideal options based on build
+              selectIdealEquipment();
+            }}
+            className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={!classEquipment}
+            title="Intelligently select starting equipment based on your build"
+          >
+            <Sparkles className="w-4 h-4" />
+            Random (Build Appropriate)
+          </button>
+          <button
+            onClick={rollAndBuySmart}
+            className="px-4 py-2 rounded-lg bg-amber-600/80 hover:bg-amber-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={!classGold}
+            title="Roll for gold and automatically buy optimal equipment for your class"
+          >
+            <Dices className="w-4 h-4" />
+            Roll & shop
+          </button>
+        </div>
       </div>
 
       {/* Method Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => { setMethod('starting'); setGoldRolled(false); }}
+          onClick={() => { setMethod('starting'); setGoldRolled(false); setEquipmentChoices({}); }}
           className={`p-4 rounded-xl border text-left transition-all ${
             method === 'starting'
               ? 'bg-indigo-500/20 border-indigo-500/50'
@@ -8802,6 +11871,28 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
               </div>
             </div>
             {method === 'gold' && <Check className="w-5 h-5 text-indigo-400 ml-auto" />}
+          </div>
+        </button>
+        
+        <button
+          onClick={selectIdealEquipment}
+          className={`p-4 rounded-xl border text-left transition-all ${
+            method === 'ideal'
+              ? 'bg-cyan-500/20 border-cyan-500/50'
+              : 'bg-slate-800/50 border-slate-700/50 hover:border-cyan-500/30'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-6 h-6 text-cyan-400" />
+            <div>
+              <div className={`font-semibold ${method === 'ideal' ? 'text-cyan-300' : 'text-slate-200'}`}>
+                Random (Build Appropriate)
+              </div>
+              <div className="text-xs text-slate-500">
+                Roll gold & buy random weapons, armor, and gear suited for your build
+              </div>
+            </div>
+            {method === 'ideal' && <Check className="w-5 h-5 text-cyan-400 ml-auto" />}
           </div>
         </button>
       </div>
@@ -8866,26 +11957,40 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         </div>
       )}
 
-      {/* Gold Method */}
-      {method === 'gold' && (
+      {/* Gold Method / Ideal Gear */}
+      {(method === 'gold' || method === 'ideal') && (
         <div className="space-y-4">
+          {/* Random Build Appropriate Banner */}
+          {method === 'ideal' && (
+            <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Rolled <span className="font-bold text-amber-400">{totalGoldRolled} gp</span> and selected build-appropriate equipment for your {CLASSES[classId]?.name}. You can modify below.
+            </div>
+          )}
+          
           {/* Roll / Gold Display */}
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <div className={`p-4 rounded-xl ${method === 'ideal' ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-amber-500/10 border-amber-500/30'} border`}>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-amber-300 font-medium">Starting Gold</div>
-                <div className="text-3xl font-bold text-amber-400">{gold} gp</div>
+                <div className={`text-sm font-medium ${method === 'ideal' ? 'text-cyan-300' : 'text-amber-300'}`}>
+                  {method === 'ideal' ? 'Remaining Gold' : 'Starting Gold'}
+                </div>
+                <div className={`text-3xl font-bold ${method === 'ideal' ? 'text-cyan-400' : 'text-amber-400'}`}>{gold} gp</div>
               </div>
               <button
-                onClick={rollStartingGold}
-                className="px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 transition-colors"
+                onClick={() => method === 'ideal' ? selectIdealEquipment() : rollStartingGold()}
+                className={`px-4 py-2 rounded-lg ${
+                  method === 'ideal' 
+                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/30' 
+                    : 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+                } border transition-colors`}
               >
-                {goldRolled ? 'Reroll' : 'Roll'} ({classGold?.dice}d{classGold?.sides} × {classGold?.multiplier})
+                {method === 'ideal' ? 'Reroll & Rebuy' : (goldRolled ? 'Reroll' : 'Roll')} ({classGold?.dice}d{classGold?.sides} × {classGold?.multiplier})
               </button>
             </div>
           </div>
 
-          {goldRolled && (
+          {(goldRolled || method === 'ideal') && (
             <>
               {/* Shop Categories */}
               <div className="flex gap-2 overflow-x-auto pb-2">
@@ -8982,11 +12087,26 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Background</h3>
-        <p className="text-sm text-slate-500">
-          Your background reveals where you came from and your place in the world.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Background</h3>
+          <p className="text-sm text-slate-500">
+            Your background reveals where you came from and your place in the world.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            const bgId = smartChooseBackground(character);
+            updateCharacter('background', bgId);
+            setShowAllBackgrounds(false);
+          }}
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+          title="Automatically select a synergistic background based on your class"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="hidden sm:inline">Choose for me</span>
+          <span className="sm:hidden">Auto</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -9297,9 +12417,9 @@ const BackgroundSelectionStep = ({ character, updateCharacter }) => {
 // CLASS SELECTION STEP (PHASE 4)
 // ============================================================================
 
-const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, setRandomWithMulticlass }) => {
+const ClassSelectionStep = ({ character, updateCharacter, onShowCompare }) => {
   const [showAllClasses, setShowAllClasses] = useState(!character.class);
-  const [multiclassExpanded, setMulticlassExpanded] = useState(randomWithMulticlass || (character.multiclass?.length > 0));
+  const [multiclassExpanded, setMulticlassExpanded] = useState(character.multiclass?.length > 0);
   const selectedClassId = character.class;
   const selectedClass = selectedClassId ? CLASSES[selectedClassId] : null;
 
@@ -9317,7 +12437,6 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                 onChange={(e) => {
                   const checked = e.target.checked;
                   setMulticlassExpanded(checked);
-                  setRandomWithMulticlass(checked);
                   if (checked && (character.level || 1) < 2) {
                     updateCharacter('level', 2);
                   }
@@ -9351,9 +12470,8 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
   useEffect(() => {
     if ((character.multiclass || []).length > 0 && !multiclassExpanded) {
       setMulticlassExpanded(true);
-      setRandomWithMulticlass(true);
     }
-  }, [character.multiclass, multiclassExpanded, setRandomWithMulticlass]);
+  }, [character.multiclass, multiclassExpanded]);
 
   const pickClass = (classId) => {
     updateCharacter('class', classId);
@@ -9384,17 +12502,65 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-1">Choose Your Class</h3>
-        <p className="text-sm text-slate-500">
-          Your class determines your abilities, features, and role in the party.
-        </p>
-        <p className="text-xs text-slate-500 mt-2">
-          Multiclass options appear after selecting a primary class (below the class grid, or below on small screens).
-        </p>
-        <p className="text-xs text-slate-500 mt-1">
-          Note: multiclassing splits your total character level across classes.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-white mb-1">Choose Your Class</h3>
+          <p className="text-sm text-slate-500">
+            Your class determines your abilities, features, and role in the party.
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            Multiclass options appear after selecting a primary class (below the class grid, or below on small screens).
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            Note: multiclassing splits your total character level across classes.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => {
+              const result = smartChooseClass(character);
+              updateCharacter('class', result.class);
+              if (result.subclass) updateCharacter('subclass', result.subclass);
+              if (result.fightingStyle) updateCharacter('fightingStyle', result.fightingStyle);
+              if (result.classSkills) updateCharacter('classSkills', result.classSkills);
+              if (result.expertise) updateCharacter('expertise', result.expertise);
+              if (result.cantripChoices) updateCharacter('cantripChoices', result.cantripChoices);
+              
+              // Also pick a multiclass if multiclass is enabled
+              if (multiclassExpanded && (character.level || 1) >= 2) {
+                const mcResult = smartChooseMulticlass({ ...character, class: result.class });
+                if (mcResult) {
+                  updateCharacter('multiclass', [mcResult]);
+                }
+              }
+              setShowAllClasses(false);
+            }}
+            className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
+            title="Automatically select a synergistic class with all choices made"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Choose for me</span>
+            <span className="sm:hidden">Auto</span>
+          </button>
+          <label className="flex items-center gap-2 text-xs text-slate-400 px-2">
+            <input
+              type="checkbox"
+              checked={multiclassExpanded}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setMulticlassExpanded(checked);
+                if (checked && (character.level || 1) < 2) {
+                  updateCharacter('level', 2);
+                }
+                if (!checked) {
+                  updateCharacter('multiclass', []);
+                }
+              }}
+              className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+            />
+            Include multiclass
+          </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
@@ -9648,11 +12814,22 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
                 {/* Subclass Selection */}
                 {character.level >= selectedClass.subclassLevel && SUBCLASSES[selectedClassId] && (
                   <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Star className="w-4 h-4 text-amber-400" />
-                      <div className="text-xs text-amber-300 font-semibold">
-                        Choose Your {selectedClass.subclassName}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-amber-400" />
+                        <div className="text-xs text-amber-300 font-semibold">
+                          Choose Your {selectedClass.subclassName}
+                        </div>
                       </div>
+                      {Object.keys(SUBCLASSES[selectedClassId]).length > 2 && onShowCompare && (
+                        <button
+                          onClick={onShowCompare}
+                          className="px-2 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[10px] font-medium hover:bg-indigo-500/30 transition-all flex items-center gap-1"
+                        >
+                          <Scale className="w-3 h-3" />
+                          Compare
+                        </button>
+                      )}
                     </div>
                     <div className="space-y-2">
                       {Object.entries(SUBCLASSES[selectedClassId]).map(([subId, sub]) => {
@@ -9975,9 +13152,12 @@ const ClassSelectionStep = ({ character, updateCharacter, randomWithMulticlass, 
 // ============================================================================
 
 // Generates a random character with synergistic choices
-const generateRandomCharacter = (importedName = '', enableMulticlass = false) => {
+const generateRandomCharacter = (importedName = '', enableMulticlass = false, targetLevel = null) => {
   // Helper to pick random from array
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  // Determine level - use targetLevel if provided, otherwise random 1-10
+  const characterLevel = targetLevel || Math.floor(Math.random() * 10) + 1;
   
   // Step 1: Pick a random class first (determines build strategy)
   const classId = pick(Object.keys(CLASSES));
@@ -10134,16 +13314,8 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
   const possibleAlignments = alignmentsByClass[selectedClass.name.toLowerCase()] || Object.keys(ALIGNMENTS);
   const alignment = pick(possibleAlignments);
   
-  // Step 9: Random level (weighted toward low levels)
-  const levelWeights = [1, 1, 1, 1, 1, 3, 2, 2, 1, 1]; // More likely to be level 1-5
-  const weightedLevels = [];
-  levelWeights.forEach((weight, i) => {
-    for (let j = 0; j < weight; j++) {
-      weightedLevels.push(i + 1);
-    }
-  });
-  const levelPool = enableMulticlass ? weightedLevels.filter(l => l >= 2) : weightedLevels;
-  const level = pick(levelPool.length ? levelPool : weightedLevels);
+  // Step 9: Use the determined level (from targetLevel or random)
+  const level = characterLevel;
   
   // Step 9.5: Multiclass generation (if enabled and level is high enough)
   let multiclassLevels = [];
@@ -10806,6 +13978,259 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false) =>
 };
 
 // ============================================================================
+// SMART "CHOOSE FOR ME" HELPER FUNCTIONS
+// ============================================================================
+
+// Smart race selection based on class
+const smartChooseRace = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const chooseSubrace = (raceId) => {
+    const race = RACES[raceId];
+    if (race?.subraces && Object.keys(race.subraces).length > 0) {
+      return pick(Object.keys(race.subraces));
+    }
+    return null;
+  };
+
+  if (!character.class) {
+    // No class yet: pick from all available races
+    const allRaces = Object.keys(RACES).filter(id => RACES[id]);
+    const raceId = pick(allRaces);
+    return { race: raceId, subrace: chooseSubrace(raceId) };
+  }
+  
+  const classData = CLASSES[character.class];
+  const primaryAbilities = classData.primaryAbility || [];
+  
+  // Map base races to ability synergies (not subraces)
+  const raceAbilityMap = {
+    dwarf: ['constitution', 'strength'],
+    elf: ['dexterity', 'intelligence', 'wisdom'],
+    halfling: ['dexterity', 'constitution', 'charisma'],
+    human: ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'],
+    dragonborn: ['strength', 'charisma'],
+    gnome: ['intelligence', 'constitution'],
+    halfElf: ['charisma', 'dexterity', 'wisdom'],
+    halfOrc: ['strength', 'constitution'],
+    tiefling: ['charisma', 'intelligence']
+  };
+  
+  // Find races that boost primary abilities
+  const compatibleRaces = Object.keys(RACES).filter(raceId => {
+    const raceAbilities = raceAbilityMap[raceId] || [];
+    return raceAbilities.length === 0 || primaryAbilities.some(ability => raceAbilities.includes(ability));
+  });
+  
+  const raceId = pick(compatibleRaces.length > 0 ? compatibleRaces : Object.keys(RACES).filter(id => RACES[id]));
+
+  return { race: raceId, subrace: chooseSubrace(raceId) };
+};
+
+// Smart class selection based on ability scores
+const smartChooseClass = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  if (!character.abilities) {
+    return { class: pick(Object.keys(CLASSES)), subclass: null, fightingStyle: null, classSkills: [], expertise: [], cantripChoices: [] };
+  }
+  
+  // Find top 2 ability scores
+  const abilities = character.abilities;
+  const sorted = Object.entries(abilities).sort((a, b) => b[1] - a[1]);
+  const topAbilities = sorted.slice(0, 2).map(([ability]) => ability);
+  
+  // Find classes that use these abilities
+  const compatibleClasses = Object.keys(CLASSES).filter(classId => {
+    const classData = CLASSES[classId];
+    return classData.primaryAbility.some(ability => topAbilities.includes(ability));
+  });
+  
+  const classId = compatibleClasses.length > 0 ? pick(compatibleClasses) : pick(Object.keys(CLASSES));
+  const classData = CLASSES[classId];
+  
+  // Pick subclass if level is high enough
+  let subclassId = null;
+  if (character.level >= classData.subclassLevel) {
+    const subclasses = SUBCLASSES[classId];
+    if (subclasses) {
+      subclassId = pick(Object.keys(subclasses));
+    }
+  }
+  
+  // Pick class skills
+  const skillChoices = classData.skillChoices || { count: 0, from: [] };
+  const allSkills = ['Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History', 'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception', 'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'];
+  const availableSkills = skillChoices.from === 'any' ? allSkills : skillChoices.from;
+  const classSkills = [];
+  const skillPool = [...availableSkills];
+  for (let i = 0; i < skillChoices.count && skillPool.length > 0; i++) {
+    const idx = Math.floor(Math.random() * skillPool.length);
+    classSkills.push(skillPool[idx]);
+    skillPool.splice(idx, 1);
+  }
+  
+  // Pick fighting style for classes that have it (Fighter, Paladin, Ranger)
+  let fightingStyle = null;
+  if (['fighter', 'paladin', 'ranger'].includes(classId)) {
+    const styles = Object.keys(FIGHTING_STYLES);
+    fightingStyle = pick(styles);
+  }
+  
+  // Pick expertise for Bard and Rogue
+  const expertise = [];
+  if (classId === 'bard' || classId === 'rogue') {
+    const expertiseCount = classId === 'bard' ? 2 : 2;
+    const expertisePool = [...classSkills];
+    for (let i = 0; i < expertiseCount && expertisePool.length > 0; i++) {
+      const idx = Math.floor(Math.random() * expertisePool.length);
+      expertise.push(expertisePool[idx]);
+      expertisePool.splice(idx, 1);
+    }
+  }
+  
+  // Pick cantrip choices for classes that get to choose (Wizard, Sorcerer, etc.)
+  const cantripChoices = [];
+  // This would need to be implemented based on class spellcasting rules
+  
+  return { 
+    class: classId, 
+    subclass: subclassId,
+    fightingStyle,
+    classSkills,
+    expertise,
+    cantripChoices
+  };
+};
+
+// Smart multiclass selection - picks a synergistic multiclass with all choices
+const smartChooseMulticlass = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const totalLevel = character.level || 1;
+  
+  if (totalLevel < 2 || !character.class) return null;
+  
+  const synergies = {
+    fighter: ['rogue', 'warlock', 'wizard', 'cleric'],
+    rogue: ['fighter', 'ranger', 'warlock', 'bard'],
+    paladin: ['warlock', 'sorcerer', 'bard'],
+    warlock: ['paladin', 'sorcerer', 'fighter', 'bard'],
+    sorcerer: ['warlock', 'paladin', 'bard'],
+    bard: ['warlock', 'paladin', 'rogue', 'sorcerer'],
+    ranger: ['rogue', 'fighter', 'druid', 'cleric'],
+    cleric: ['fighter', 'paladin', 'druid'],
+    druid: ['cleric', 'monk', 'ranger'],
+    monk: ['rogue', 'fighter', 'druid'],
+    barbarian: ['fighter', 'rogue', 'druid'],
+    wizard: ['fighter', 'cleric']
+  };
+  
+  const primaryId = character.class;
+  const existing = (character.multiclass || []).map(mc => mc.classId);
+  const choices = (synergies[primaryId] || Object.keys(CLASSES))
+    .filter(id => id !== primaryId && !existing.includes(id));
+  
+  if (choices.length === 0) return null;
+  
+  const pickId = pick(choices);
+  const mcClassData = CLASSES[pickId];
+  
+  // Pick subclass for multiclass if level allows
+  let mcSubclass = null;
+  if (mcClassData && mcClassData.subclassLevel <= totalLevel) {
+    const subclasses = SUBCLASSES[pickId];
+    if (subclasses) {
+      mcSubclass = pick(Object.keys(subclasses));
+    }
+  }
+  
+  // Pick fighting style for multiclass if applicable  
+  let mcFightingStyle = null;
+  if (['fighter', 'paladin', 'ranger'].includes(pickId)) {
+    mcFightingStyle = pick(Object.keys(FIGHTING_STYLES));
+  }
+  
+  // Pick class skills for multiclass
+  const skillChoices = mcClassData?.skillChoices || { count: 0, from: [] };
+  const allSkills = ['Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History', 'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception', 'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'];
+  const availableSkills = skillChoices.from === 'any' ? allSkills : (skillChoices.from || []);
+  const mcClassSkills = [];
+  const skillPool = [...availableSkills];
+  // Multiclass typically gets fewer skill proficiencies
+  const skillCount = Math.min(1, skillChoices.count || 0);
+  for (let i = 0; i < skillCount && skillPool.length > 0; i++) {
+    const idx = Math.floor(Math.random() * skillPool.length);
+    mcClassSkills.push(skillPool[idx]);
+    skillPool.splice(idx, 1);
+  }
+  
+  return {
+    classId: pickId,
+    level: 1,
+    subclass: mcSubclass,
+    fightingStyle: mcFightingStyle,
+    classSkills: mcClassSkills
+  };
+};
+
+// Smart background selection based on class
+const smartChooseBackground = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  
+  if (!character.class) {
+    return pick(Object.keys(BACKGROUNDS));
+  }
+  
+  // Background synergies with classes
+  const backgroundSynergies = {
+    barbarian: ['outlander', 'folkHero', 'urchin'],
+    bard: ['entertainer', 'charlatan', 'guildArtisan'],
+    cleric: ['acolyte', 'hermit', 'sage'],
+    druid: ['hermit', 'outlander', 'sage'],
+    fighter: ['soldier', 'folkHero', 'noble'],
+    monk: ['hermit', 'outlander', 'sage'],
+    paladin: ['noble', 'soldier', 'acolyte'],
+    ranger: ['outlander', 'folkHero', 'hermit'],
+    rogue: ['criminal', 'charlatan', 'urchin'],
+    sorcerer: ['noble', 'hermit', 'charlatan'],
+    warlock: ['charlatan', 'hermit', 'sage'],
+    wizard: ['sage', 'hermit', 'noble']
+  };
+  
+  // Consider multiclass synergies
+  let synergies = [...(backgroundSynergies[character.class] || [])];
+  if (character.multiclass && character.multiclass.length > 0) {
+    character.multiclass.forEach(mc => {
+      const mcSynergies = backgroundSynergies[mc.class] || [];
+      synergies.push(...mcSynergies);
+    });
+  }
+  
+  // Consider ability scores for skill synergies
+  const abilityScores = character.abilityScores || {};
+  const highestAbility = Object.entries(abilityScores).sort((a, b) => b[1] - a[1])[0]?.[0];
+  
+  // Add ability-based background preferences
+  const abilityBackgrounds = {
+    strength: ['soldier', 'folkHero'],
+    dexterity: ['criminal', 'urchin', 'entertainer'],
+    constitution: ['outlander', 'soldier'],
+    intelligence: ['sage', 'guildArtisan'],
+    wisdom: ['hermit', 'acolyte', 'outlander'],
+    charisma: ['noble', 'entertainer', 'charlatan']
+  };
+  
+  if (highestAbility && abilityBackgrounds[highestAbility]) {
+    synergies.push(...abilityBackgrounds[highestAbility]);
+  }
+  
+  // Remove duplicates and filter existing backgrounds
+  synergies = [...new Set(synergies)];
+  const compatible = synergies.filter(bg => BACKGROUNDS[bg]);
+  
+  return compatible.length > 0 ? pick(compatible) : pick(Object.keys(BACKGROUNDS));
+};
+
+// ============================================================================
 // CHARACTER CREATOR COMPONENT (SKELETON)
 // ============================================================================
 
@@ -10888,6 +14313,10 @@ const CharacterCreator = ({
     }
     return defaultCharacter;
   });
+  
+  // Modal states
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showSubclassCompare, setShowSubclassCompare] = useState(false);
 
   // Save character state to localStorage whenever it changes
   useEffect(() => {
@@ -10928,9 +14357,163 @@ const CharacterCreator = ({
   // Update character name when importedName changes
   useEffect(() => {
     if (importedName) {
-      setCharacter(prev => ({ ...prev, name: importedName }));
+      // Check if this is a dev test command
+      if (importedName.startsWith('DEV_TEST:')) {
+        const testType = importedName.replace('DEV_TEST:', '');
+        handleDevTest(testType);
+        setImportedName(''); // Clear the command
+      } else {
+        setCharacter(prev => ({ ...prev, name: importedName }));
+      }
     }
   }, [importedName]);
+  
+  // Dev test handler
+  const handleDevTest = (testType) => {
+    let testCharacter;
+    
+    switch (testType) {
+      case 'multiclass':
+        // Level 10 with 2-way multiclass
+        testCharacter = generateRandomCharacter('Test Multiclass', true);
+        testCharacter.level = 10;
+        testCharacter.multiclass = [
+          { classId: 'wizard', level: 4, subclass: null }
+        ];
+        break;
+        
+      case 'maxSpells':
+        // Wizard at level 10 with full spells
+        testCharacter = generateRandomCharacter('Test Spellcaster', false);
+        testCharacter.class = 'wizard';
+        testCharacter.level = 10;
+        // Level 10 wizard: 5 cantrips, up to 5th level spells
+        testCharacter.cantrips = ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion'];
+        testCharacter.spells = [
+          'shield', 'magicMissile', 'detectMagic', 'identify', 'mageArmor',
+          'mistyStep', 'holdPerson', 'invisibility', 'scorchingRay',
+          'fireball', 'counterspell', 'haste', 'lightningBolt',
+          'greaterInvisibility', 'polymorph', 'dimensionDoor',
+          'wallOfForce', 'coneOfCold'
+        ];
+        break;
+        
+      case 'allFeatures':
+        // Battle Master Fighter with maneuvers at level 10
+        testCharacter = generateRandomCharacter('Battle Master Test', false);
+        testCharacter.class = 'fighter';
+        testCharacter.level = 10;
+        testCharacter.subclass = 'battleMaster';
+        testCharacter.fightingStyle = 'dueling';
+        testCharacter.battleMasterManeuvers = [
+          'commandersStrike', 'maneuveringAttack', 'rally', 
+          'sweepingAttack', 'disarmingAttack', 'distractingStrike', 'evasiveFootwork'
+        ];
+        testCharacter.asiChoices = {
+          4: { type: 'feat', feat: 'sentinel' },
+          6: { type: 'feat', feat: 'polearmMaster' },
+          8: { type: 'asi', asiType: 'single', singleAbility: 'strength' }
+        };
+        break;
+        
+      case 'longEquipment':
+        // Character with extensive equipment
+        testCharacter = generateRandomCharacter('Test Equipment', false);
+        testCharacter.equipment = [
+          'Longsword', 'Shield', 'Chain Mail', 'Backpack', 'Bedroll',
+          'Mess Kit', 'Tinderbox', '10 torches', 'Rations (10 days)',
+          'Waterskin', '50 feet of hempen rope', 'Healing Potion (5)',
+          'Thieves\' Tools', 'Crowbar', 'Hammer', 'Pitons (10)',
+          'Grappling Hook', 'Holy Symbol', 'Prayer Book', 'Incense (5 sticks)',
+          'Vestments', 'Common Clothes', 'Belt Pouch', 'Component Pouch'
+        ];
+        testCharacter.gold = 250;
+        break;
+        
+      case 'variantHuman':
+        // Variant human with choices
+        testCharacter = generateRandomCharacter('Test Variant', false);
+        testCharacter.race = 'human';
+        testCharacter.subrace = 'variant';
+        testCharacter.variantHumanChoices = ['strength', 'constitution'];
+        testCharacter.variantHumanFeat = 'great-weapon-master';
+        break;
+        
+      case 'pdfStress':
+        // MAXIMUM TEXT - Fighter 7 (Battle Master) / Warlock 3 for most content
+        testCharacter = generateRandomCharacter('PDF Stress Test', true);
+        testCharacter.level = 10;
+        testCharacter.class = 'fighter';
+        testCharacter.subclass = 'battleMaster';
+        testCharacter.multiclass = [
+          { classId: 'warlock', level: 3, subclass: 'fiend', pactBoon: 'pactOfTheBlade' }
+        ];
+        testCharacter.fightingStyle = 'greatWeaponFighting';
+        // 5 maneuvers for Fighter 7 Battle Master
+        testCharacter.battleMasterManeuvers = [
+          'commandersStrike', 'disarmingAttack', 'riposte', 'precisionAttack', 'menacingAttack'
+        ];
+        // 2 invocations for Warlock 3
+        testCharacter.warlockInvocations = ['agonizingBlast', 'devilsSight'];
+        // Maximum equipment for stress test
+        testCharacter.equipment = [
+          'Plate Armor', 'Greatsword +1', 'Shield', 'Longbow', 'Arrows (40)',
+          'Javelin (5)', 'Dagger (2)', 'Handaxe (2)', 'Backpack', 'Bedroll',
+          'Mess Kit', 'Tinderbox', 'Torches (10)', 'Rations (10 days)', 'Waterskin',
+          'Hemp Rope (50 ft)', 'Grappling Hook', 'Crowbar', 'Hammer', 'Pitons (10)',
+          'Lantern (Hooded)', 'Oil Flask (5)', 'Healing Potion (3)', 'Antitoxin',
+          'Caltrops', 'Ball Bearings', 'Chain (10 ft)', 'Manacles', 'Mirror (Steel)',
+          'Bell', 'Candles (5)', 'Chalk', 'Component Pouch', 'Explorer\'s Pack'
+        ];
+        // Warlock cantrips
+        testCharacter.cantrips = ['eldritchBlast', 'mageHand', 'prestidigitation'];
+        // Warlock spells known (4 at level 3)
+        testCharacter.spells = [
+          'hex', 'armorOfAgathys', 'hellishRebuke', 'darkness'
+        ];
+        testCharacter.gold = 250;
+        testCharacter.asiChoices = {
+          4: { type: 'feat', feat: 'greatWeaponMaster' },
+          6: { type: 'asi', asiType: 'double', doubleAbilities: ['strength', 'constitution'] }
+        };
+        testCharacter.physicalCharacteristics = {
+          age: '32',
+          height: '6\'4"',
+          weight: '220 lbs',
+          eyes: 'Steel Gray',
+          hair: 'Black with gray streaks',
+          skin: 'Weathered tan'
+        };
+        break;
+      
+      case 'fullCaster':
+        // Full caster with max cantrips and spells
+        testCharacter = generateRandomCharacter('Full Caster Test', false);
+        testCharacter.class = 'sorcerer';
+        testCharacter.level = 10;
+        testCharacter.subclass = 'draconicBloodline';
+        // Level 10 sorcerer: 6 cantrips, 11 spells known
+        testCharacter.cantrips = ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'rayOfFrost'];
+        testCharacter.spells = [
+          'shield', 'magicMissile', 'chromaticOrb',
+          'mistyStep', 'holdPerson', 'scorchingRay',
+          'fireball', 'counterspell', 'haste',
+          'greaterInvisibility', 'polymorph'
+        ];
+        testCharacter.metamagicOptions = ['quickened', 'twinned', 'subtle'];
+        testCharacter.asiChoices = {
+          4: { type: 'asi', asiType: 'single', singleAbility: 'charisma' },
+          8: { type: 'feat', feat: 'war-caster' }
+        };
+        break;
+        
+      default:
+        testCharacter = generateRandomCharacter('Dev Test', false);
+    }
+    
+    setCharacter(testCharacter);
+    setCurrentStep(steps.length - 1); // Jump to review step
+  };
 
   const steps = [
     { id: 'basics', label: 'Basics', icon: User },
@@ -10986,11 +14569,12 @@ const CharacterCreator = ({
 
   // One-level undo snapshot for randomize on Review step
   const [lastRandomSnapshot, setLastRandomSnapshot] = useState(null);
-  const [randomWithMulticlass, setRandomWithMulticlass] = useState(false);
 
-  const randomizeFromReview = () => {
+  const randomizeFromReview = (level = null, multiclass = false) => {
     const prev = character;
-    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
+    // Use existing name, or imported name, fallback to generated
+    const nameToUse = prev.name || importedName || '';
+    const randomChar = generateRandomCharacter(nameToUse, multiclass, level);
     // Preserve playerName from previous character
     randomChar.playerName = prev.playerName || '';
     setLastRandomSnapshot(prev);
@@ -11032,8 +14616,35 @@ const CharacterCreator = ({
     }
   };
 
+  // Load template into character
+  const loadTemplate = (templateCharacter) => {
+    setCharacter(prev => ({
+      ...defaultCharacter,
+      ...templateCharacter,
+      name: prev.name || '', // Keep current name if set
+      playerName: prev.playerName || '' // Keep current player name
+    }));
+    setCurrentStep(steps.length - 1); // Go to review step
+  };
+
   return (
     <div ref={containerRef} className="space-y-4 md:space-y-6 overflow-x-hidden">
+      {/* Templates Modal */}
+      <TemplatesModal
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onSelectTemplate={loadTemplate}
+        currentCharacter={character}
+      />
+      
+      {/* Subclass Compare Modal */}
+      <SubclassCompareModal
+        isOpen={showSubclassCompare}
+        onClose={() => setShowSubclassCompare(false)}
+        classId={character.class}
+        onSelectSubclass={(subclassId) => updateCharacter('subclass', subclassId)}
+      />
+      
       {/* Step Progress Bar */}
       <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-3 md:p-4 border border-slate-800/50 relative z-10">
         <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -11042,9 +14653,19 @@ const CharacterCreator = ({
             <span className="md:hidden">5e CC</span>
             <span className="hidden md:inline">5e-Compatible Character Creator</span>
           </h2>
-          <span className="text-xs md:text-sm text-slate-400">
-            Step {currentStep + 1} of {steps.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowTemplates(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-medium hover:bg-indigo-500/30 transition-all flex items-center gap-1.5"
+              title="Build Templates"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Templates</span>
+            </button>
+            <span className="text-xs md:text-sm text-slate-400 ml-1">
+              Step {currentStep + 1} of {steps.length}
+            </span>
+          </div>
         </div>
         
         {/* Mobile: Compact Progress Dots + Current Step Name */}
@@ -11153,38 +14774,17 @@ const CharacterCreator = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">Basic Information</h3>
-              <div className="flex flex-col items-end gap-2">
-                <label className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 cursor-pointer hover:bg-slate-700/50 transition-all">
-                  <input
-                    type="checkbox"
-                    checked={randomWithMulticlass}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setRandomWithMulticlass(checked);
-                      if (checked && (character.level || 1) < 2) {
-                        updateCharacter('level', 2);
-                      }
-                    }}
-                    className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
-                  />
-                  <span>Multiclass (Random)</span>
-                </label>
-                <button
-                  onClick={() => {
-                    const randomChar = generateRandomCharacter(importedName, randomWithMulticlass);
-                    // Preserve playerName if user entered it before randomizing
-                    randomChar.playerName = character.playerName || '';
-                    setCharacter(randomChar);
-                    // Jump to review step (last step)
-                    setCurrentStep(steps.length - 1);
-                  }}
-                  className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span className="hidden sm:inline">Random Character</span>
-                  <span className="sm:hidden">Random</span>
-                </button>
-              </div>
+              <RandomizerPopover 
+                onRandomize={(level, multiclass) => {
+                  // Preserve existing character name, or use imported name
+                  const nameToUse = character.name || importedName || '';
+                  const randomChar = generateRandomCharacter(nameToUse, multiclass, level);
+                  randomChar.playerName = character.playerName || '';
+                  setCharacter(randomChar);
+                  setCurrentStep(steps.length - 1);
+                }}
+                currentLevel={character.level || 1}
+              />
             </div>
             
             {/* Character Name */}
@@ -11286,69 +14886,177 @@ const CharacterCreator = ({
 
             {/* Physical Characteristics */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">
-                Physical Characteristics <span className="text-slate-500 font-normal">(Optional)</span>
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-slate-300">
+                  Physical Characteristics <span className="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <button
+                  onClick={() => {
+                    const ages = ['18', '25', '30', '45', '60', '120', '200'];
+                    // Height: 4'6" to 6'8" in 1-inch increments
+                    const feet = 4 + Math.floor(Math.random() * 3); // 4, 5, or 6
+                    const maxInches = feet === 6 ? 8 : 11;
+                    const inches = Math.floor(Math.random() * (maxInches + 1));
+                    const height = `${feet}'${inches}"`;
+                    
+                    // Weight: correlated with height (BMI range 18-30)
+                    const totalInches = feet * 12 + inches;
+                    const minWeight = Math.ceil((totalInches * totalInches * 18) / 703 / 5) * 5; // Round to nearest 5
+                    const maxWeight = Math.ceil((totalInches * totalInches * 30) / 703 / 5) * 5;
+                    const weight = `${minWeight + Math.floor(Math.random() * ((maxWeight - minWeight) / 5 + 1)) * 5} lbs`;
+                    
+                    const eyeColors = ['Brown', 'Blue', 'Green', 'Hazel', 'Amber', 'Gray', 'Violet'];
+                    const hairColors = ['Black', 'Brown', 'Blonde', 'Red', 'White', 'Silver', 'Auburn'];
+                    const skinTones = ['Pale', 'Fair', 'Light', 'Olive', 'Tan', 'Brown', 'Dark'];
+                    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+                    updateCharacter('physicalCharacteristics', {
+                      age: ages[Math.floor(Math.random() * ages.length)],
+                      height,
+                      weight,
+                      eyes: pick(eyeColors),
+                      hair: pick(hairColors),
+                      skin: pick(skinTones)
+                    });
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600/80 to-teal-600/80 text-white text-xs font-medium hover:from-cyan-500/80 hover:to-teal-500/80 transition-all flex items-center gap-1.5"
+                >
+                  <Dices className="w-3.5 h-3.5" />
+                  Randomize
+                </button>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Age</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.age || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, age: e.target.value })}
-                    placeholder="e.g., 25"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.age || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, age: e.target.value })}
+                      placeholder="e.g., 25"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const ages = ['18', '20', '22', '25', '28', '30', '35', '40', '45', '50', '60', '75', '100', '150', '200', '300'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, age: ages[Math.floor(Math.random() * ages.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize age"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Height</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.height || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, height: e.target.value })}
-                    placeholder="e.g., 5'10&quot;"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.height || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, height: e.target.value })}
+                      placeholder="e.g., 5'10&quot;"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const feet = 4 + Math.floor(Math.random() * 3);
+                        const inches = Math.floor(Math.random() * 12);
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, height: `${feet}'${inches}"` });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize height"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Weight</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.weight || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, weight: e.target.value })}
-                    placeholder="e.g., 180 lbs"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.weight || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, weight: e.target.value })}
+                      placeholder="e.g., 180 lbs"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const weights = ['90', '100', '110', '120', '130', '140', '150', '160', '170', '180', '190', '200', '220', '240', '260'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, weight: `${weights[Math.floor(Math.random() * weights.length)]} lbs` });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize weight"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Eyes</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.eyes || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, eyes: e.target.value })}
-                    placeholder="e.g., Blue"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.eyes || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, eyes: e.target.value })}
+                      placeholder="e.g., Blue"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const eyeColors = ['Brown', 'Blue', 'Green', 'Hazel', 'Amber', 'Gray', 'Violet', 'Black', 'Gold', 'Silver', 'Red', 'White'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, eyes: eyeColors[Math.floor(Math.random() * eyeColors.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize eye color"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Hair</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.hair || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, hair: e.target.value })}
-                    placeholder="e.g., Brown"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.hair || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, hair: e.target.value })}
+                      placeholder="e.g., Brown"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const hairColors = ['Black', 'Brown', 'Blonde', 'Red', 'White', 'Silver', 'Auburn', 'Gray', 'Bald', 'Blue', 'Green', 'Purple'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, hair: hairColors[Math.floor(Math.random() * hairColors.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize hair color"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Skin</label>
-                  <input
-                    type="text"
-                    value={character.physicalCharacteristics?.skin || ''}
-                    onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, skin: e.target.value })}
-                    placeholder="e.g., Fair"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
-                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={character.physicalCharacteristics?.skin || ''}
+                      onChange={(e) => updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, skin: e.target.value })}
+                      placeholder="e.g., Fair"
+                      className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        const skinTones = ['Pale', 'Fair', 'Light', 'Olive', 'Tan', 'Brown', 'Dark', 'Ebony', 'Golden', 'Gray', 'Green', 'Blue'];
+                        updateCharacter('physicalCharacteristics', { ...character.physicalCharacteristics, skin: skinTones[Math.floor(Math.random() * skinTones.length)] });
+                      }}
+                      className="px-2 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 hover:text-white transition-all"
+                      title="Randomize skin tone"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -11368,8 +15076,7 @@ const CharacterCreator = ({
           <ClassSelectionStep 
             character={character}
             updateCharacter={updateCharacter}
-            randomWithMulticlass={randomWithMulticlass}
-            setRandomWithMulticlass={setRandomWithMulticlass}
+            onShowCompare={() => setShowSubclassCompare(true)}
           />
         )}
 
@@ -11415,8 +15122,6 @@ const CharacterCreator = ({
             onRandomize={randomizeFromReview}
             onUndo={undoRandomizeFromReview}
             canUndo={!!lastRandomSnapshot}
-            randomWithMulticlass={randomWithMulticlass}
-            setRandomWithMulticlass={setRandomWithMulticlass}
             onGoToStep={setCurrentStep}
             resetCharacter={resetCharacter}
           />
@@ -11509,6 +15214,213 @@ const CharacterCreator = ({
 };
 
 // ============================================================================
+// DEV TOOLS (Only shows on dev.aether-names.com)
+// ============================================================================
+
+const DevTools = ({ onQuickTest }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showLocalStorage, setShowLocalStorage] = useState(false);
+  
+  // Only show on dev subdomain
+  const isDev = typeof window !== 'undefined' && 
+                (window.location.hostname === 'dev.aether-names.com' || 
+                 window.location.hostname === 'localhost');
+  
+  // Keyboard shortcut: Ctrl+Shift+D (or Cmd+Shift+D on Mac)
+  useEffect(() => {
+    if (!isDev) return;
+    
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setIsOpen(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDev]);
+  
+  if (!isDev) return null;
+  
+  // Get localStorage data for debugging
+  const getLocalStorageData = () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      try {
+        data[key] = JSON.parse(localStorage.getItem(key));
+      } catch {
+        data[key] = localStorage.getItem(key);
+      }
+    }
+    return data;
+  };
+
+  const quickTests = [
+    {
+      name: 'Multiclass (Lv10)',
+      description: 'Level 10 character with multiclass',
+      action: () => onQuickTest('multiclass')
+    },
+    {
+      name: 'Full Caster (Lv10)',
+      description: 'Sorcerer with max cantrips & spells',
+      action: () => onQuickTest('fullCaster')
+    },
+    {
+      name: 'Max Spells (Wizard)',
+      description: 'Level 10 Wizard with full spellbook',
+      action: () => onQuickTest('maxSpells')
+    },
+    {
+      name: 'All Features',
+      description: 'Fighter with style, feats, subclass',
+      action: () => onQuickTest('allFeatures')
+    },
+    {
+      name: 'Long Equipment',
+      description: 'Extensive equipment list + gold',
+      action: () => onQuickTest('longEquipment')
+    },
+    {
+      name: 'Variant Human',
+      description: 'Variant human with feat & ASI',
+      action: () => onQuickTest('variantHuman')
+    },
+    {
+      name: 'PDF Stress Test',
+      description: 'Paladin/Warlock multiclass for PDF',
+      action: () => onQuickTest('pdfStress')
+    }
+  ];
+  
+  const utilityActions = [
+    {
+      name: 'View LocalStorage',
+      description: 'Inspect saved character data',
+      action: () => setShowLocalStorage(!showLocalStorage)
+    },
+    {
+      name: 'Copy Character JSON',
+      description: 'Copy current character to clipboard',
+      action: () => {
+        const char = localStorage.getItem('aethername_character');
+        if (char) {
+          navigator.clipboard.writeText(char);
+          alert('Character JSON copied to clipboard!');
+        } else {
+          alert('No character data found');
+        }
+      }
+    },
+    {
+      name: 'Clear All Data',
+      description: 'Reset localStorage and reload',
+      action: () => {
+        if (window.confirm('Clear all saved data? This cannot be undone.')) {
+          localStorage.clear();
+          window.location.reload();
+        }
+      }
+    },
+    {
+      name: 'Force Error',
+      description: 'Trigger an error for testing',
+      action: () => {
+        throw new Error('Dev Tools: Intentional test error');
+      }
+    }
+  ];
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50">
+      {isOpen && (
+        <div className="mb-2 bg-slate-900 border-2 border-green-500 rounded-xl p-4 shadow-2xl max-w-sm max-h-[80vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <h3 className="font-bold text-green-400">DEV TOOLS</h3>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-slate-500 hover:text-slate-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="text-xs text-slate-500 mb-3 flex items-center justify-between">
+            <span>Max Level: 10 • Quick tests</span>
+            <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] font-mono">
+              Ctrl+Shift+D
+            </kbd>
+          </div>
+          
+          {/* Quick Test Presets */}
+          <div className="space-y-1.5 mb-4">
+            <div className="text-[10px] uppercase text-slate-600 font-semibold tracking-wider">Character Presets</div>
+            {quickTests.map((test) => (
+              <button
+                key={test.name}
+                onClick={test.action}
+                className="w-full text-left p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-green-500/50 transition-all"
+              >
+                <div className="font-medium text-green-400 text-sm">{test.name}</div>
+                <div className="text-xs text-slate-500">{test.description}</div>
+              </button>
+            ))}
+          </div>
+          
+          {/* Utility Actions */}
+          <div className="space-y-1.5 mb-4">
+            <div className="text-[10px] uppercase text-slate-600 font-semibold tracking-wider">Utilities</div>
+            {utilityActions.map((action) => (
+              <button
+                key={action.name}
+                onClick={action.action}
+                className="w-full text-left p-2 rounded-lg bg-slate-800/50 hover:bg-amber-500/10 border border-slate-700 hover:border-amber-500/50 transition-all"
+              >
+                <div className="font-medium text-amber-400 text-sm">{action.name}</div>
+                <div className="text-xs text-slate-500">{action.description}</div>
+              </button>
+            ))}
+          </div>
+          
+          {/* LocalStorage Viewer */}
+          {showLocalStorage && (
+            <div className="mt-3 p-2 bg-slate-950 rounded-lg border border-slate-700">
+              <div className="text-[10px] uppercase text-slate-600 font-semibold mb-2">LocalStorage Data</div>
+              <pre className="text-[10px] text-slate-400 overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+                {JSON.stringify(getLocalStorageData(), null, 2)}
+              </pre>
+            </div>
+          )}
+          
+          {/* Version Info */}
+          <div className="mt-3 pt-3 border-t border-slate-700/50 text-center">
+            <div className="text-[10px] text-slate-600">
+              v1.5.1 • Dev Build • {new Date().toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-green-600 hover:bg-green-500 text-white p-3 rounded-full shadow-lg shadow-green-500/50 transition-all group relative"
+        title="Dev Tools (Ctrl+Shift+D)"
+      >
+        <FlaskConical className="w-5 h-5" />
+        {!isOpen && (
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
+        )}
+      </button>
+    </div>
+  );
+};
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -11572,6 +15484,14 @@ export default function AetherNames() {
   const resultsRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [animateHeader, setAnimateHeader] = useState(false);
+  
+  // Tour state - at app level to work across both pages
+  // Disable tour on mobile devices (screen width < 768px)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [showTour, setShowTour] = useState(() => {
+    if (isMobile) return false; // Don't auto-start tour on mobile
+    return !LocalStorageUtil.getItem('aethernames_tour_complete', false);
+  });
 
   // Load favorites and history from localStorage on mount
   useEffect(() => {
@@ -11871,11 +15791,11 @@ export default function AetherNames() {
           const hadThe = nameObj.name.toLowerCase().startsWith('the ');
           
           if (hadThe) {
-            newName = 'The ' + capitalize(newParts[0].text) + ' ' + capitalize(newParts[1]?.text || '');
+            newName = 'The ' + capitalize(newParts[0]?.text || '') + ' ' + capitalize(newParts[1]?.text || '');
           } else if (hadSpaces) {
-            newName = newParts.map(p => capitalize(p.text)).join(' ');
+            newName = newParts.map(p => capitalize(p.text || '')).join(' ');
           } else {
-            newName = capitalize(newParts[0].text) + (newParts[1]?.text.toLowerCase() || '');
+            newName = capitalize(newParts[0]?.text || '') + (newParts[1]?.text?.toLowerCase() || '');
           }
         } else {
           newName = newParts.map(p => p.text).join('');
@@ -12032,7 +15952,7 @@ export default function AetherNames() {
         // Join with spaces, preserve "The" at the start
         newName = newParts.map((p, i) => {
           if (p.isTitle) return p.text; // Keep "The" as-is
-          return capitalize(p.text.toLowerCase());
+          return capitalize((p.text || '').toLowerCase());
         }).join(' ');
       } else if (hasTypeParts) {
         // Type-element names: check original name style
@@ -12041,12 +15961,12 @@ export default function AetherNames() {
         const hadThe = originalName.toLowerCase().startsWith('the ');
         
         if (hadThe) {
-          newName = 'The ' + capitalize(newParts[0].text) + ' ' + capitalize(newParts[1]?.text || '');
+          newName = 'The ' + capitalize(newParts[0]?.text || '') + ' ' + capitalize(newParts[1]?.text || '');
         } else if (hadSpaces) {
-          newName = newParts.map(p => capitalize(p.text)).join(' ');
+          newName = newParts.map(p => capitalize(p.text || '')).join(' ');
         } else {
           // Compound style - join directly
-          newName = capitalize(newParts[0].text) + newParts[1]?.text.toLowerCase();
+          newName = capitalize(newParts[0]?.text || '') + (newParts[1]?.text?.toLowerCase() || '');
         }
       } else {
         newName = newParts.map(p => p.text).join('');
@@ -12297,12 +16217,20 @@ export default function AetherNames() {
         {/* Header */}
         <header className={`relative z-50 text-center py-8 mb-8 transition-all duration-1000 ${animateHeader ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
           {/* Navigation */}
-          <div className="flex justify-center mb-6">
+          <div className="flex items-center justify-center gap-3 mb-6">
             <Navigation 
               currentPage={currentPage} 
               setCurrentPage={setCurrentPage} 
               theme={config.genre}
             />
+            {/* Hide tour button on mobile - tour doesn't work well on small screens */}
+            <button
+              onClick={() => setShowTour(true)}
+              className="hidden md:block p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/50 transition-all"
+              title="Show Tour / Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
           </div>
 
           {currentPage === 'generator' && (
@@ -12372,11 +16300,13 @@ export default function AetherNames() {
 
           {/* Main Action Buttons - Side by Side on Mobile */}
           <div className="flex gap-2 md:gap-3 justify-center mb-3 md:mb-4">
-            <GlowButton onClick={generate} disabled={isGenerating} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-8" theme={config.genre}>
-              <Sparkles className={`w-4 h-4 md:w-5 md:h-5 ${isGenerating ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">{isGenerating ? 'Forging...' : 'Generate Names'}</span>
-              <span className="sm:hidden">{isGenerating ? 'Forging...' : 'Generate'}</span>
-            </GlowButton>
+            <span id="tour-generate-button">
+              <GlowButton onClick={generate} disabled={isGenerating} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-8" theme={config.genre}>
+                <Sparkles className={`w-4 h-4 md:w-5 md:h-5 ${isGenerating ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isGenerating ? 'Forging...' : 'Generate Names'}</span>
+                <span className="sm:hidden">{isGenerating ? 'Forging...' : 'Generate'}</span>
+              </GlowButton>
+            </span>
             <GlowButton variant="secondary" onClick={surpriseMe} className="flex-1 max-w-[180px] md:max-w-none md:flex-none md:px-6" theme={config.genre}>
               <Zap className="w-4 h-4 md:w-5 md:h-5" />
               <span className="hidden sm:inline">Surprise Me</span>
@@ -12545,7 +16475,7 @@ export default function AetherNames() {
               {/* Genre */}
               <div className="mb-6">
                 <SectionHeader title="Genre" helpText={helpTexts.genre} icon={Globe} isLocked={lockedSettings.genre} onToggleLock={toggleLock} lockKey="genre" />
-                <div className="grid grid-cols-3 gap-2">
+                <div id="tour-genre-buttons" className="grid grid-cols-3 gap-2">
                   {genres.map(g => (
                     <SelectionChip key={g.value} selected={config.genre === g.value} onClick={() => updateConfig('genre', g.value)}>
                       <span className="mr-1">{g.icon}</span> {g.label}
@@ -12715,7 +16645,7 @@ export default function AetherNames() {
           </div>
 
           {/* Results Panel */}
-          <div className="lg:col-span-3" ref={resultsRef}>
+          <div id="tour-results-area" className="lg:col-span-3" ref={resultsRef}>
             <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800/50 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -12914,6 +16844,30 @@ export default function AetherNames() {
           </GlowButton>
         </div>
       )}
+      
+      {/* Dev Tools - Accessible from anywhere with Ctrl+Shift+D */}
+      <DevTools 
+        onQuickTest={(testType) => {
+          // Navigate to character creator if not already there
+          setCurrentPage('character');
+          // Set a flag or pass test type
+          setCharacterImportName(`DEV_TEST:${testType}`);
+        }}
+      />
+      
+      {/* Floating Dice Roller - Available on all pages */}
+      <DiceRoller />
+      
+      {/* Onboarding Tour - App Level */}
+      <OnboardingTour 
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={() => setShowTour(false)}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        onGenerate={generate}
+        hasGeneratedNames={generatedNames.length > 0}
+      />
     </div>
   );
 }
