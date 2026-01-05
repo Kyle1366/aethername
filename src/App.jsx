@@ -4811,57 +4811,57 @@ const STARTING_GOLD = {
 
 const EQUIPMENT_SHOP = {
   weapons: [
-    { name: 'Club', cost: 0.1, damage: '1d4 bludgeoning', properties: 'Light' },
-    { name: 'Dagger', cost: 2, damage: '1d4 piercing', properties: 'Finesse, light, thrown (20/60)' },
-    { name: 'Handaxe', cost: 5, damage: '1d6 slashing', properties: 'Light, thrown (20/60)' },
-    { name: 'Javelin', cost: 0.5, damage: '1d6 piercing', properties: 'Thrown (30/120)' },
-    { name: 'Mace', cost: 5, damage: '1d6 bludgeoning', properties: '—' },
-    { name: 'Quarterstaff', cost: 0.2, damage: '1d6 bludgeoning', properties: 'Versatile (1d8)' },
-    { name: 'Shortbow', cost: 25, damage: '1d6 piercing', properties: 'Ammunition (80/320), two-handed' },
-    { name: 'Shortsword', cost: 10, damage: '1d6 piercing', properties: 'Finesse, light' },
-    { name: 'Longsword', cost: 15, damage: '1d8 slashing', properties: 'Versatile (1d10)' },
-    { name: 'Rapier', cost: 25, damage: '1d8 piercing', properties: 'Finesse' },
-    { name: 'Greataxe', cost: 30, damage: '1d12 slashing', properties: 'Heavy, two-handed' },
-    { name: 'Greatsword', cost: 50, damage: '2d6 slashing', properties: 'Heavy, two-handed' },
-    { name: 'Longbow', cost: 50, damage: '1d8 piercing', properties: 'Ammunition (150/600), heavy, two-handed' },
-    { name: 'Light Crossbow', cost: 25, damage: '1d8 piercing', properties: 'Ammunition (80/320), loading, two-handed' }
+    { name: 'Club', cost: 0.1, damage: '1d4 bludgeoning', properties: 'Light', goodFor: ['druid'] },
+    { name: 'Dagger', cost: 2, damage: '1d4 piercing', properties: 'Finesse, light, thrown (20/60)', goodFor: ['rogue', 'wizard', 'sorcerer', 'warlock', 'bard'] },
+    { name: 'Handaxe', cost: 5, damage: '1d6 slashing', properties: 'Light, thrown (20/60)', goodFor: ['barbarian', 'fighter', 'ranger'] },
+    { name: 'Javelin', cost: 0.5, damage: '1d6 piercing', properties: 'Thrown (30/120)', goodFor: ['fighter', 'paladin', 'barbarian'] },
+    { name: 'Mace', cost: 5, damage: '1d6 bludgeoning', properties: '—', goodFor: ['cleric', 'paladin'] },
+    { name: 'Quarterstaff', cost: 0.2, damage: '1d6 bludgeoning', properties: 'Versatile (1d8)', goodFor: ['monk', 'druid', 'wizard', 'cleric'] },
+    { name: 'Shortbow', cost: 25, damage: '1d6 piercing', properties: 'Ammunition (80/320), two-handed', goodFor: ['rogue', 'ranger', 'fighter'] },
+    { name: 'Shortsword', cost: 10, damage: '1d6 piercing', properties: 'Finesse, light', goodFor: ['rogue', 'ranger', 'fighter', 'monk'] },
+    { name: 'Longsword', cost: 15, damage: '1d8 slashing', properties: 'Versatile (1d10)', goodFor: ['fighter', 'paladin', 'cleric'] },
+    { name: 'Rapier', cost: 25, damage: '1d8 piercing', properties: 'Finesse', goodFor: ['rogue', 'bard', 'fighter', 'ranger'] },
+    { name: 'Greataxe', cost: 30, damage: '1d12 slashing', properties: 'Heavy, two-handed', goodFor: ['barbarian', 'fighter'] },
+    { name: 'Greatsword', cost: 50, damage: '2d6 slashing', properties: 'Heavy, two-handed', goodFor: ['fighter', 'paladin'] },
+    { name: 'Longbow', cost: 50, damage: '1d8 piercing', properties: 'Ammunition (150/600), heavy, two-handed', goodFor: ['ranger', 'fighter'] },
+    { name: 'Light Crossbow', cost: 25, damage: '1d8 piercing', properties: 'Ammunition (80/320), loading, two-handed', goodFor: ['rogue', 'wizard', 'sorcerer'] }
   ],
   armor: [
-    { name: 'Padded', cost: 5, ac: '11 + Dex', type: 'Light', stealth: 'Disadvantage' },
-    { name: 'Leather', cost: 10, ac: '11 + Dex', type: 'Light', stealth: '—' },
-    { name: 'Studded Leather', cost: 45, ac: '12 + Dex', type: 'Light', stealth: '—' },
-    { name: 'Hide', cost: 10, ac: '12 + Dex (max 2)', type: 'Medium', stealth: '—' },
-    { name: 'Chain Shirt', cost: 50, ac: '13 + Dex (max 2)', type: 'Medium', stealth: '—' },
-    { name: 'Scale Mail', cost: 50, ac: '14 + Dex (max 2)', type: 'Medium', stealth: 'Disadvantage' },
-    { name: 'Breastplate', cost: 400, ac: '14 + Dex (max 2)', type: 'Medium', stealth: '—' },
-    { name: 'Chain Mail', cost: 75, ac: '16', type: 'Heavy', stealth: 'Disadvantage', strReq: 13 },
-    { name: 'Plate', cost: 1500, ac: '18', type: 'Heavy', stealth: 'Disadvantage', strReq: 15 },
-    { name: 'Shield', cost: 10, ac: '+2', type: 'Shield', stealth: '—' }
+    { name: 'Padded', cost: 5, ac: '11 + Dex', type: 'Light', stealth: 'Disadvantage', goodFor: [] },
+    { name: 'Leather', cost: 10, ac: '11 + Dex', type: 'Light', stealth: '—', goodFor: ['rogue', 'bard', 'ranger', 'monk', 'warlock'] },
+    { name: 'Studded Leather', cost: 45, ac: '12 + Dex', type: 'Light', stealth: '—', goodFor: ['rogue', 'bard', 'ranger', 'warlock'] },
+    { name: 'Hide', cost: 10, ac: '12 + Dex (max 2)', type: 'Medium', stealth: '—', goodFor: ['druid', 'barbarian'] },
+    { name: 'Chain Shirt', cost: 50, ac: '13 + Dex (max 2)', type: 'Medium', stealth: '—', goodFor: ['cleric', 'ranger'] },
+    { name: 'Scale Mail', cost: 50, ac: '14 + Dex (max 2)', type: 'Medium', stealth: 'Disadvantage', goodFor: ['cleric', 'fighter'] },
+    { name: 'Breastplate', cost: 400, ac: '14 + Dex (max 2)', type: 'Medium', stealth: '—', goodFor: ['fighter', 'paladin', 'cleric', 'ranger'] },
+    { name: 'Chain Mail', cost: 75, ac: '16', type: 'Heavy', stealth: 'Disadvantage', strReq: 13, goodFor: ['fighter', 'paladin', 'cleric'] },
+    { name: 'Plate', cost: 1500, ac: '18', type: 'Heavy', stealth: 'Disadvantage', strReq: 15, goodFor: ['fighter', 'paladin'] },
+    { name: 'Shield', cost: 10, ac: '+2', type: 'Shield', stealth: '—', goodFor: ['fighter', 'paladin', 'cleric', 'druid'] }
   ],
   gear: [
-    { name: 'Backpack', cost: 2 },
-    { name: 'Bedroll', cost: 1 },
-    { name: 'Rope, 50 ft', cost: 1 },
-    { name: 'Torch (10)', cost: 0.1 },
-    { name: 'Rations (10 days)', cost: 5 },
-    { name: 'Waterskin', cost: 0.2 },
-    { name: 'Tinderbox', cost: 0.5 },
-    { name: 'Arrows (20)', cost: 1 },
-    { name: 'Bolts (20)', cost: 1 },
-    { name: 'Component Pouch', cost: 25 },
-    { name: 'Arcane Focus', cost: 10 },
-    { name: 'Holy Symbol', cost: 5 },
-    { name: 'Thieves\' Tools', cost: 25 },
-    { name: 'Healer\'s Kit', cost: 5 }
+    { name: 'Backpack', cost: 2, goodFor: ['all'] },
+    { name: 'Bedroll', cost: 1, goodFor: ['all'] },
+    { name: 'Rope, 50 ft', cost: 1, goodFor: ['all'] },
+    { name: 'Torch (10)', cost: 0.1, goodFor: ['all'] },
+    { name: 'Rations (10 days)', cost: 5, goodFor: ['all'] },
+    { name: 'Waterskin', cost: 0.2, goodFor: ['all'] },
+    { name: 'Tinderbox', cost: 0.5, goodFor: ['all'] },
+    { name: 'Arrows (20)', cost: 1, goodFor: ['ranger', 'fighter'] },
+    { name: 'Bolts (20)', cost: 1, goodFor: ['rogue', 'fighter'] },
+    { name: 'Component Pouch', cost: 25, goodFor: ['wizard', 'sorcerer', 'warlock', 'bard'] },
+    { name: 'Arcane Focus', cost: 10, goodFor: ['wizard', 'sorcerer', 'warlock'] },
+    { name: 'Holy Symbol', cost: 5, goodFor: ['cleric', 'paladin'] },
+    { name: 'Thieves\' Tools', cost: 25, goodFor: ['rogue'] },
+    { name: 'Healer\'s Kit', cost: 5, goodFor: ['cleric', 'druid', 'paladin', 'ranger'] }
   ],
   packs: [
-    { name: 'Burglar\'s Pack', cost: 16, contents: 'Backpack, ball bearings, string, bell, 5 candles, crowbar, hammer, 10 pitons, lantern, 2 oil flasks, rations, tinderbox, waterskin, 50 ft rope' },
-    { name: 'Diplomat\'s Pack', cost: 39, contents: 'Chest, 2 cases for maps, fine clothes, ink, pen, lamp, 2 oil flasks, 5 paper sheets, vial of perfume, sealing wax, soap' },
-    { name: 'Dungeoneer\'s Pack', cost: 12, contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft rope' },
-    { name: 'Entertainer\'s Pack', cost: 40, contents: 'Backpack, bedroll, 2 costumes, 5 candles, rations, waterskin, disguise kit' },
-    { name: 'Explorer\'s Pack', cost: 10, contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft rope' },
-    { name: 'Priest\'s Pack', cost: 19, contents: 'Backpack, blanket, 10 candles, tinderbox, alms box, 2 incense blocks, censer, vestments, rations, waterskin' },
-    { name: 'Scholar\'s Pack', cost: 40, contents: 'Backpack, book of lore, ink, pen, 10 parchment sheets, little bag of sand, small knife' }
+    { name: 'Burglar\'s Pack', cost: 16, contents: 'Backpack, ball bearings, string, bell, 5 candles, crowbar, hammer, 10 pitons, lantern, 2 oil flasks, rations, tinderbox, waterskin, 50 ft rope', goodFor: ['rogue'] },
+    { name: 'Diplomat\'s Pack', cost: 39, contents: 'Chest, 2 cases for maps, fine clothes, ink, pen, lamp, 2 oil flasks, 5 paper sheets, vial of perfume, sealing wax, soap', goodFor: ['bard', 'paladin', 'warlock'] },
+    { name: 'Dungeoneer\'s Pack', cost: 12, contents: 'Backpack, crowbar, hammer, 10 pitons, 10 torches, tinderbox, 10 days rations, waterskin, 50 ft rope', goodFor: ['fighter', 'barbarian', 'paladin'] },
+    { name: 'Entertainer\'s Pack', cost: 40, contents: 'Backpack, bedroll, 2 costumes, 5 candles, rations, waterskin, disguise kit', goodFor: ['bard'] },
+    { name: 'Explorer\'s Pack', cost: 10, contents: 'Backpack, bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50 ft rope', goodFor: ['ranger', 'druid', 'monk'] },
+    { name: 'Priest\'s Pack', cost: 19, contents: 'Backpack, blanket, 10 candles, tinderbox, alms box, 2 incense blocks, censer, vestments, rations, waterskin', goodFor: ['cleric'] },
+    { name: 'Scholar\'s Pack', cost: 40, contents: 'Backpack, book of lore, ink, pen, 10 parchment sheets, little bag of sand, small knife', goodFor: ['wizard', 'sorcerer'] }
   ]
 };
 
@@ -6357,7 +6357,8 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
     const isMartial = ['fighter', 'paladin', 'ranger', 'barbarian', 'monk'].includes(classLowerCase);
     const isCaster = ['wizard', 'sorcerer', 'warlock', 'cleric', 'druid', 'bard'].includes(classLowerCase);
     const primaryAbility = primaryTargets[0] || 'constitution';
-    const currentPrimaryScore = character.abilityScores?.[primaryAbility] || 10;
+    
+    const currentPrimaryScore = character.abilities?.[primaryAbility] || 10;
     
     // Build-aware feat selection
     const getBestFeat = (level) => {
@@ -9816,7 +9817,7 @@ const MulticlassStep = ({ character, updateCharacter }) => {
   const availableClasses = Object.entries(CLASSES).filter(([id]) => id !== character.class);
 
   const smartAddMulticlass = () => {
-    if (totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2) return;
+    if (totalLevel < 2 || availableMulticlassLevels < 1 || multiclassEntries.length >= 2) return null;
     const synergies = {
       fighter: ['rogue', 'warlock', 'wizard', 'cleric'],
       rogue: ['fighter', 'ranger', 'warlock', 'bard'],
@@ -9835,10 +9836,35 @@ const MulticlassStep = ({ character, updateCharacter }) => {
     const already = multiclassEntries.map(mc => mc.classId);
     const choices = (synergies[primaryId] || availableClasses.map(([id]) => id))
       .filter(id => id !== primaryId && !already.includes(id));
-    if (choices.length === 0) return;
+    if (choices.length === 0) return null;
     const pickId = choices[0];
-    const newMulticlass = [...multiclassEntries, { classId: pickId, level: 1, subclass: null }];
+    
+    // Also pick a subclass for the multiclass
+    const mcClassData = CLASSES[pickId];
+    let mcSubclass = null;
+    if (mcClassData && mcClassData.subclassLevel <= totalLevel) {
+      const subclasses = SUBCLASSES[pickId];
+      if (subclasses) {
+        const subclassKeys = Object.keys(subclasses);
+        mcSubclass = subclassKeys[Math.floor(Math.random() * subclassKeys.length)];
+      }
+    }
+    
+    // Pick fighting style for multiclass if applicable
+    let mcFightingStyle = null;
+    if (['fighter', 'paladin', 'ranger'].includes(pickId)) {
+      const styles = Object.keys(FIGHTING_STYLES);
+      mcFightingStyle = styles[Math.floor(Math.random() * styles.length)];
+    }
+    
+    const newMulticlass = [...multiclassEntries, { 
+      classId: pickId, 
+      level: 1, 
+      subclass: mcSubclass,
+      fightingStyle: mcFightingStyle
+    }];
     updateCharacter('multiclass', newMulticlass);
+    return { classId: pickId, subclass: mcSubclass, fightingStyle: mcFightingStyle };
   };
   
   // Multi-class rules: need to be at least level 2 to multi-class
@@ -11104,8 +11130,8 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
     const choices = {};
     const classLower = character.class?.toLowerCase() || '';
     const fightingStyle = character.fightingStyle?.toLowerCase() || '';
-    const primaryAbility = character.abilityScores ? 
-      Object.entries(character.abilityScores).sort((a, b) => b[1] - a[1])[0]?.[0] : 'strength';
+    const primaryAbility = character.abilities ? 
+      Object.entries(character.abilities).sort((a, b) => b[1] - a[1])[0]?.[0] : 'strength';
     
     // Build-aware equipment selection logic
     classEquipment.choices.forEach((choice, idx) => {
@@ -11145,7 +11171,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       
       // Armor choices based on class and dex
       if (choice.name?.toLowerCase().includes('armor')) {
-        const dexScore = character.abilityScores?.dexterity || 10;
+        const dexScore = character.abilities?.dexterity || 10;
         if (dexScore >= 14 && (classLower === 'rogue' || classLower === 'ranger' || classLower === 'monk')) {
           // High dex classes: prefer light armor
           selectedIdx = options.findIndex(opt => 
@@ -11182,6 +11208,123 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
     setEquipmentChoices(choices);
     setGoldRolled(false);
     setPurchasedItems([]);
+  };
+
+  // Roll for gold and smartly buy equipment based on class
+  const rollAndBuySmart = () => {
+    if (!classGold) return;
+    
+    // Roll for starting gold
+    let totalGold = 0;
+    for (let i = 0; i < classGold.dice; i++) {
+      totalGold += Math.floor(Math.random() * classGold.sides) + 1;
+    }
+    totalGold *= classGold.multiplier;
+    
+    const classLower = character.class?.toLowerCase() || '';
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
+    const items = [];
+    let remainingGold = totalGold;
+    
+    // Helper to check if item is good for this class
+    const isGoodForClass = (item) => {
+      const goodFor = item.goodFor || [];
+      return goodFor.includes('all') || goodFor.includes(classLower);
+    };
+    
+    // Helper to buy item if affordable
+    const tryBuy = (item) => {
+      if (remainingGold >= item.cost && !items.includes(item.name)) {
+        items.push(item.name);
+        remainingGold = Math.round((remainingGold - item.cost) * 100) / 100;
+        return true;
+      }
+      return false;
+    };
+    
+    // Priority 1: Get a pack that's good for the class
+    const goodPacks = EQUIPMENT_SHOP.packs.filter(isGoodForClass).sort((a, b) => a.cost - b.cost);
+    if (goodPacks.length > 0) {
+      tryBuy(goodPacks[0]);
+    } else {
+      // Default to Explorer's Pack as it's cheapest
+      const explorerPack = EQUIPMENT_SHOP.packs.find(p => p.name === "Explorer's Pack");
+      if (explorerPack) tryBuy(explorerPack);
+    }
+    
+    // Priority 2: Get armor appropriate for class
+    const goodArmor = EQUIPMENT_SHOP.armor.filter(isGoodForClass);
+    // Sort by AC value (higher is better) but still affordable
+    goodArmor.sort((a, b) => {
+      const acA = parseInt(a.ac) || 11;
+      const acB = parseInt(b.ac) || 11;
+      return acB - acA;
+    });
+    
+    for (const armor of goodArmor) {
+      if (tryBuy(armor)) break;
+    }
+    
+    // Priority 3: Get a weapon appropriate for class and fighting style
+    let goodWeapons = EQUIPMENT_SHOP.weapons.filter(isGoodForClass);
+    
+    // Fighting style preferences
+    if (fightingStyle === 'great weapon fighting') {
+      goodWeapons = goodWeapons.filter(w => w.properties?.includes('two-handed') || w.properties?.includes('Heavy'));
+    } else if (fightingStyle === 'archery') {
+      goodWeapons = goodWeapons.filter(w => w.properties?.includes('Ammunition'));
+    } else if (fightingStyle === 'dueling') {
+      goodWeapons = goodWeapons.filter(w => !w.properties?.includes('two-handed'));
+    }
+    
+    // Sort by damage (prefer higher damage dice)
+    goodWeapons.sort((a, b) => {
+      const dmgA = parseInt(a.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+      const dmgB = parseInt(b.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+      return dmgB - dmgA;
+    });
+    
+    for (const weapon of goodWeapons) {
+      if (tryBuy(weapon)) break;
+    }
+    
+    // Priority 4: Shield for classes that benefit
+    if (['fighter', 'paladin', 'cleric'].includes(classLower) && fightingStyle !== 'great weapon fighting') {
+      const shield = EQUIPMENT_SHOP.armor.find(a => a.name === 'Shield');
+      if (shield) tryBuy(shield);
+    }
+    
+    // Priority 5: Class-specific gear
+    const classGear = EQUIPMENT_SHOP.gear.filter(isGoodForClass);
+    for (const gear of classGear) {
+      tryBuy(gear);
+    }
+    
+    // Priority 6: Ammunition if we have a ranged weapon
+    const hasRanged = items.some(i => {
+      const weapon = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return weapon?.properties?.includes('Ammunition');
+    });
+    if (hasRanged) {
+      const ammo = EQUIPMENT_SHOP.gear.find(g => g.name === 'Arrows (20)' || g.name === 'Bolts (20)');
+      if (ammo) tryBuy(ammo);
+    }
+    
+    // Priority 7: Basic adventuring gear if we have gold left
+    const basicGear = ['Backpack', 'Bedroll', 'Rations (10 days)', 'Waterskin', 'Rope, 50 ft', 'Torch (10)'];
+    for (const gearName of basicGear) {
+      const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+      if (gear && !items.includes(gear.name)) {
+        tryBuy(gear);
+      }
+    }
+    
+    // Set state
+    setMethod('gold');
+    setGold(remainingGold);
+    setGoldRolled(true);
+    setPurchasedItems(items);
+    setEquipmentChoices({});
   };
 
   // Update character when equipment changes
@@ -11247,12 +11390,12 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
             Take your class starting equipment, roll for gold, or auto-select ideal gear.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={autoSelectEquipment}
             className="px-4 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!classEquipment}
-            title="Select first option for each choice"
+            title="Select first option for each starting equipment choice"
           >
             Choose for me
           </button>
@@ -11260,10 +11403,19 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
             onClick={selectIdealEquipment}
             className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             disabled={!classEquipment}
-            title="Intelligently select gear based on your build"
+            title="Intelligently select starting equipment based on your build"
           >
             <Sparkles className="w-4 h-4" />
-            Choose ideal
+            Ideal gear
+          </button>
+          <button
+            onClick={rollAndBuySmart}
+            className="px-4 py-2 rounded-lg bg-amber-600/80 hover:bg-amber-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={!classGold}
+            title="Roll for gold and automatically buy optimal equipment for your class"
+          >
+            <Dices className="w-4 h-4" />
+            Roll & shop
           </button>
         </div>
       </div>
@@ -11951,6 +12103,14 @@ const ClassSelectionStep = ({ character, updateCharacter, onShowCompare }) => {
               if (result.classSkills) updateCharacter('classSkills', result.classSkills);
               if (result.expertise) updateCharacter('expertise', result.expertise);
               if (result.cantripChoices) updateCharacter('cantripChoices', result.cantripChoices);
+              
+              // Also pick a multiclass if multiclass is enabled
+              if (multiclassExpanded && (character.level || 1) >= 2) {
+                const mcResult = smartChooseMulticlass({ ...character, class: result.class });
+                if (mcResult) {
+                  updateCharacter('multiclass', [mcResult]);
+                }
+              }
               setShowAllClasses(false);
             }}
             className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap"
@@ -13517,6 +13677,76 @@ const smartChooseClass = (character) => {
     classSkills,
     expertise,
     cantripChoices
+  };
+};
+
+// Smart multiclass selection - picks a synergistic multiclass with all choices
+const smartChooseMulticlass = (character) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const totalLevel = character.level || 1;
+  
+  if (totalLevel < 2 || !character.class) return null;
+  
+  const synergies = {
+    fighter: ['rogue', 'warlock', 'wizard', 'cleric'],
+    rogue: ['fighter', 'ranger', 'warlock', 'bard'],
+    paladin: ['warlock', 'sorcerer', 'bard'],
+    warlock: ['paladin', 'sorcerer', 'fighter', 'bard'],
+    sorcerer: ['warlock', 'paladin', 'bard'],
+    bard: ['warlock', 'paladin', 'rogue', 'sorcerer'],
+    ranger: ['rogue', 'fighter', 'druid', 'cleric'],
+    cleric: ['fighter', 'paladin', 'druid'],
+    druid: ['cleric', 'monk', 'ranger'],
+    monk: ['rogue', 'fighter', 'druid'],
+    barbarian: ['fighter', 'rogue', 'druid'],
+    wizard: ['fighter', 'cleric']
+  };
+  
+  const primaryId = character.class;
+  const existing = (character.multiclass || []).map(mc => mc.classId);
+  const choices = (synergies[primaryId] || Object.keys(CLASSES))
+    .filter(id => id !== primaryId && !existing.includes(id));
+  
+  if (choices.length === 0) return null;
+  
+  const pickId = pick(choices);
+  const mcClassData = CLASSES[pickId];
+  
+  // Pick subclass for multiclass if level allows
+  let mcSubclass = null;
+  if (mcClassData && mcClassData.subclassLevel <= totalLevel) {
+    const subclasses = SUBCLASSES[pickId];
+    if (subclasses) {
+      mcSubclass = pick(Object.keys(subclasses));
+    }
+  }
+  
+  // Pick fighting style for multiclass if applicable  
+  let mcFightingStyle = null;
+  if (['fighter', 'paladin', 'ranger'].includes(pickId)) {
+    mcFightingStyle = pick(Object.keys(FIGHTING_STYLES));
+  }
+  
+  // Pick class skills for multiclass
+  const skillChoices = mcClassData?.skillChoices || { count: 0, from: [] };
+  const allSkills = ['Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History', 'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception', 'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'];
+  const availableSkills = skillChoices.from === 'any' ? allSkills : (skillChoices.from || []);
+  const mcClassSkills = [];
+  const skillPool = [...availableSkills];
+  // Multiclass typically gets fewer skill proficiencies
+  const skillCount = Math.min(1, skillChoices.count || 0);
+  for (let i = 0; i < skillCount && skillPool.length > 0; i++) {
+    const idx = Math.floor(Math.random() * skillPool.length);
+    mcClassSkills.push(skillPool[idx]);
+    skillPool.splice(idx, 1);
+  }
+  
+  return {
+    classId: pickId,
+    level: 1,
+    subclass: mcSubclass,
+    fightingStyle: mcFightingStyle,
+    classSkills: mcClassSkills
   };
 };
 
