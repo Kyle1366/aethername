@@ -11374,6 +11374,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   const [method, setMethod] = useState(character.equipmentMethod || null);
   const [equipmentChoices, setEquipmentChoices] = useState(character.equipmentChoices || {});
   const [gold, setGold] = useState(character.gold || 0);
+  const [totalGoldRolled, setTotalGoldRolled] = useState(0);
   const [goldRolled, setGoldRolled] = useState(false);
   const [purchasedItems, setPurchasedItems] = useState(character.purchasedItems || []);
   const [shopCategory, setShopCategory] = useState('weapons');
@@ -11592,6 +11593,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
     // Set state - use 'ideal' method which will show gold/purchased UI
     setMethod('ideal');
     setGold(remainingGold);
+    setTotalGoldRolled(totalGold);
     setGoldRolled(true);
     setPurchasedItems(items);
     setEquipmentChoices({});
@@ -11962,7 +11964,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
           {method === 'ideal' && (
             <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
-              Rolled gold and selected build-appropriate equipment for your {CLASSES[classId]?.name}. You can modify below.
+              Rolled <span className="font-bold text-amber-400">{totalGoldRolled} gp</span> and selected build-appropriate equipment for your {CLASSES[classId]?.name}. You can modify below.
             </div>
           )}
           
