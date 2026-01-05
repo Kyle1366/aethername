@@ -6349,61 +6349,138 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
 
   const smartFillASI = () => {
     const primaryTargets = [...primaryAbilityOrder, ...savingThrowOrder, ...ABILITY_NAMES].filter((v, i, arr) => v && arr.indexOf(v) === i);
-    const updated = { ...asiChoices };
+    const updated = {};
     
     // Analyze build to determine feat vs ASI strategy
     const classLowerCase = character.class?.toLowerCase() || '';
-    const hasFightingStyle = character.fightingStyle !== undefined;
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
     const isMartial = ['fighter', 'paladin', 'ranger', 'barbarian', 'monk'].includes(classLowerCase);
     const isCaster = ['wizard', 'sorcerer', 'warlock', 'cleric', 'druid', 'bard'].includes(classLowerCase);
+    const isHalfCaster = ['paladin', 'ranger'].includes(classLowerCase);
     const primaryAbility = primaryTargets[0] || 'constitution';
+    const secondaryAbility = primaryTargets[1] || 'constitution';
     
-    const currentPrimaryScore = character.abilities?.[primaryAbility] || 10;
-    
-    // Build-aware feat selection
-    const getBestFeat = (level) => {
-      // If primary ability is below 18, prioritize ASI
-      if (currentPrimaryScore < 18) return null;
-      
-      // Level-based feat recommendations
-      if (level === 4) {
-        // Early game: focus on core combat feats
-        if (isMartial) {
-          if (classLowerCase === 'fighter' || classLowerCase === 'paladin') return 'Great Weapon Master';
-          if (classLowerCase === 'ranger') return 'Sharpshooter';
-          if (classLowerCase === 'barbarian') return 'Great Weapon Master';
-          if (classLowerCase === 'monk') return 'Mobile';
+    // Calculate current scores considering all previous ASI increases
+    const getCurrentScore = (ability, upToLevel) => {
+      let score = character.abilities?.[ability] || 10;
+      // Add previous ASI bonuses
+      asiLevels.filter(l => l < upToLevel).forEach(l => {
+        const prevChoice = updated[l];
+        if (prevChoice?.type === 'asi' && prevChoice.abilityIncreases) {
+          score += prevChoice.abilityIncreases[ability] || 0;
         }
-        if (isCaster) return 'War Caster';
+      });
+      return score;
+    };
+    
+    // Build-aware feat selection - returns feat ID (key) not name
+    const getBestFeat = (level, currentPrimaryScore) => {
+      // If primary ability is below 16, always prioritize ASI
+      if (currentPrimaryScore < 16) return null;
+      
+      // Class and build specific feat recommendations
+      const featRecommendations = {
+        // Martial feats
+        fighter: () => {
+          if (fightingStyle === 'great weapon fighting') return 'greatWeaponMaster';
+          if (fightingStyle === 'archery') return 'sharpshooter';
+          if (fightingStyle === 'dueling' || fightingStyle === 'defense') return 'sentinel';
+          return 'sentinel';
+        },
+        barbarian: () => 'greatWeaponMaster',
+        paladin: () => {
+          if (fightingStyle === 'great weapon fighting') return 'greatWeaponMaster';
+          return 'sentinel';
+        },
+        ranger: () => {
+          if (fightingStyle === 'archery') return 'sharpshooter';
+          return 'alert';
+        },
+        monk: () => 'mobile',
+        rogue: () => currentPrimaryScore >= 18 ? 'alert' : null,
+        
+        // Caster feats
+        wizard: () => 'warCaster',
+        sorcerer: () => 'warCaster',
+        warlock: () => 'warCaster',
+        cleric: () => 'warCaster',
+        druid: () => 'warCaster',
+        bard: () => 'warCaster'
+      };
+      
+      // Only recommend feats at certain levels and scores
+      if (currentPrimaryScore >= 18) {
+        const getFeat = featRecommendations[classLowerCase];
+        if (getFeat) return getFeat();
       }
       
-      if (level === 8) {
-        // Mid game: specialization feats
-        if (isMartial && !isCaster) return 'Sentinel';
-        if (isCaster) return 'Resilient (Constitution)';
+      // At level 8+, consider resilient for casters if primary is maxed
+      if (level >= 8 && isCaster && currentPrimaryScore >= 18) {
+        return 'resilient';
       }
       
-      return null; // Default to ASI
+      // Lucky is always good if primary is maxed
+      if (currentPrimaryScore >= 20 && level >= 8) {
+        return 'lucky';
+      }
+      
+      return null;
     };
     
     asiLevels.forEach(level => {
-      const recommendedFeat = getBestFeat(level);
+      const currentPrimaryScore = getCurrentScore(primaryAbility, level);
+      const currentSecondaryScore = getCurrentScore(secondaryAbility, level);
+      const recommendedFeat = getBestFeat(level, currentPrimaryScore);
       
-      if (recommendedFeat && currentPrimaryScore >= 16) {
-        // Choose feat if primary is strong enough
+      if (recommendedFeat && currentPrimaryScore >= 18 && FEATS[recommendedFeat]) {
+        // Choose feat if primary is strong enough and feat exists
         updated[level] = {
           type: 'feat',
           feat: recommendedFeat
         };
       } else {
-        // Prioritize primary ability, then secondary
-        const topAbility = primaryTargets[0] || 'constitution';
+        // ASI logic - prioritize getting primary to 20, then secondary
+        const abilityIncreases = {};
+        
+        if (currentPrimaryScore < 20) {
+          // How much can we increase primary?
+          const primaryNeeded = Math.min(2, 20 - currentPrimaryScore);
+          abilityIncreases[primaryAbility] = primaryNeeded;
+          
+          // If we only needed 1 for primary (odd score), put 1 in secondary
+          if (primaryNeeded === 1 && currentSecondaryScore < 20) {
+            abilityIncreases[secondaryAbility] = 1;
+          }
+        } else if (currentSecondaryScore < 20) {
+          // Primary is maxed, work on secondary
+          const secondaryNeeded = Math.min(2, 20 - currentSecondaryScore);
+          abilityIncreases[secondaryAbility] = secondaryNeeded;
+          
+          // If we only needed 1 for secondary, put 1 in constitution
+          if (secondaryNeeded === 1) {
+            const conScore = getCurrentScore('constitution', level);
+            if (conScore < 20 && secondaryAbility !== 'constitution') {
+              abilityIncreases['constitution'] = 1;
+            }
+          }
+        } else {
+          // Both primary and secondary maxed, boost constitution
+          const conScore = getCurrentScore('constitution', level);
+          if (conScore < 20) {
+            abilityIncreases['constitution'] = Math.min(2, 20 - conScore);
+          } else {
+            // Everything important is maxed, just put +2 in something useful
+            abilityIncreases[primaryAbility] = 2; // Will be ignored if at 20 but shows intent
+          }
+        }
+        
         updated[level] = {
           type: 'asi',
-          abilityIncreases: { [topAbility]: 2 }
+          abilityIncreases
         };
       }
     });
+    
     updateCharacter('asiChoices', updated);
   };
   
@@ -10269,21 +10346,178 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
   const hasSpellcasting = spellcastingClasses.length > 0;
   const isMulticlassCaster = spellcastingClasses.length > 1;
 
+  // Smart spell selection based on class, level, and build
   const autoSelectSpells = () => {
     if (!hasSpellcasting) return;
-    const pickedCantrips = availableCantrips.slice(0, maxCantrips).map(s => s.id);
-    const spellPool = [
-      ...availableLevel1Spells,
-      ...availableLevel2Spells,
-      ...availableLevel3Spells,
-      ...availableLevel4Spells,
-      ...availableLevel5Spells,
-      ...availableLevel6Spells,
-      ...availableLevel7Spells,
-      ...availableLevel8Spells,
-      ...availableLevel9Spells
-    ];
-    const pickedSpells = spellPool.slice(0, totalMaxSpells).map(s => s.id);
+    
+    const classLower = character.class?.toLowerCase() || '';
+    const fightingStyle = character.fightingStyle?.toLowerCase() || '';
+    const level = character.level || 1;
+    
+    // Define spell priorities for each class - most important spells first
+    const classSpellPriorities = {
+      // Cantrip priorities by class
+      cantrips: {
+        wizard: ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'shockingGrasp'],
+        sorcerer: ['fireBolt', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'rayOfFrost'],
+        warlock: ['eldritchBlast', 'mageHand', 'prestidigitation', 'minorIllusion', 'chillTouch'],
+        cleric: ['sacredFlame', 'guidance', 'thaumaturgy', 'spareTheDying', 'light', 'mending'],
+        druid: ['produceFlame', 'guidance', 'druidcraft', 'shillelagh', 'thornWhip', 'resistance'],
+        bard: ['viciousMockery', 'mageHand', 'prestidigitation', 'light', 'minorIllusion', 'message'],
+        paladin: [],
+        ranger: []
+      },
+      // Level 1 spell priorities by class
+      level1: {
+        wizard: ['mageArmor', 'shield', 'magicMissile', 'detectMagic', 'findFamiliar', 'sleep', 'burningHands'],
+        sorcerer: ['mageArmor', 'shield', 'magicMissile', 'detectMagic', 'sleep', 'burningHands', 'chromationOrb'],
+        warlock: ['hex', 'armorOfAgathys', 'hellishRebuke', 'charmPerson', 'expeditiousRetreat'],
+        cleric: ['healingWord', 'bless', 'cureWounds', 'guidingBolt', 'detectMagic', 'sanctuary', 'shieldOfFaith'],
+        druid: ['healingWord', 'goodberry', 'entangle', 'faerieFire', 'cureWounds', 'fogCloud'],
+        bard: ['healingWord', 'faerieFire', 'dissonantWhispers', 'heroism', 'sleep', 'cureWounds'],
+        paladin: ['bless', 'cureWounds', 'divineFavor', 'shieldOfFaith', 'compelledDuel'],
+        ranger: ['huntersMark', 'goodberry', 'cureWounds', 'fogCloud', 'alarm']
+      },
+      // Level 2 spell priorities by class
+      level2: {
+        wizard: ['invisibility', 'mistyStep', 'web', 'holdPerson', 'scorchingRay', 'blur'],
+        sorcerer: ['invisibility', 'mistyStep', 'holdPerson', 'scorchingRay', 'blur', 'enhanceAbility'],
+        warlock: ['invisibility', 'mistyStep', 'holdPerson', 'darkness', 'suggestion'],
+        cleric: ['spiritualWeapon', 'lesserRestoration', 'aid', 'holdPerson', 'silenceSpell'],
+        druid: ['moonbeam', 'lesserRestoration', 'barkskin', 'holdPerson', 'enhanceAbility'],
+        bard: ['invisibility', 'holdPerson', 'lesserRestoration', 'enhanceAbility', 'heat_metal'],
+        paladin: ['aid', 'lesserRestoration', 'findSteed', 'brandingSmite'],
+        ranger: ['lesserRestoration', 'silenceSpell', 'barkskin', 'darkvision']
+      },
+      // Level 3 spell priorities 
+      level3: {
+        wizard: ['fireball', 'counterspell', 'fly', 'haste', 'dispelMagic'],
+        sorcerer: ['fireball', 'counterspell', 'fly', 'haste', 'dispelMagic'],
+        warlock: ['counterspell', 'fly', 'hypnoticPattern', 'dispelMagic'],
+        cleric: ['spiritGuardians', 'revivify', 'dispelMagic', 'massCureWounds'],
+        druid: ['callLightning', 'conjureAnimals', 'dispelMagic', 'waterBreathing'],
+        bard: ['hypnoticPattern', 'dispelMagic', 'fear', 'massHealingWord'],
+        paladin: ['revivify', 'dispelMagic', 'auraOfVitality'],
+        ranger: ['conjureAnimals', 'waterBreathing', 'windWall']
+      }
+    };
+    
+    // Pick cantrips intelligently
+    const cantripPriority = classSpellPriorities.cantrips[classLower] || [];
+    const pickedCantrips = [];
+    
+    // First, add prioritized cantrips that are available
+    for (const spellId of cantripPriority) {
+      if (pickedCantrips.length >= maxCantrips) break;
+      const spell = availableCantrips.find(s => s.id === spellId);
+      if (spell && !pickedCantrips.includes(spellId)) {
+        pickedCantrips.push(spellId);
+      }
+    }
+    
+    // Fill remaining slots with other available cantrips
+    for (const spell of availableCantrips) {
+      if (pickedCantrips.length >= maxCantrips) break;
+      if (!pickedCantrips.includes(spell.id)) {
+        pickedCantrips.push(spell.id);
+      }
+    }
+    
+    // Pick spells intelligently based on level
+    const pickedSpells = [];
+    const spellsByLevel = {
+      1: availableLevel1Spells,
+      2: availableLevel2Spells,
+      3: availableLevel3Spells,
+      4: availableLevel4Spells,
+      5: availableLevel5Spells,
+      6: availableLevel6Spells,
+      7: availableLevel7Spells,
+      8: availableLevel8Spells,
+      9: availableLevel9Spells
+    };
+    
+    const spellPriorities = {
+      1: classSpellPriorities.level1[classLower] || [],
+      2: classSpellPriorities.level2[classLower] || [],
+      3: classSpellPriorities.level3[classLower] || []
+    };
+    
+    // Distribute spells across levels - prioritize lower levels first for usability
+    // At level 1-2: mostly level 1 spells
+    // At level 3-4: some level 2 spells
+    // At level 5+: distribute across available levels
+    
+    const getSpellDistribution = () => {
+      const distribution = {};
+      let remaining = totalMaxSpells;
+      
+      for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+        const available = spellsByLevel[spellLevel]?.length || 0;
+        if (available === 0) continue;
+        
+        // Higher level spells get fewer slots, lower levels get more
+        let slots;
+        if (spellLevel === 1) {
+          slots = Math.min(remaining, Math.ceil(totalMaxSpells * 0.4), available);
+        } else if (spellLevel === 2) {
+          slots = Math.min(remaining, Math.ceil(totalMaxSpells * 0.3), available);
+        } else {
+          slots = Math.min(remaining, Math.ceil(totalMaxSpells * 0.15), available);
+        }
+        
+        distribution[spellLevel] = slots;
+        remaining -= slots;
+      }
+      
+      // If we have remaining slots, add more level 1-2 spells
+      if (remaining > 0) {
+        for (let spellLevel = 1; spellLevel <= 2; spellLevel++) {
+          const available = spellsByLevel[spellLevel]?.length || 0;
+          const current = distribution[spellLevel] || 0;
+          const canAdd = Math.min(remaining, available - current);
+          if (canAdd > 0) {
+            distribution[spellLevel] = current + canAdd;
+            remaining -= canAdd;
+          }
+        }
+      }
+      
+      return distribution;
+    };
+    
+    const distribution = getSpellDistribution();
+    
+    // Pick spells for each level
+    for (let spellLevel = 1; spellLevel <= maxSpellLevel; spellLevel++) {
+      const slotsForLevel = distribution[spellLevel] || 0;
+      if (slotsForLevel === 0) continue;
+      
+      const availableAtLevel = spellsByLevel[spellLevel] || [];
+      const priorityList = spellPriorities[spellLevel] || [];
+      
+      let pickedForLevel = 0;
+      
+      // First, pick priority spells
+      for (const spellId of priorityList) {
+        if (pickedForLevel >= slotsForLevel) break;
+        const spell = availableAtLevel.find(s => s.id === spellId);
+        if (spell && !pickedSpells.includes(spellId)) {
+          pickedSpells.push(spellId);
+          pickedForLevel++;
+        }
+      }
+      
+      // Fill remaining with other available spells
+      for (const spell of availableAtLevel) {
+        if (pickedForLevel >= slotsForLevel) break;
+        if (!pickedSpells.includes(spell.id)) {
+          pickedSpells.push(spell.id);
+          pickedForLevel++;
+        }
+      }
+    }
+    
     setSelectedCantrips(pickedCantrips);
     setSelectedSpells(pickedSpells);
   };
@@ -10489,10 +10723,12 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
           </p>
         </div>
         <button
-          className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           onClick={autoSelectSpells}
           disabled={!hasSpellcasting || (maxCantrips === 0 && totalMaxSpells === 0)}
+          title="Intelligently select optimal spells for your class and level"
         >
+          <Sparkles className="w-4 h-4" />
           Choose for me
         </button>
       </div>
@@ -11392,15 +11628,29 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
-            onClick={autoSelectEquipment}
+            onClick={() => {
+              // Reset and select first options
+              if (!classEquipment) return;
+              const choices = {};
+              classEquipment.choices.forEach((_, idx) => {
+                choices[idx] = 0;
+              });
+              setMethod('starting');
+              setEquipmentChoices(choices);
+              setGoldRolled(false);
+              setPurchasedItems([]);
+            }}
             className="px-4 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!classEquipment}
             title="Select first option for each starting equipment choice"
           >
-            Choose for me
+            Quick pick
           </button>
           <button
-            onClick={selectIdealEquipment}
+            onClick={() => {
+              // Reset and select ideal options based on build
+              selectIdealEquipment();
+            }}
             className="px-4 py-2 rounded-lg bg-cyan-600/80 hover:bg-cyan-500/80 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             disabled={!classEquipment}
             title="Intelligently select starting equipment based on your build"
