@@ -11395,111 +11395,205 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   };
 
   const selectIdealEquipment = () => {
-    if (!classEquipment) return;
-    const choices = {};
+    if (!classGold) return;
+    
     const classLower = character.class?.toLowerCase() || '';
     const fightingStyle = character.fightingStyle?.toLowerCase() || '';
     const primaryAbility = character.abilities ? 
       Object.entries(character.abilities).sort((a, b) => b[1] - a[1])[0]?.[0] : 'strength';
+    const dexScore = character.abilities?.dexterity || 10;
     
-    // Helper to pick randomly from valid indices
-    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    // Helper to shuffle array for randomization
+    const shuffle = (arr) => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
     
-    // Build-aware equipment selection logic with randomization
-    classEquipment.choices.forEach((choice, idx) => {
-      const options = choice.options || [];
-      let validIndices = [];
-      
-      // Weapon choices based on fighting style and abilities
-      if (choice.name?.toLowerCase().includes('weapon')) {
-        if (fightingStyle === 'great weapon fighting') {
-          // Prefer two-handed weapons
-          validIndices = options.map((opt, i) => 
-            (opt?.toLowerCase().includes('greatsword') || 
-            opt?.toLowerCase().includes('greataxe') ||
-            opt?.toLowerCase().includes('maul') ||
-            opt?.toLowerCase().includes('glaive') ||
-            opt?.toLowerCase().includes('halberd')) ? i : -1
-          ).filter(i => i >= 0);
-        } else if (fightingStyle === 'archery') {
-          // Prefer ranged weapons
-          validIndices = options.map((opt, i) => 
-            (opt?.toLowerCase().includes('longbow') ||
-            opt?.toLowerCase().includes('crossbow') ||
-            opt?.toLowerCase().includes('shortbow')) ? i : -1
-          ).filter(i => i >= 0);
-        } else if (fightingStyle === 'dueling' || fightingStyle === 'defense') {
-          // Prefer one-handed weapon and shield
-          validIndices = options.map((opt, i) => 
-            (opt?.toLowerCase().includes('shield') ||
-            (opt?.toLowerCase().includes('sword') && !opt?.toLowerCase().includes('greatsword')) ||
-            opt?.toLowerCase().includes('mace') ||
-            opt?.toLowerCase().includes('warhammer')) ? i : -1
-          ).filter(i => i >= 0);
-        } else if (primaryAbility === 'dexterity') {
-          // Dex-based: prefer finesse/ranged
-          validIndices = options.map((opt, i) => 
-            (opt?.toLowerCase().includes('rapier') ||
-            opt?.toLowerCase().includes('shortbow') ||
-            opt?.toLowerCase().includes('scimitar') ||
-            opt?.toLowerCase().includes('shortsword') ||
-            opt?.toLowerCase().includes('dagger')) ? i : -1
-          ).filter(i => i >= 0);
-        }
+    // Roll for starting gold
+    let totalGold = 0;
+    for (let i = 0; i < classGold.dice; i++) {
+      totalGold += Math.floor(Math.random() * classGold.sides) + 1;
+    }
+    totalGold *= classGold.multiplier;
+    
+    const items = [];
+    let remainingGold = totalGold;
+    
+    // Helper to check if item is good for this class
+    const isGoodForClass = (item) => {
+      const goodFor = item.goodFor || [];
+      return goodFor.includes('all') || goodFor.includes(classLower);
+    };
+    
+    // Helper to buy item if affordable
+    const tryBuy = (item) => {
+      if (remainingGold >= item.cost && !items.includes(item.name)) {
+        items.push(item.name);
+        remainingGold = Math.round((remainingGold - item.cost) * 100) / 100;
+        return true;
       }
-      
-      // Armor choices based on class and dex
-      if (choice.name?.toLowerCase().includes('armor')) {
-        const dexScore = character.abilities?.dexterity || 10;
-        if (dexScore >= 14 && (classLower === 'rogue' || classLower === 'ranger' || classLower === 'monk')) {
-          // High dex classes: prefer light armor
-          validIndices = options.map((opt, i) => 
-            (opt?.toLowerCase().includes('leather') ||
-            opt?.toLowerCase().includes('studded')) ? i : -1
-          ).filter(i => i >= 0);
-        } else if (classLower === 'paladin' || classLower === 'fighter') {
-          // Heavy armor classes: prefer chain mail or better
-          validIndices = options.map((opt, i) => 
-            (opt?.toLowerCase().includes('chain') ||
-            opt?.toLowerCase().includes('scale') ||
-            opt?.toLowerCase().includes('plate')) ? i : -1
-          ).filter(i => i >= 0);
-        }
-      }
-      
-      // Pack choices based on class role
-      if (choice.name?.toLowerCase().includes('pack')) {
-        const packPreferences = {
-          wizard: ['scholar', 'explorer'],
-          cleric: ['scholar', 'priest'],
-          druid: ['explorer', 'priest'],
-          ranger: ['explorer', 'dungeoneer'],
-          rogue: ['burglar', 'explorer', 'dungeoneer'],
-          fighter: ['dungeoneer', 'explorer'],
-          paladin: ['priest', 'dungeoneer', 'explorer'],
-          barbarian: ['explorer', 'dungeoneer']
-        };
-        const prefs = packPreferences[classLower] || [];
-        validIndices = options.map((opt, i) => {
-          for (const pref of prefs) {
-            if (opt?.toLowerCase().includes(pref)) return i;
-          }
-          return -1;
-        }).filter(i => i >= 0);
-      }
-      
-      // Pick randomly from valid options, or random from all if no good matches
-      if (validIndices.length > 0) {
-        choices[idx] = pickRandom(validIndices);
-      } else {
-        choices[idx] = Math.floor(Math.random() * options.length);
-      }
+      return false;
+    };
+    
+    // === IDEAL GEAR: Prioritize the BEST items for this class/build ===
+    
+    // 1. WEAPON - Most important, get the best weapon for the build
+    let idealWeapons = EQUIPMENT_SHOP.weapons.filter(isGoodForClass);
+    
+    // Filter by fighting style
+    if (fightingStyle === 'great weapon fighting') {
+      const heavy = idealWeapons.filter(w => w.properties?.includes('Heavy') || w.properties?.includes('two-handed'));
+      if (heavy.length > 0) idealWeapons = heavy;
+    } else if (fightingStyle === 'archery') {
+      const ranged = idealWeapons.filter(w => w.properties?.includes('Ammunition'));
+      if (ranged.length > 0) idealWeapons = ranged;
+    } else if (fightingStyle === 'dueling' || fightingStyle === 'defense') {
+      const versatile = idealWeapons.filter(w => !w.properties?.includes('two-handed') && !w.properties?.includes('Heavy'));
+      if (versatile.length > 0) idealWeapons = versatile;
+    } else if (primaryAbility === 'dexterity') {
+      const finesse = idealWeapons.filter(w => w.properties?.includes('Finesse') || w.properties?.includes('Ammunition'));
+      if (finesse.length > 0) idealWeapons = finesse;
+    }
+    
+    // Sort by damage (higher is better) and pick best affordable
+    idealWeapons.sort((a, b) => {
+      const dmgA = parseInt(a.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+      const dmgB = parseInt(b.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+      return dmgB - dmgA;
     });
     
+    for (const weapon of idealWeapons) {
+      if (tryBuy(weapon)) break;
+    }
+    
+    // 2. ARMOR - Get the best armor the class can use
+    let idealArmor = EQUIPMENT_SHOP.armor.filter(isGoodForClass).filter(a => a.name !== 'Shield');
+    
+    // Sort by AC (higher is better)
+    idealArmor.sort((a, b) => {
+      const acA = parseInt(a.ac?.match(/(\d+)/)?.[1] || '10');
+      const acB = parseInt(b.ac?.match(/(\d+)/)?.[1] || '10');
+      return acB - acA;
+    });
+    
+    // For high DEX characters, prefer armor that benefits from DEX
+    if (dexScore >= 14 && ['rogue', 'ranger', 'monk', 'bard'].includes(classLower)) {
+      const lightArmor = idealArmor.filter(a => a.ac?.includes('+ Dex'));
+      if (lightArmor.length > 0) idealArmor = lightArmor;
+    }
+    
+    for (const armor of idealArmor) {
+      if (tryBuy(armor)) break;
+    }
+    
+    // 3. SHIELD - For non-two-handed builds
+    if (!fightingStyle?.includes('great weapon') && !fightingStyle?.includes('two-weapon')) {
+      if (['fighter', 'paladin', 'cleric', 'ranger'].includes(classLower)) {
+        const shield = EQUIPMENT_SHOP.armor.find(a => a.name === 'Shield');
+        if (shield) tryBuy(shield);
+      }
+    }
+    
+    // 4. Secondary weapon (backup or ranged option)
+    const hasRanged = items.some(i => {
+      const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return w?.properties?.includes('Ammunition');
+    });
+    const hasMelee = items.some(i => {
+      const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return w && !w.properties?.includes('Ammunition');
+    });
+    
+    if (!hasRanged && remainingGold >= 25) {
+      // Get a ranged backup
+      const rangedBackups = shuffle(EQUIPMENT_SHOP.weapons.filter(w => 
+        w.properties?.includes('Ammunition') && w.cost <= remainingGold && isGoodForClass(w)
+      ));
+      if (rangedBackups.length > 0) tryBuy(rangedBackups[0]);
+    }
+    
+    if (!hasMelee && remainingGold >= 10) {
+      // Get a melee backup
+      const meleeBackups = shuffle(EQUIPMENT_SHOP.weapons.filter(w => 
+        !w.properties?.includes('Ammunition') && w.cost <= remainingGold && isGoodForClass(w)
+      ));
+      if (meleeBackups.length > 0) tryBuy(meleeBackups[0]);
+    }
+    
+    // 5. Ammunition if needed
+    if (items.some(i => {
+      const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+      return w?.properties?.includes('Ammunition');
+    })) {
+      const arrows = EQUIPMENT_SHOP.gear.find(g => g.name === 'Arrows (20)');
+      const bolts = EQUIPMENT_SHOP.gear.find(g => g.name === 'Bolts (20)');
+      if (arrows) tryBuy(arrows);
+      if (bolts) tryBuy(bolts);
+    }
+    
+    // 6. PACK - Get the best pack for the class
+    const packPriority = {
+      wizard: ["Scholar's Pack", "Explorer's Pack"],
+      sorcerer: ["Explorer's Pack", "Dungeoneer's Pack"],
+      warlock: ["Scholar's Pack", "Dungeoneer's Pack"],
+      cleric: ["Priest's Pack", "Explorer's Pack"],
+      druid: ["Explorer's Pack", "Priest's Pack"],
+      bard: ["Entertainer's Pack", "Explorer's Pack"],
+      rogue: ["Burglar's Pack", "Explorer's Pack", "Dungeoneer's Pack"],
+      ranger: ["Explorer's Pack", "Dungeoneer's Pack"],
+      fighter: ["Dungeoneer's Pack", "Explorer's Pack"],
+      paladin: ["Priest's Pack", "Explorer's Pack"],
+      barbarian: ["Explorer's Pack", "Dungeoneer's Pack"],
+      monk: ["Explorer's Pack", "Dungeoneer's Pack"]
+    };
+    
+    const preferredPacks = packPriority[classLower] || ["Explorer's Pack"];
+    for (const packName of preferredPacks) {
+      const pack = EQUIPMENT_SHOP.packs.find(p => p.name === packName);
+      if (pack && tryBuy(pack)) break;
+    }
+    
+    // 7. Class-specific essential gear
+    const classEssentials = {
+      wizard: ['Component Pouch', 'Spellbook'],
+      sorcerer: ['Component Pouch'],
+      warlock: ['Component Pouch'],
+      cleric: ['Holy Symbol'],
+      druid: ['Druidic Focus'],
+      bard: ['Musical Instrument'],
+      rogue: ["Thieves' Tools"],
+      ranger: ['Rope, 50 ft'],
+      fighter: [],
+      paladin: ['Holy Symbol'],
+      barbarian: [],
+      monk: []
+    };
+    
+    for (const gearName of (classEssentials[classLower] || [])) {
+      const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+      if (gear) tryBuy(gear);
+    }
+    
+    // 8. Fill with useful adventuring gear
+    const usefulGear = shuffle(['Rope, 50 ft', 'Torch (10)', 'Tinderbox', 'Rations (10 days)', 'Waterskin', 'Crowbar', 'Grappling Hook', 'Oil (flask)']);
+    for (const gearName of usefulGear) {
+      if (remainingGold < 1) break;
+      const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+      if (gear && !items.includes(gear.name)) {
+        tryBuy(gear);
+      }
+    }
+    
+    // Set state - use 'ideal' method which will show gold/purchased UI
     setMethod('ideal');
-    setEquipmentChoices(choices);
-    setGoldRolled(false);
-    setPurchasedItems([]);
+    setGold(remainingGold);
+    setGoldRolled(true);
+    setPurchasedItems(items);
+    setEquipmentChoices({});
   };
 
   // Roll for gold and smartly buy equipment based on class (with randomization)
@@ -11792,7 +11886,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                 Ideal Gear
               </div>
               <div className="text-xs text-slate-500">
-                Auto-select based on your build and fighting style
+                Roll gold & buy optimal weapons, armor, and gear for your build
               </div>
             </div>
             {method === 'ideal' && <Check className="w-5 h-5 text-cyan-400 ml-auto" />}
@@ -11801,17 +11895,11 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       </div>
 
       {/* Starting Equipment */}
-      {(method === 'starting' || method === 'ideal') && classEquipment && (
+      {method === 'starting' && classEquipment && (
         <div className="space-y-4">
-          {method === 'ideal' && (
-            <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              Optimal choices selected based on your class and fighting style. Click to change.
-            </div>
-          )}
           {/* Equipment Choices */}
           {classEquipment.choices.map((choice, choiceIndex) => (
-            <div key={choiceIndex} className={`p-4 rounded-xl border ${method === 'ideal' ? 'bg-cyan-500/5 border-cyan-500/30' : 'bg-slate-800/50 border-slate-700/50'}`}>
+            <div key={choiceIndex} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
               <div className="text-sm font-medium text-slate-300 mb-3">{choice.name}</div>
               <div className="flex flex-wrap gap-2">
                 {choice.options.map((option, optionIndex) => (
@@ -11820,9 +11908,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                     onClick={() => selectChoice(choiceIndex, optionIndex)}
                     className={`px-3 py-2 rounded-lg border text-sm transition-all ${
                       equipmentChoices[choiceIndex] === optionIndex
-                        ? method === 'ideal' 
-                          ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                          : 'bg-green-500/20 border-green-500/50 text-green-300'
+                        ? 'bg-green-500/20 border-green-500/50 text-green-300'
                         : 'bg-slate-700/50 border-slate-600/50 text-slate-300 hover:border-green-500/30'
                     }`}
                   >
@@ -11868,26 +11954,40 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         </div>
       )}
 
-      {/* Gold Method */}
-      {method === 'gold' && (
+      {/* Gold Method / Ideal Gear */}
+      {(method === 'gold' || method === 'ideal') && (
         <div className="space-y-4">
+          {/* Ideal Gear Banner */}
+          {method === 'ideal' && (
+            <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Rolled gold and selected optimal equipment for your {CLASSES[classId]?.name} build. You can modify below.
+            </div>
+          )}
+          
           {/* Roll / Gold Display */}
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <div className={`p-4 rounded-xl ${method === 'ideal' ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-amber-500/10 border-amber-500/30'} border`}>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-amber-300 font-medium">Starting Gold</div>
-                <div className="text-3xl font-bold text-amber-400">{gold} gp</div>
+                <div className={`text-sm font-medium ${method === 'ideal' ? 'text-cyan-300' : 'text-amber-300'}`}>
+                  {method === 'ideal' ? 'Remaining Gold' : 'Starting Gold'}
+                </div>
+                <div className={`text-3xl font-bold ${method === 'ideal' ? 'text-cyan-400' : 'text-amber-400'}`}>{gold} gp</div>
               </div>
               <button
-                onClick={rollStartingGold}
-                className="px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 transition-colors"
+                onClick={() => method === 'ideal' ? selectIdealEquipment() : rollStartingGold()}
+                className={`px-4 py-2 rounded-lg ${
+                  method === 'ideal' 
+                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/30' 
+                    : 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+                } border transition-colors`}
               >
-                {goldRolled ? 'Reroll' : 'Roll'} ({classGold?.dice}d{classGold?.sides} × {classGold?.multiplier})
+                {method === 'ideal' ? 'Reroll & Rebuy' : (goldRolled ? 'Reroll' : 'Roll')} ({classGold?.dice}d{classGold?.sides} × {classGold?.multiplier})
               </button>
             </div>
           </div>
 
-          {goldRolled && (
+          {(goldRolled || method === 'ideal') && (
             <>
               {/* Shop Categories */}
               <div className="flex gap-2 overflow-x-auto pb-2">
