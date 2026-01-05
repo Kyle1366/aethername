@@ -10553,6 +10553,7 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
     
     setSelectedCantrips(pickedCantrips);
     setSelectedSpells(pickedSpells);
+    setActiveTab('selected'); // Switch to selected tab to show chosen spells
   };
   
   // Merge available spells from all spellcasting classes (removing duplicates)
@@ -11439,7 +11440,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       return false;
     };
     
-    // === IDEAL GEAR: Prioritize the BEST items for this class/build ===
+    // === RANDOM BUILD APPROPRIATE: Prioritize good items for this class/build ===
     
     // 1. WEAPON - Most important, get the best weapon for the build
     let idealWeapons = EQUIPMENT_SHOP.weapons.filter(isGoodForClass);
@@ -11778,7 +11779,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         <div>
           <h3 className="text-xl font-bold text-white mb-1">Choose Your Equipment</h3>
           <p className="text-sm text-slate-500">
-            Take your class starting equipment, roll for gold, or auto-select ideal gear.
+            Take your class starting equipment, roll for gold, or get random build-appropriate gear.
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -11811,7 +11812,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
             title="Intelligently select starting equipment based on your build"
           >
             <Sparkles className="w-4 h-4" />
-            Ideal gear
+            Random (Build Appropriate)
           </button>
           <button
             onClick={rollAndBuySmart}
@@ -11883,10 +11884,10 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
             <Sparkles className="w-6 h-6 text-cyan-400" />
             <div>
               <div className={`font-semibold ${method === 'ideal' ? 'text-cyan-300' : 'text-slate-200'}`}>
-                Ideal Gear
+                Random (Build Appropriate)
               </div>
               <div className="text-xs text-slate-500">
-                Roll gold & buy optimal weapons, armor, and gear for your build
+                Roll gold & buy random weapons, armor, and gear suited for your build
               </div>
             </div>
             {method === 'ideal' && <Check className="w-5 h-5 text-cyan-400 ml-auto" />}
@@ -11957,11 +11958,11 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
       {/* Gold Method / Ideal Gear */}
       {(method === 'gold' || method === 'ideal') && (
         <div className="space-y-4">
-          {/* Ideal Gear Banner */}
+          {/* Random Build Appropriate Banner */}
           {method === 'ideal' && (
             <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
-              Rolled gold and selected optimal equipment for your {CLASSES[classId]?.name} build. You can modify below.
+              Rolled gold and selected build-appropriate equipment for your {CLASSES[classId]?.name}. You can modify below.
             </div>
           )}
           
