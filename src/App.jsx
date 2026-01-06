@@ -12550,22 +12550,22 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         </div>
       )}
       
-      {/* Random Character Equipment (pre-generated) */}
+      {/* Random Character Equipment (pre-generated with build-appropriate logic) */}
       {method === 'random' && (
         <div className="space-y-4">
           <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            This equipment was generated with your random character using class starting equipment.
+            This equipment was generated using build-appropriate gear selection for your {CLASSES[classId]?.name || 'class'}.
           </div>
           
           {/* Gold Display - shows where gold came from */}
           <div className="p-4 rounded-xl bg-amber-500/10 border-amber-500/30 border">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-amber-300">Starting Gold</div>
+                <div className="text-sm font-medium text-amber-300">Gold Remaining</div>
                 <div className="text-3xl font-bold text-amber-400">{formatGold(gold)} gp</div>
                 <div className="text-xs text-slate-400 mt-1">
-                  From {BACKGROUNDS[character.background]?.name || 'Background'} background
+                  From rolled starting gold + {BACKGROUNDS[character.background]?.name || 'Background'} background
                 </div>
               </div>
             </div>
@@ -13756,6 +13756,210 @@ const ClassSelectionStep = ({ character, updateCharacter, onShowCompare }) => {
 };
 
 // ============================================================================
+// BUILD-APPROPRIATE EQUIPMENT GENERATOR (for random characters)
+// ============================================================================
+
+// Generates build-appropriate equipment based on class, abilities, and fighting style
+const generateBuildAppropriateEquipment = (classId, abilities = {}, fightingStyle = null) => {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const shuffle = (arr) => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  };
+
+  const classLower = classId?.toLowerCase() || '';
+  const fightingStyleLower = fightingStyle?.toLowerCase() || '';
+  const primaryAbility = abilities ? 
+    Object.entries(abilities).sort((a, b) => b[1] - a[1])[0]?.[0] : 'strength';
+  const dexScore = abilities?.dexterity || 10;
+  
+  // Get class gold data
+  const classGold = STARTING_GOLD[classId];
+  if (!classGold) return { equipment: [], gold: 0, totalGoldRolled: 0 };
+  
+  // Roll for starting gold
+  let totalGold = 0;
+  for (let i = 0; i < classGold.dice; i++) {
+    totalGold += Math.floor(Math.random() * classGold.sides) + 1;
+  }
+  totalGold *= classGold.multiplier;
+  
+  const items = [];
+  let remainingGold = totalGold;
+  
+  // Helper to check if item is good for this class
+  const isGoodForClass = (item) => {
+    const goodFor = item.goodFor || [];
+    return goodFor.includes('all') || goodFor.includes(classLower);
+  };
+  
+  // Helper to buy item if affordable
+  const tryBuy = (item) => {
+    if (remainingGold >= item.cost && !items.includes(item.name)) {
+      items.push(item.name);
+      remainingGold = Math.round((remainingGold - item.cost) * 100) / 100;
+      return true;
+    }
+    return false;
+  };
+  
+  // 1. WEAPON - Most important, get the best weapon for the build
+  let idealWeapons = EQUIPMENT_SHOP.weapons.filter(isGoodForClass);
+  
+  // Filter by fighting style
+  if (fightingStyleLower === 'great weapon fighting') {
+    const heavy = idealWeapons.filter(w => w.properties?.includes('Heavy') || w.properties?.includes('two-handed'));
+    if (heavy.length > 0) idealWeapons = heavy;
+  } else if (fightingStyleLower === 'archery') {
+    const ranged = idealWeapons.filter(w => w.properties?.includes('Ammunition'));
+    if (ranged.length > 0) idealWeapons = ranged;
+  } else if (fightingStyleLower === 'dueling' || fightingStyleLower === 'defense') {
+    const versatile = idealWeapons.filter(w => !w.properties?.includes('two-handed') && !w.properties?.includes('Heavy'));
+    if (versatile.length > 0) idealWeapons = versatile;
+  } else if (primaryAbility === 'dexterity') {
+    const finesse = idealWeapons.filter(w => w.properties?.includes('Finesse') || w.properties?.includes('Ammunition'));
+    if (finesse.length > 0) idealWeapons = finesse;
+  }
+  
+  // Sort by damage (higher is better) and pick best affordable
+  idealWeapons.sort((a, b) => {
+    const dmgA = parseInt(a.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+    const dmgB = parseInt(b.damage?.match(/\d+d(\d+)/)?.[1] || '4');
+    return dmgB - dmgA;
+  });
+  
+  for (const weapon of idealWeapons) {
+    if (tryBuy(weapon)) break;
+  }
+  
+  // 2. ARMOR - Get the best armor the class can use
+  let idealArmor = EQUIPMENT_SHOP.armor.filter(isGoodForClass).filter(a => a.name !== 'Shield');
+  
+  // Sort by AC (higher is better)
+  idealArmor.sort((a, b) => {
+    const acA = parseInt(a.ac?.match(/(\d+)/)?.[1] || '10');
+    const acB = parseInt(b.ac?.match(/(\d+)/)?.[1] || '10');
+    return acB - acA;
+  });
+  
+  // For high DEX characters, prefer armor that benefits from DEX
+  if (dexScore >= 14 && ['rogue', 'ranger', 'monk', 'bard'].includes(classLower)) {
+    const lightArmor = idealArmor.filter(a => a.ac?.includes('+ Dex'));
+    if (lightArmor.length > 0) idealArmor = lightArmor;
+  }
+  
+  for (const armor of idealArmor) {
+    if (tryBuy(armor)) break;
+  }
+  
+  // 3. SHIELD - For non-two-handed builds
+  if (!fightingStyleLower?.includes('great weapon') && !fightingStyleLower?.includes('two-weapon')) {
+    if (['fighter', 'paladin', 'cleric', 'ranger'].includes(classLower)) {
+      const shield = EQUIPMENT_SHOP.armor.find(a => a.name === 'Shield');
+      if (shield) tryBuy(shield);
+    }
+  }
+  
+  // 4. Secondary weapon (backup or ranged option)
+  const hasRanged = items.some(i => {
+    const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+    return w?.properties?.includes('Ammunition');
+  });
+  const hasMelee = items.some(i => {
+    const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+    return w && !w.properties?.includes('Ammunition');
+  });
+  
+  if (!hasRanged && remainingGold >= 25) {
+    const rangedBackups = shuffle(EQUIPMENT_SHOP.weapons.filter(w => 
+      w.properties?.includes('Ammunition') && w.cost <= remainingGold && isGoodForClass(w)
+    ));
+    if (rangedBackups.length > 0) tryBuy(rangedBackups[0]);
+  }
+  
+  if (!hasMelee && remainingGold >= 10) {
+    const meleeBackups = shuffle(EQUIPMENT_SHOP.weapons.filter(w => 
+      !w.properties?.includes('Ammunition') && w.cost <= remainingGold && isGoodForClass(w)
+    ));
+    if (meleeBackups.length > 0) tryBuy(meleeBackups[0]);
+  }
+  
+  // 5. Ammunition if needed
+  if (items.some(i => {
+    const w = EQUIPMENT_SHOP.weapons.find(w => w.name === i);
+    return w?.properties?.includes('Ammunition');
+  })) {
+    const arrows = EQUIPMENT_SHOP.gear.find(g => g.name === 'Arrows (20)');
+    const bolts = EQUIPMENT_SHOP.gear.find(g => g.name === 'Bolts (20)');
+    if (arrows) tryBuy(arrows);
+    if (bolts) tryBuy(bolts);
+  }
+  
+  // 6. PACK - Get the best pack for the class
+  const packPriority = {
+    wizard: ["Scholar's Pack", "Explorer's Pack"],
+    sorcerer: ["Explorer's Pack", "Dungeoneer's Pack"],
+    warlock: ["Scholar's Pack", "Dungeoneer's Pack"],
+    cleric: ["Priest's Pack", "Explorer's Pack"],
+    druid: ["Explorer's Pack", "Priest's Pack"],
+    bard: ["Entertainer's Pack", "Explorer's Pack"],
+    rogue: ["Burglar's Pack", "Explorer's Pack", "Dungeoneer's Pack"],
+    ranger: ["Explorer's Pack", "Dungeoneer's Pack"],
+    fighter: ["Dungeoneer's Pack", "Explorer's Pack"],
+    paladin: ["Priest's Pack", "Explorer's Pack"],
+    barbarian: ["Explorer's Pack", "Dungeoneer's Pack"],
+    monk: ["Explorer's Pack", "Dungeoneer's Pack"]
+  };
+  
+  const preferredPacks = packPriority[classLower] || ["Explorer's Pack"];
+  for (const packName of preferredPacks) {
+    const pack = EQUIPMENT_SHOP.packs.find(p => p.name === packName);
+    if (pack && tryBuy(pack)) break;
+  }
+  
+  // 7. Class-specific essential gear
+  const classEssentials = {
+    wizard: ['Component Pouch', 'Spellbook'],
+    sorcerer: ['Component Pouch'],
+    warlock: ['Component Pouch'],
+    cleric: ['Holy Symbol'],
+    druid: ['Druidic Focus'],
+    bard: ['Lute'],
+    rogue: ["Thieves' Tools"],
+    ranger: ['Rope, 50 ft'],
+    fighter: [],
+    paladin: ['Holy Symbol'],
+    barbarian: [],
+    monk: []
+  };
+  
+  for (const gearName of (classEssentials[classLower] || [])) {
+    const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+    if (gear) tryBuy(gear);
+  }
+  
+  // 8. Fill with useful adventuring gear
+  const usefulGear = shuffle(['Rope, 50 ft', 'Torch (10)', 'Tinderbox', 'Rations (10 days)', 'Waterskin', 'Crowbar']);
+  for (const gearName of usefulGear) {
+    if (remainingGold < 1) break;
+    const gear = EQUIPMENT_SHOP.gear.find(g => g.name === gearName);
+    if (gear && !items.includes(gear.name)) {
+      tryBuy(gear);
+    }
+  }
+  
+  return {
+    equipment: items,
+    gold: remainingGold,
+    totalGoldRolled: totalGold
+  };
+};
+
+// ============================================================================
 // RANDOM CHARACTER GENERATOR (SMART)
 // ============================================================================
 
@@ -14456,132 +14660,12 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
     musicalInstrument = pick(instruments);
   }
   
-  // Step 15: Smart Equipment Selection
-  const equipment = [];
+  // Step 15: Smart Build-Appropriate Equipment Selection
+  // Use the build-appropriate helper that rolls gold and buys optimal gear
+  const buildEquipment = generateBuildAppropriateEquipment(classId, abilities, fightingStyle);
+  const equipment = [...buildEquipment.equipment];
   
-  // Get class proficiencies
-  const classData = CLASSES[classId];
-  const weaponProfs = classData?.weaponProficiencies || [];
-  const armorProfs = classData?.armorProficiencies || [];
-  
-  // Check if proficient with weapon/armor
-  const hasMartialWeapons = weaponProfs.some(p => p.toLowerCase().includes('martial'));
-  const hasHeavyArmor = armorProfs.some(p => p.toLowerCase().includes('all armor') || p.toLowerCase().includes('heavy'));
-  
-  // Helper to check if item requires proficiency and if character has it
-  const checkProficiency = (item) => {
-    // Check for conditional items
-    if (item.includes('(if proficient)')) {
-      const itemName = item.replace('(if proficient)', '').trim();
-      
-      // Check weapon proficiency
-      if (itemName === 'Warhammer') {
-        return hasMartialWeapons;
-      }
-      
-      // Check armor proficiency
-      if (itemName === 'Chain mail') {
-        return hasHeavyArmor;
-      }
-      
-      return false; // Default to not proficient
-    }
-    return true; // No proficiency check needed
-  };
-  
-  // Helper to make generic equipment specific
-  const makeSpecific = (item) => {
-    // Complex equipment combinations
-    if (item === 'Martial weapon + shield') return pick(['Longsword + shield', 'Battleaxe + shield', 'Warhammer + shield', 'Rapier + shield']);
-    if (item === 'Two martial weapons') return pick(['Two longswords', 'Longsword + rapier', 'Two battleaxes', 'Battleaxe + warhammer']);
-    if (item === 'Two shortswords') return 'Two shortswords';
-    if (item === 'Two simple melee weapons') return pick(['Two clubs', 'Two daggers', 'Club + mace', 'Two maces']);
-    if (item === 'Two handaxes') return 'Two handaxes';
-    
-    // Armor + weapon combos
-    if (item === 'Leather armor + longbow + 20 arrows') return 'Leather armor, longbow, 20 arrows';
-    if (item === 'Chain mail') return 'Chain mail';
-    if (item === 'Scale mail') return 'Scale mail';
-    if (item === 'Leather armor') return 'Leather armor';
-    
-    // Ranged weapon combos
-    if (item === 'Light crossbow + 20 bolts') return 'Light crossbow, 20 bolts';
-    if (item === 'Shortbow + 20 arrows') return 'Shortbow, 20 arrows';
-    if (item === '5 javelins') return '5 javelins';
-    if (item === 'Longbow') return 'Longbow';
-    if (item === '20 arrows') return '20 arrows';
-    
-    // Generic weapon types
-    if (item === 'Any martial melee weapon') return pick(['Longsword', 'Battleaxe', 'Warhammer', 'Greatsword', 'Maul', 'Rapier']);
-    if (item === 'Any martial weapon') return pick(['Longsword', 'Rapier', 'Battleaxe', 'Longbow']);
-    if (item === 'Any simple weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace', 'Javelin', 'Spear']);
-    if (item === 'Any simple melee weapon') return pick(['Club', 'Dagger', 'Quarterstaff', 'Mace', 'Spear']);
-    if (item === 'Any musical instrument') return pick(['Lute', 'Flute', 'Drum', 'Harp', 'Viol']);
-    
-    // Keep specific items as-is
-    return item;
-  };
-  
-  // Helper to decide random choices from equipment options
-  const pickEquipment = (classEquipment) => {
-    const items = [];
-    
-    if (classEquipment.choices) {
-      classEquipment.choices.forEach(choice => {
-        // Filter options to only those the character is proficient with
-        const validOptions = choice.options.filter(checkProficiency);
-        
-        if (validOptions.length > 0) {
-          const selectedOption = makeSpecific(pick(validOptions));
-          items.push(selectedOption);
-        } else {
-          // Fallback to first option without proficiency check if no valid options
-          const selectedOption = makeSpecific(choice.options[0].replace('(if proficient)', '').trim());
-          items.push(selectedOption);
-        }
-      });
-    }
-    
-    if (classEquipment.fixed) {
-      // Apply makeSpecific to fixed items too
-      const fixedItems = classEquipment.fixed.map(item => makeSpecific(item));
-      items.push(...fixedItems);
-    }
-    
-    return items;
-  };
-  
-  // Primary class equipment
-  const primaryClassEquipment = STARTING_EQUIPMENT[classId];
-  if (primaryClassEquipment) {
-    equipment.push(...pickEquipment(primaryClassEquipment));
-  }
-  
-  // If multiclassed, potentially add some equipment from secondary/tertiary classes
-  if (multiclassLevels.length > 0) {
-    multiclassLevels.forEach((mc, index) => {
-      const secondaryClassEquipment = STARTING_EQUIPMENT[mc.classId];
-      
-      if (secondaryClassEquipment) {
-        // Chance decreases for each additional class (50% for first, 30% for second)
-        const addChance = index === 0 ? 0.5 : 0.3;
-        if (Math.random() < addChance) {
-          // Pick one random choice from this multiclass
-          if (secondaryClassEquipment.choices && secondaryClassEquipment.choices.length > 0) {
-            const randomChoice = pick(secondaryClassEquipment.choices);
-            const selectedOption = makeSpecific(pick(randomChoice.options));
-            
-            // Avoid duplicates
-            if (!equipment.includes(selectedOption)) {
-              equipment.push(selectedOption);
-            }
-          }
-        }
-      }
-    });
-  }
-  
-  // Add background equipment (but extract gold from it)
+  // Add background equipment (non-gold items only)
   let backgroundGold = 0;
   if (selectedBackground.equipment) {
     selectedBackground.equipment.forEach(item => {
@@ -14590,14 +14674,16 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
       if (goldMatch) {
         backgroundGold += parseInt(goldMatch[1]);
       } else {
-        equipment.push(item);
+        // Only add if not already in equipment
+        if (!equipment.includes(item)) {
+          equipment.push(item);
+        }
       }
     });
   }
   
-  // Starting gold = background gold only (since we're taking starting equipment, not rolling)
-  // In D&D 5e RAW, you either take starting equipment OR roll for gold, not both
-  const startingGold = backgroundGold;
+  // Total gold = remaining from build-appropriate shopping + background gold
+  const startingGold = Math.round((buildEquipment.gold + backgroundGold) * 100) / 100;
   
   // Random Physical Characteristics
   const ages = ['18', '25', '30', '45', '60', '120', '200'];
