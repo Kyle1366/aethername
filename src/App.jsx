@@ -12266,28 +12266,54 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                 ))}
               </div>
 
-              {/* Purchased Items */}
+              {/* Purchased Items - RPG Shop Style */}
               {purchasedItems.length > 0 && (
-                <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-                  <div className="text-sm font-medium text-green-300 mb-3">
-                    Purchased ({purchasedItems.length} items)
+                <div className="p-4 rounded-xl bg-slate-800/80 border border-amber-500/30">
+                  {/* Header like RPG shop */}
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-700/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-400">🎒</span>
+                      <span className="text-sm font-semibold text-amber-300">Your Inventory</span>
+                    </div>
+                    <div className="text-xs text-slate-400">{purchasedItems.length} items</div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  
+                  {/* Item List */}
+                  <div className="space-y-1 max-h-48 overflow-y-auto mb-3">
                     {purchasedItems.map((item, i) => {
                       const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
                       return (
-                        <span 
+                        <div 
                           key={i} 
-                          className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
+                          className="flex items-center justify-between p-2 rounded-lg bg-slate-900/50 hover:bg-red-500/10 group cursor-pointer transition-colors"
                           onClick={() => removeItem(i)}
-                          title="Click to refund"
+                          title="Click to sell back"
                         >
-                          {item}
-                          {shopItem && <span className="text-amber-400 text-xs">({shopItem.cost}gp)</span>}
-                          <X className="w-3 h-3" />
-                        </span>
+                          <span className="text-sm text-slate-200 truncate flex-1 mr-2">{item}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-amber-400 text-sm font-medium">{shopItem?.cost || '?'} gp</span>
+                            <X className="w-3.5 h-3.5 text-slate-500 group-hover:text-red-400 transition-colors" />
+                          </div>
+                        </div>
                       );
                     })}
+                  </div>
+                  
+                  {/* Total & Gold remaining - like checkout */}
+                  <div className="pt-2 border-t border-slate-700/50 space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Total Spent:</span>
+                      <span className="text-red-400 font-medium">
+                        {purchasedItems.reduce((sum, item) => {
+                          const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
+                          return sum + (shopItem?.cost || 0);
+                        }, 0)} gp
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Gold Remaining:</span>
+                      <span className="text-amber-400 font-bold text-lg">{gold} gp</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -12364,28 +12390,45 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
             ))}
           </div>
 
-          {/* Current Equipment */}
+          {/* Current Equipment - RPG Shop Style */}
           {purchasedItems.length > 0 && (
-            <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-              <div className="text-sm font-medium text-green-300 mb-3">
-                Equipment ({purchasedItems.length} items)
+            <div className="p-4 rounded-xl bg-slate-800/80 border border-amber-500/30">
+              {/* Header like RPG shop */}
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-700/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400">🎒</span>
+                  <span className="text-sm font-semibold text-amber-300">Your Inventory</span>
+                </div>
+                <div className="text-xs text-slate-400">{purchasedItems.length} items</div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              
+              {/* Item List */}
+              <div className="space-y-1 max-h-48 overflow-y-auto mb-3">
                 {purchasedItems.map((item, i) => {
                   const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
                   return (
-                    <span 
+                    <div 
                       key={i} 
-                      className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-900/50 hover:bg-red-500/10 group cursor-pointer transition-colors"
                       onClick={() => removeItem(i)}
                       title="Click to remove"
                     >
-                      {item}
-                      {shopItem && <span className="text-amber-400 text-xs">({shopItem.cost}gp)</span>}
-                      <X className="w-3 h-3" />
-                    </span>
+                      <span className="text-sm text-slate-200 truncate flex-1 mr-2">{item}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {shopItem && <span className="text-amber-400 text-sm font-medium">{shopItem.cost} gp</span>}
+                        <X className="w-3.5 h-3.5 text-slate-500 group-hover:text-red-400 transition-colors" />
+                      </div>
+                    </div>
                   );
                 })}
+              </div>
+              
+              {/* Gold remaining */}
+              <div className="pt-2 border-t border-slate-700/50">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Gold Remaining:</span>
+                  <span className="text-amber-400 font-bold text-lg">{gold} gp</span>
+                </div>
               </div>
             </div>
           )}
