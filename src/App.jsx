@@ -10565,8 +10565,12 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
       }
     }
     
-    setSelectedCantrips(pickedCantrips);
-    setSelectedSpells(pickedSpells);
+    // SAFETY: Ensure we never exceed totalMaxSpells (hard cap)
+    const finalCantrips = pickedCantrips.slice(0, maxCantrips);
+    const finalSpells = pickedSpells.slice(0, totalMaxSpells);
+    
+    setSelectedCantrips(finalCantrips);
+    setSelectedSpells(finalSpells);
     setActiveTab('selected'); // Switch to selected tab to show chosen spells
   };
   
