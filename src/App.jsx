@@ -11574,6 +11574,98 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
 // EQUIPMENT SELECTION STEP (PHASE 6)
 // ============================================================================
 
+// Helper to estimate item cost from name (handles random character equipment variations)
+const getItemCost = (itemName) => {
+  if (!itemName) return null;
+  
+  const allShopItems = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs];
+  
+  // Direct match (case insensitive)
+  const directMatch = allShopItems.find(si => si.name.toLowerCase() === itemName.toLowerCase());
+  if (directMatch) return directMatch.cost;
+  
+  // Handle "Two X" or "2 X" patterns
+  const twoMatch = itemName.match(/^two\s+(.+)s?$/i) || itemName.match(/^2\s+(.+)s?$/i);
+  if (twoMatch) {
+    const baseName = twoMatch[1].replace(/s$/, ''); // Remove trailing 's'
+    const baseItem = allShopItems.find(si => si.name.toLowerCase() === baseName.toLowerCase() || 
+                                              si.name.toLowerCase() === (baseName + 's').toLowerCase());
+    if (baseItem) return baseItem.cost * 2;
+  }
+  
+  // Handle "X + Y" combinations (like "Longsword + shield")
+  if (itemName.includes('+')) {
+    const parts = itemName.split('+').map(p => p.trim());
+    let total = 0;
+    let found = false;
+    for (const part of parts) {
+      const partItem = allShopItems.find(si => si.name.toLowerCase() === part.toLowerCase());
+      if (partItem) {
+        total += partItem.cost;
+        found = true;
+      }
+    }
+    if (found) return total;
+  }
+  
+  // Handle "X, Y, Z" combinations (like "Leather armor, longbow, 20 arrows")
+  if (itemName.includes(',')) {
+    const parts = itemName.split(',').map(p => p.trim());
+    let total = 0;
+    let found = false;
+    for (const part of parts) {
+      const cost = getItemCost(part); // Recursive call for each part
+      if (cost !== null) {
+        total += cost;
+        found = true;
+      }
+    }
+    if (found) return total;
+  }
+  
+  // Handle "20 arrows" → "Arrows (20)"
+  const ammoMatch = itemName.match(/^(\d+)\s+(.+)$/i);
+  if (ammoMatch) {
+    const count = parseInt(ammoMatch[1]);
+    const ammoName = ammoMatch[2];
+    const shopAmmo = allShopItems.find(si => si.name.toLowerCase().includes(ammoName.toLowerCase()));
+    if (shopAmmo) {
+      // Most ammo is sold in packs of 20
+      const packSize = shopAmmo.name.match(/\((\d+)\)/)?.[1] || 20;
+      return shopAmmo.cost * (count / parseInt(packSize));
+    }
+  }
+  
+  // Handle "5 javelins" type patterns
+  const multiMatch = itemName.match(/^(\d+)\s+(.+)$/i);
+  if (multiMatch) {
+    const count = parseInt(multiMatch[1]);
+    const baseName = multiMatch[2].replace(/s$/, ''); // Remove trailing 's'
+    const baseItem = allShopItems.find(si => si.name.toLowerCase() === baseName.toLowerCase());
+    if (baseItem) return baseItem.cost * count;
+  }
+  
+  // Partial match as fallback
+  const partialMatch = allShopItems.find(si => 
+    si.name.toLowerCase().includes(itemName.toLowerCase()) || 
+    itemName.toLowerCase().includes(si.name.toLowerCase())
+  );
+  if (partialMatch) return partialMatch.cost;
+  
+  return null;
+};
+
+// Helper to display gold nicely (handles floating point issues)
+const formatGold = (amount) => {
+  if (amount === null || amount === undefined) return '0';
+  // Round to 1 decimal place, but show as integer if it's close to a whole number
+  const rounded = Math.round(amount * 10) / 10;
+  if (Math.abs(rounded - Math.round(rounded)) < 0.01) {
+    return Math.round(rounded).toString();
+  }
+  return rounded.toString();
+};
+
 const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   // Check if this is a random character with pre-generated equipment
   const hasRandomEquipment = character.equipment && Array.isArray(character.equipment) && character.equipment.length > 0 && !character.equipmentMethod;
@@ -12188,7 +12280,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
           {method === 'ideal' && (
             <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
-              Rolled <span className="font-bold text-amber-400">{totalGoldRolled} gp</span> and selected build-appropriate equipment for your {CLASSES[classId]?.name}. You can modify below.
+              Rolled <span className="font-bold text-amber-400">{formatGold(totalGoldRolled)} gp</span> and selected build-appropriate equipment for your {CLASSES[classId]?.name}. You can modify below.
             </div>
           )}
           
@@ -12199,7 +12291,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                 <div className={`text-sm font-medium ${method === 'ideal' ? 'text-cyan-300' : 'text-amber-300'}`}>
                   {method === 'ideal' ? 'Remaining Gold' : 'Starting Gold'}
                 </div>
-                <div className={`text-3xl font-bold ${method === 'ideal' ? 'text-cyan-400' : 'text-amber-400'}`}>{gold} gp</div>
+                <div className={`text-3xl font-bold ${method === 'ideal' ? 'text-cyan-400' : 'text-amber-400'}`}>{formatGold(gold)} gp</div>
               </div>
               <button
                 onClick={() => method === 'ideal' ? selectIdealEquipment() : rollStartingGold()}
@@ -12281,7 +12373,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                   {/* Item List */}
                   <div className="space-y-1 max-h-48 overflow-y-auto mb-3">
                     {purchasedItems.map((item, i) => {
-                      const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
+                      const itemCost = getItemCost(item);
                       return (
                         <div 
                           key={i} 
@@ -12291,7 +12383,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                         >
                           <span className="text-sm text-slate-200 truncate flex-1 mr-2">{item}</span>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-amber-400 text-sm font-medium">{shopItem?.cost || '?'} gp</span>
+                            <span className="text-amber-400 text-sm font-medium">{itemCost !== null ? formatGold(itemCost) : '?'} gp</span>
                             <X className="w-3.5 h-3.5 text-slate-500 group-hover:text-red-400 transition-colors" />
                           </div>
                         </div>
@@ -12304,15 +12396,15 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Total Spent:</span>
                       <span className="text-red-400 font-medium">
-                        {purchasedItems.reduce((sum, item) => {
-                          const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
-                          return sum + (shopItem?.cost || 0);
-                        }, 0)} gp
+                        {formatGold(purchasedItems.reduce((sum, item) => {
+                          const itemCost = getItemCost(item);
+                          return sum + (itemCost || 0);
+                        }, 0))} gp
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Gold Remaining:</span>
-                      <span className="text-amber-400 font-bold text-lg">{gold} gp</span>
+                      <span className="text-amber-400 font-bold text-lg">{formatGold(gold)} gp</span>
                     </div>
                   </div>
                 </div>
@@ -12335,7 +12427,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-medium text-amber-300">Remaining Gold</div>
-                <div className="text-3xl font-bold text-amber-400">{gold} gp</div>
+                <div className="text-3xl font-bold text-amber-400">{formatGold(gold)} gp</div>
               </div>
             </div>
           </div>
@@ -12405,7 +12497,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
               {/* Item List */}
               <div className="space-y-1 max-h-48 overflow-y-auto mb-3">
                 {purchasedItems.map((item, i) => {
-                  const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
+                  const itemCost = getItemCost(item);
                   return (
                     <div 
                       key={i} 
@@ -12415,7 +12507,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                     >
                       <span className="text-sm text-slate-200 truncate flex-1 mr-2">{item}</span>
                       <div className="flex items-center gap-2 shrink-0">
-                        {shopItem && <span className="text-amber-400 text-sm font-medium">{shopItem.cost} gp</span>}
+                        {itemCost !== null && <span className="text-amber-400 text-sm font-medium">{formatGold(itemCost)} gp</span>}
                         <X className="w-3.5 h-3.5 text-slate-500 group-hover:text-red-400 transition-colors" />
                       </div>
                     </div>
@@ -12427,7 +12519,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
               <div className="pt-2 border-t border-slate-700/50">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Gold Remaining:</span>
-                  <span className="text-amber-400 font-bold text-lg">{gold} gp</span>
+                  <span className="text-amber-400 font-bold text-lg">{formatGold(gold)} gp</span>
                 </div>
               </div>
             </div>
