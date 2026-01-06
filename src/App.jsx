@@ -12203,10 +12203,16 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
 
   const removeItem = (index) => {
     const item = purchasedItems[index];
-    const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs]
-      .find(i => i.name === item);
-    if (shopItem) {
-      setGold(prev => Math.round((prev + shopItem.cost) * 100) / 100);
+    
+    // Don't allow removing background items
+    if (isBackgroundItem(item)) {
+      return;
+    }
+    
+    // Refund the item cost using our smart matching function
+    const itemCost = getItemCost(item);
+    if (itemCost !== null) {
+      setGold(prev => Math.round((prev + itemCost) * 100) / 100);
     }
     setPurchasedItems(prev => prev.filter((_, i) => i !== index));
   };
@@ -12635,13 +12641,13 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                   return (
                     <div 
                       key={i} 
-                      className={`flex items-center justify-between p-2 rounded-lg group cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between p-2 rounded-lg transition-colors ${
                         fromBackground 
-                          ? 'bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20' 
-                          : 'bg-slate-900/50 hover:bg-red-500/10'
+                          ? 'bg-purple-500/10 border border-purple-500/20' 
+                          : 'bg-slate-900/50 hover:bg-red-500/10 cursor-pointer group'
                       }`}
-                      onClick={() => removeItem(i)}
-                      title="Click to remove"
+                      onClick={fromBackground ? undefined : () => removeItem(i)}
+                      title={fromBackground ? "From background (cannot remove)" : "Click to remove"}
                     >
                       <div className="flex items-center gap-2 flex-1 mr-2">
                         <span className={`text-sm truncate ${fromBackground ? 'text-purple-200' : 'text-slate-200'}`}>{item}</span>
@@ -12651,7 +12657,7 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {itemCost !== null && <span className="text-amber-400 text-sm font-medium">{formatGold(itemCost)} gp</span>}
-                        <X className={`w-3.5 h-3.5 transition-colors ${fromBackground ? 'text-purple-400 group-hover:text-red-400' : 'text-slate-500 group-hover:text-red-400'}`} />
+                        {!fromBackground && <X className="w-3.5 h-3.5 transition-colors text-slate-500 group-hover:text-red-400" />}
                       </div>
                     </div>
                   );
