@@ -1433,7 +1433,8 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) =
                 {[
                   { label: 'Lvl 1', range: [1, 1] },
                   { label: '1-5', range: [1, 5] },
-                  { label: '5-10', range: [5, 10] },
+                    gold: startingGold,
+                    goldRolled: initialGoldRolled,
                 ].map(preset => (
                   <button
                     key={preset.label}
@@ -11793,6 +11794,9 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   const [equipmentChoices, setEquipmentChoices] = useState(character.equipmentChoices || {});
   const [gold, setGold] = useState(character.gold || 0);
   const [totalGoldRolled, setTotalGoldRolled] = useState(character.gold || 0);
+  const [totalGoldRolled, setTotalGoldRolled] = useState(
+    character.goldRolled || character.totalGoldRolled || character.gold || 0
+  );
   const [goldRolled, setGoldRolled] = useState(hasRandomEquipment || character.equipmentMethod === 'gold' || character.equipmentMethod === 'ideal');
   const [purchasedItems, setPurchasedItems] = useState(() => {
     if (character.purchasedItems && character.purchasedItems.length > 0) return character.purchasedItems;
