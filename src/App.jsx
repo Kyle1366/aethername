@@ -11791,7 +11791,6 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   });
   const [equipmentChoices, setEquipmentChoices] = useState(character.equipmentChoices || {});
   const [gold, setGold] = useState(character.gold || 0);
-  const [totalGoldRolled, setTotalGoldRolled] = useState(character.gold || 0);
   const [totalGoldRolled, setTotalGoldRolled] = useState(
     character.goldRolled || character.totalGoldRolled || character.gold || 0
   );
