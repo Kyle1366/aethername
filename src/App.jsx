@@ -1430,7 +1430,7 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) =
               
               {/* Quick Level Presets */}
               <div className="flex flex-wrap gap-1.5">
-                [
+                {[
                   { label: 'Lvl 1', range: [1, 1] },
                   { label: '1-5', range: [1, 5] }
                 ].map(preset => (
