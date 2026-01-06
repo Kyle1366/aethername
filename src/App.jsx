@@ -6361,6 +6361,48 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
   // Initialize ASI choices if not exist
   const asiChoices = character.asiChoices || {};
 
+  // Get racial bonuses for this character
+  const racialBonuses = getRacialBonuses(character.race, character.subrace);
+  // Include Variant Human choices if applicable
+  const variantBonuses = (() => {
+    if (character.race === 'human' && character.subrace === 'variant' && character.variantAbilities) {
+      return { [character.variantAbilities[0]]: 1, [character.variantAbilities[1]]: 1 };
+    }
+    return {};
+  })();
+  // Include Half-Elf choices if applicable  
+  const halfElfBonuses = (() => {
+    if (character.race === 'halfElf' && character.halfElfAbilities) {
+      const b = {};
+      character.halfElfAbilities.forEach(a => { b[a] = (b[a] || 0) + 1; });
+      return b;
+    }
+    return {};
+  })();
+
+  // Helper to calculate effective ability score accounting for racial bonuses and previous ASI choices
+  const getEffectiveScore = (ability, atLevel) => {
+    let score = character.abilities?.[ability] || 10;
+    // Add racial bonuses
+    score += racialBonuses[ability] || 0;
+    score += variantBonuses[ability] || 0;
+    score += halfElfBonuses[ability] || 0;
+    // Add bonuses from ASI choices at levels BEFORE the given level
+    asiLevels.filter(l => l < atLevel).forEach(l => {
+      const prevChoice = asiChoices[l];
+      if (prevChoice?.type === 'asi') {
+        if (prevChoice.asiType === 'single' && prevChoice.singleAbility === ability) {
+          score += 2;
+        } else if (prevChoice.asiType === 'double' && prevChoice.doubleAbilities?.includes(ability)) {
+          score += 1;
+        } else if (prevChoice.abilityIncreases) {
+          score += prevChoice.abilityIncreases[ability] || 0;
+        }
+      }
+    });
+    return Math.min(score, 20); // Cap at 20
+  };
+
   const smartFillASI = () => {
     const primaryTargets = [...primaryAbilityOrder, ...savingThrowOrder, ...ABILITY_NAMES].filter((v, i, arr) => v && arr.indexOf(v) === i);
     const updated = {};
@@ -6613,9 +6655,10 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
                 {choice.asiType === 'single' && (
                   <div className="grid grid-cols-3 gap-2">
                     {ABILITY_NAMES.map(ability => {
-                      const currentScore = character.abilities?.[ability] || 10;
+                      const currentScore = getEffectiveScore(ability, level);
                       const isSelected = choice.singleAbility === ability;
                       const atMax = currentScore >= 20;
+                      const newScore = Math.min(currentScore + 2, 20);
                       
                       return (
                         <button
@@ -6631,7 +6674,7 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
                           }`}
                         >
                           <div>{ABILITY_LABELS[ability].short}</div>
-                          <div className="text-xs text-slate-300 font-semibold">{currentScore} → {currentScore + 2}</div>
+                          <div className="text-xs text-slate-300 font-semibold">{currentScore} → {newScore}</div>
                           {isSelected && <div className="text-green-400">✓</div>}
                           {atMax && <div className="text-red-400 text-[10px]">Max</div>}
                         </button>
@@ -6644,11 +6687,12 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
                   <div>
                     <div className="grid grid-cols-3 gap-2">
                       {ABILITY_NAMES.map(ability => {
-                        const currentScore = character.abilities?.[ability] || 10;
+                        const currentScore = getEffectiveScore(ability, level);
                         const doubleAbilities = choice.doubleAbilities || [];
                         const isSelected = doubleAbilities.includes(ability);
                         const canSelect = doubleAbilities.length < 2 || isSelected;
                         const atMax = currentScore >= 20;
+                        const newScore = Math.min(currentScore + 1, 20);
                         
                         return (
                           <button
@@ -6675,7 +6719,7 @@ const ASIFeatsStep = ({ character, updateCharacter }) => {
                             }`}
                           >
                             <div>{ABILITY_LABELS[ability].short}</div>
-                            <div className="text-[10px] text-slate-500">{currentScore} → {currentScore + 1}</div>
+                            <div className="text-[10px] text-slate-500">{currentScore} → {newScore}</div>
                             {isSelected && <div className="text-green-400">✓</div>}
                             {atMax && <div className="text-red-400 text-[10px]">Max</div>}
                           </button>
@@ -13463,45 +13507,112 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
   const asiChoices = {};
   const asiLevels = [4, 8, 12, 16, 19].filter(l => l <= level);
   
+  // Calculate racial bonuses for effective score calculation
+  const racialBonuses = getRacialBonuses(raceId, subraceId);
+  // Add variant human choices if applicable
+  const variantBonuses = {};
+  if (raceId === 'variantHuman' && variantHumanChoices.length >= 2) {
+    variantBonuses[variantHumanChoices[0]] = 1;
+    variantBonuses[variantHumanChoices[1]] = 1;
+  }
+  
+  // Helper to get effective score at a given ASI level (includes racial + previous ASIs)
+  const getEffectiveScoreForASI = (ability, atLevel) => {
+    let score = abilities[ability] || 10;
+    // Add racial bonuses
+    score += racialBonuses[ability] || 0;
+    score += variantBonuses[ability] || 0;
+    // Add bonuses from ASI choices at earlier levels
+    asiLevels.filter(l => l < atLevel).forEach(l => {
+      const prevChoice = asiChoices[l];
+      if (prevChoice?.type === 'asi') {
+        if (prevChoice.asiType === 'single' && prevChoice.singleAbility === ability) {
+          score += 2;
+        } else if (prevChoice.asiType === 'double' && prevChoice.doubleAbilities?.includes(ability)) {
+          score += 1;
+        }
+      }
+    });
+    return Math.min(score, 20);
+  };
+  
   asiLevels.forEach(asiLevel => {
     // Decide between ASI and Feat (60% ASI, 40% Feat for variety)
     const chooseASI = Math.random() < 0.6;
     
     if (chooseASI) {
-      // Pick top 2 abilities to boost based on class priority
-      const topTwo = priority.slice(0, 2);
-      const boostOne = Math.random() < 0.5; // 50% chance to boost one ability by +2 vs two by +1
+      // Find the best abilities to boost (not already at 20)
+      const eligibleAbilities = priority.filter(a => getEffectiveScoreForASI(a, asiLevel) < 20);
       
-      if (boostOne) {
-        // +2 to single ability (primary stat)
-        asiChoices[asiLevel] = {
-          type: 'asi',
-          asiType: 'single',
-          singleAbility: topTwo[0]
+      if (eligibleAbilities.length === 0) {
+        // All priority abilities are maxed, pick a feat instead
+        const featsByClass = {
+          barbarian: ['greatWeaponMaster', 'polearmMaster', 'toughness', 'athlete', 'sentinel'],
+          bard: ['actor', 'inspiringLeader', 'keenMind', 'skilled', 'warCaster'],
+          cleric: ['warCaster', 'resilient', 'healer', 'observant'],
+          druid: ['warCaster', 'resilient', 'observant', 'alert', 'sentinel'],
+          fighter: ['greatWeaponMaster', 'sharpshooter', 'polearmMaster', 'sentinel', 'crossbowExpert'],
+          monk: ['mobile', 'alert', 'athlete', 'observant', 'sentinel'],
+          paladin: ['greatWeaponMaster', 'polearmMaster', 'inspiringLeader', 'sentinel'],
+          ranger: ['sharpshooter', 'crossbowExpert', 'alert', 'observant', 'mobile'],
+          rogue: ['crossbowExpert', 'alert', 'mobile', 'skulker', 'sentinel'],
+          sorcerer: ['warCaster', 'resilient', 'alert'],
+          warlock: ['warCaster', 'actor', 'resilient', 'alert'],
+          wizard: ['warCaster', 'keenMind', 'resilient', 'observant']
         };
+        const compatibleFeats = featsByClass[selectedClass.name.toLowerCase()] || ['alert', 'athlete', 'actor', 'toughness'];
+        const availableFeats = compatibleFeats.filter(f => FEATS[f]);
+        const feat = availableFeats.length > 0 ? pick(availableFeats) : pick(Object.keys(FEATS));
+        asiChoices[asiLevel] = { type: 'feat', feat };
       } else {
-        // +1 to two abilities (primary and secondary)
-        asiChoices[asiLevel] = {
-          type: 'asi',
-          asiType: 'double',
-          doubleAbilities: [topTwo[0], topTwo[1]]
-        };
+        const boostOne = Math.random() < 0.5;
+        
+        if (boostOne) {
+          // +2 to single ability - pick best that won't exceed 20
+          const bestAbility = eligibleAbilities.find(a => getEffectiveScoreForASI(a, asiLevel) <= 18) || eligibleAbilities[0];
+          // If best ability is at 19, +2 would cap at 20 (which is fine, just wasteful of 1 point)
+          asiChoices[asiLevel] = {
+            type: 'asi',
+            asiType: 'single',
+            singleAbility: bestAbility
+          };
+        } else {
+          // +1 to two abilities - pick two that are under 20
+          const twoAbilities = eligibleAbilities.slice(0, 2);
+          if (twoAbilities.length >= 2) {
+            asiChoices[asiLevel] = {
+              type: 'asi',
+              asiType: 'double',
+              doubleAbilities: twoAbilities
+            };
+          } else if (twoAbilities.length === 1) {
+            // Only one ability left under 20, do +2 to it instead
+            asiChoices[asiLevel] = {
+              type: 'asi',
+              asiType: 'single',
+              singleAbility: twoAbilities[0]
+            };
+          } else {
+            // Shouldn't happen but fallback to feat
+            asiChoices[asiLevel] = { type: 'feat', feat: pick(Object.keys(FEATS)) };
+          }
+        }
       }
     } else {
       // Pick a feat appropriate for the class
       const featsByClass = {
         barbarian: ['greatWeaponMaster', 'polearmMaster', 'toughness', 'athlete', 'sentinel'],
         bard: ['actor', 'inspiringLeader', 'keenMind', 'skilled', 'warCaster'],
-        cleric: ['warCaster', 'resilient', 'healer', 'observant', 'ritual Caster'],
+        cleric: ['warCaster', 'resilient', 'healer', 'observant'],
         druid: ['warCaster', 'resilient', 'observant', 'alert', 'sentinel'],
         fighter: ['greatWeaponMaster', 'sharpshooter', 'polearmMaster', 'sentinel', 'crossbowExpert'],
         monk: ['mobile', 'alert', 'athlete', 'observant', 'sentinel'],
-        paladin: ['greatWeaponMaster', 'polearmMaster', 'inspiringLeader', 'sentinel', 'mounted Combatant'],
+        paladin: ['greatWeaponMaster', 'polearmMaster', 'inspiringLeader', 'sentinel'],
         ranger: ['sharpshooter', 'crossbowExpert', 'alert', 'observant', 'mobile'],
         rogue: ['crossbowExpert', 'alert', 'mobile', 'skulker', 'sentinel'],
-        sorcerer: ['warCaster', 'elemental Adept', 'resilient', 'alert', 'metamagic Adept'],
-        warlock: ['warCaster', 'actor', 'resilient', 'alert', 'fey Touched'],
-        wizard: ['warCaster', 'keenMind', 'resilient', 'observant', 'ritual Caster']
+        sorcerer: ['warCaster', 'resilient', 'alert'],
+        warlock: ['warCaster', 'actor', 'resilient', 'alert'],
+        wizard: ['warCaster', 'keenMind', 'resilient', 'observant']
       };
       
       const compatibleFeats = featsByClass[selectedClass.name.toLowerCase()] || ['alert', 'athlete', 'actor', 'toughness'];
