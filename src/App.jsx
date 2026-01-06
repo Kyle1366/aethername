@@ -221,7 +221,7 @@ const DiceRoller = () => {
   };
   
   return (
-    <div id="tour-dice-roller" className="fixed top-20 right-4 z-40">
+    <div id="tour-dice-roller" className="fixed top-20 right-4 z-30">
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -1320,10 +1320,22 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) =
       </div>
       
       {/* Popover */}
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-          style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
-        >
+      {isOpen && createPortal(
+        <>
+          {/* Backdrop to close on outside click */}
+          <div className="fixed inset-0 z-[80]" onClick={() => setIsOpen(false)} />
+          <div 
+            className="fixed bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 z-[85] animate-in fade-in zoom-in-95 duration-200"
+            style={{ 
+              top: popoverRef.current ? popoverRef.current.getBoundingClientRect().bottom + 8 : '50%',
+              right: '1rem',
+              left: '1rem',
+              maxWidth: '20rem',
+              marginLeft: 'auto',
+              maxHeight: 'calc(100vh - 150px)', 
+              overflowY: 'auto' 
+            }}
+          >
           <div className="space-y-4">
             <div className="text-sm font-medium text-white flex items-center gap-2">
               <Settings className="w-4 h-4 text-purple-400" />
@@ -1420,6 +1432,8 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) =
             </button>
           </div>
         </div>
+        </>,
+        document.body
       )}
     </div>
   );
