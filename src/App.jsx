@@ -5139,7 +5139,7 @@ const SPELLS = {
   shieldOfFaith: { name: 'Shield of Faith', level: 1, school: 'abjuration', castTime: '1 bonus action', range: '60 ft', duration: '10 minutes', description: 'Target gains +2 AC.', classes: ['cleric', 'paladin'] },
   sleep: { name: 'Sleep', level: 1, school: 'enchantment', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Creatures with HP totaling up to 5d8 fall unconscious (lowest HP first).', classes: ['bard', 'sorcerer', 'wizard'] },
   speakWithAnimals: { name: 'Speak with Animals', level: 1, school: 'divination', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Communicate with beasts. Intelligence limits information.', classes: ['bard', 'druid', 'ranger'], ritual: true },
-  tashasHideousLaughter: { name: 'Tasha\'s Hideous Laughter', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Creature falls prone laughing. Incapacitated, can\'t stand. Wis save each turn.', classes: ['bard', 'wizard'] },
+  hideousLaughter: { name: 'Hideous Laughter', level: 1, school: 'enchantment', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Creature falls prone laughing. Incapacitated, can\'t stand. Wis save each turn.', classes: ['bard', 'wizard'] },
   thunderwave: { name: 'Thunderwave', level: 1, school: 'evocation', castTime: '1 action', range: 'Self (15-ft cube)', duration: 'Instantaneous', description: '2d8 thunder damage in 15-ft cube. Con save or pushed 10 ft.', classes: ['bard', 'druid', 'sorcerer', 'wizard'] },
   witchBolt: { name: 'Witch Bolt', level: 1, school: 'evocation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: '1d12 lightning damage. Use action each turn to auto-deal 1d12 more.', classes: ['sorcerer', 'warlock', 'wizard'] },
   wrathfulSmite: { name: 'Wrathful Smite', level: 1, school: 'evocation', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +1d6 psychic. Wis save or frightened.', classes: ['paladin'] },
@@ -5217,7 +5217,7 @@ const SPELLS = {
   haste: { name: 'Haste', level: 3, school: 'transmutation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Double speed, +2 AC, advantage on Dex saves, extra action.', classes: ['sorcerer', 'wizard'] },
   hungerOfHadar: { name: 'Hunger of Hadar', level: 3, school: 'conjuration', castTime: '1 action', range: '150 ft', duration: '1 minute', description: 'Void sphere. Cold damage start of turn, acid damage end of turn.', classes: ['warlock'] },
   hypnoticPattern: { name: 'Hypnotic Pattern', level: 3, school: 'illusion', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Wis save or charmed, incapacitated, speed 0 in 30-ft cube.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
-  leomundsTinyHut: { name: 'Leomund\'s Tiny Hut', level: 3, school: 'evocation', castTime: '1 minute', range: 'Self (10-ft hemisphere)', duration: '8 hours', description: 'Create dome shelter for up to 9 creatures. Blocks spells.', classes: ['bard', 'wizard'], ritual: true },
+  tinyHut: { name: 'Tiny Hut', level: 3, school: 'evocation', castTime: '1 minute', range: 'Self (10-ft hemisphere)', duration: '8 hours', description: 'Create dome shelter for up to 9 creatures. Blocks spells.', classes: ['bard', 'wizard'], ritual: true },
   lightningBolt: { name: 'Lightning Bolt', level: 3, school: 'evocation', castTime: '1 action', range: 'Self (100-ft line)', duration: 'Instantaneous', description: '100-ft line. 8d6 lightning damage. Dex save for half.', classes: ['sorcerer', 'wizard'] },
   magicCircle: { name: 'Magic Circle', level: 3, school: 'abjuration', castTime: '1 minute', range: '10 ft', duration: '1 hour', description: 'Cylinder protects against celestials, elementals, fey, fiends, or undead.', classes: ['cleric', 'paladin', 'warlock', 'wizard'] },
   majorImage: { name: 'Major Image', level: 3, school: 'illusion', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'Create illusory image with sound, smell, temperature. Int check to see through.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
@@ -5255,7 +5255,7 @@ const SPELLS = {
   dimensionDoor: { name: 'Dimension Door', level: 4, school: 'conjuration', castTime: '1 action', range: '500 ft', duration: 'Instantaneous', description: 'Teleport yourself and one willing creature up to 500 ft.', classes: ['bard', 'sorcerer', 'warlock', 'wizard'] },
   divination: { name: 'Divination', level: 4, school: 'divination', castTime: '1 action', range: 'Self', duration: 'Instantaneous', description: 'Contact deity for truthful reply about goal or event within 7 days.', classes: ['cleric'], ritual: true },
   dominateBeast: { name: 'Dominate Beast', level: 4, school: 'enchantment', castTime: '1 action', range: '60 ft', duration: '1 minute', description: 'Wis save or beast is charmed and you control it telepathically.', classes: ['druid', 'sorcerer'] },
-  evardBlackTentacles: { name: 'Evard\'s Black Tentacles', level: 4, school: 'conjuration', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Tentacles fill 20-ft square. Dex save or restrained, 3d6 bludgeoning.', classes: ['wizard'] },
+  blackTentacles: { name: 'Black Tentacles', level: 4, school: 'conjuration', castTime: '1 action', range: '90 ft', duration: '1 minute', description: 'Tentacles fill 20-ft square. Dex save or restrained, 3d6 bludgeoning.', classes: ['wizard'] },
   fabricate: { name: 'Fabricate', level: 4, school: 'transmutation', castTime: '10 minutes', range: '120 ft', duration: 'Instantaneous', description: 'Convert raw materials into finished products.', classes: ['wizard'] },
   fireShield: { name: 'Fire Shield', level: 4, school: 'evocation', castTime: '1 action', range: 'Self', duration: '10 minutes', description: 'Choose warm (fire resist) or chill (cold resist). Attackers take 2d8 damage.', classes: ['wizard'] },
   freedomOfMovement: { name: 'Freedom of Movement', level: 4, school: 'abjuration', castTime: '1 action', range: 'Touch', duration: '1 hour', description: 'Target unaffected by difficult terrain, can\'t be paralyzed or restrained.', classes: ['bard', 'cleric', 'druid', 'ranger'] },
@@ -5265,7 +5265,7 @@ const SPELLS = {
   hallucinatoryTerrain: { name: 'Hallucinatory Terrain', level: 4, school: 'illusion', castTime: '10 minutes', range: '300 ft', duration: '24 hours', description: 'Make terrain look, sound, smell like different terrain.', classes: ['bard', 'druid', 'warlock', 'wizard'] },
   iceStorm: { name: 'Ice Storm', level: 4, school: 'evocation', castTime: '1 action', range: '300 ft', duration: 'Instantaneous', description: '20-ft cylinder. 2d8 bludgeoning + 4d6 cold. Dex save for half. Difficult terrain.', classes: ['druid', 'sorcerer', 'wizard'] },
   locateCreature: { name: 'Locate Creature', level: 4, school: 'divination', castTime: '1 action', range: 'Self', duration: '1 hour', description: 'Sense direction to specific creature within 1000 ft.', classes: ['bard', 'cleric', 'druid', 'paladin', 'ranger', 'wizard'] },
-  otilukeResilientSphere: { name: 'Otiluke\'s Resilient Sphere', level: 4, school: 'evocation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Dex save or creature enclosed in indestructible force sphere.', classes: ['wizard'] },
+  resilientSphere: { name: 'Resilient Sphere', level: 4, school: 'evocation', castTime: '1 action', range: '30 ft', duration: '1 minute', description: 'Dex save or creature enclosed in indestructible force sphere.', classes: ['wizard'] },
   phantasmalKiller: { name: 'Phantasmal Killer', level: 4, school: 'illusion', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Wis save or creature frightened of nightmarish illusion. 4d10 psychic per turn.', classes: ['wizard'] },
   polymorph: { name: 'Polymorph', level: 4, school: 'transmutation', castTime: '1 action', range: '60 ft', duration: '1 hour', description: 'Wis save or transform creature into beast of equal or lower CR.', classes: ['bard', 'druid', 'sorcerer', 'wizard'] },
   privateS: { name: 'Private Sanctum', level: 4, school: 'abjuration', castTime: '10 minutes', range: '120 ft', duration: '24 hours', description: 'Area secure from scrying, teleportation, and planar travel.', classes: ['wizard'] },
@@ -5280,7 +5280,7 @@ const SPELLS = {
   antilife_shell: { name: 'Antilife Shell', level: 5, school: 'abjuration', castTime: '1 action', range: 'Self (10-ft radius)', duration: '1 hour', description: 'Barrier prevents creatures from entering or passing through.', classes: ['druid'] },
   awaken: { name: 'Awaken', level: 5, school: 'transmutation', castTime: '8 hours', range: 'Touch', duration: 'Instantaneous', description: 'Give beast or plant Intelligence of 10 and ability to speak.', classes: ['bard', 'druid'] },
   banishingSmite: { name: 'Banishing Smite', level: 5, school: 'abjuration', castTime: '1 bonus action', range: 'Self', duration: '1 minute', description: 'Next hit deals +5d10 force. If under 50 HP, banished.', classes: ['paladin'] },
-  bigbysHand: { name: 'Bigby\'s Hand', level: 5, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Create Large hand of force. Can punch, push, grasp, or block.', classes: ['wizard'] },
+  arcaneHand: { name: 'Arcane Hand', level: 5, school: 'evocation', castTime: '1 action', range: '120 ft', duration: '1 minute', description: 'Create Large hand of force. Can punch, push, grasp, or block.', classes: ['wizard'] },
   circleOfPower: { name: 'Circle of Power', level: 5, school: 'abjuration', castTime: '1 action', range: 'Self (30-ft radius)', duration: '10 minutes', description: 'Allies have advantage on saves vs magic. Successful saves take no damage.', classes: ['paladin'] },
   cloudkill: { name: 'Cloudkill', level: 5, school: 'conjuration', castTime: '1 action', range: '120 ft', duration: '10 minutes', description: 'Poisonous fog in 20-ft sphere. 5d8 poison damage. Con save for half.', classes: ['sorcerer', 'wizard'] },
   commune: { name: 'Commune', level: 5, school: 'divination', castTime: '1 minute', range: 'Self', duration: '1 minute', description: 'Contact deity and ask up to 3 yes/no questions.', classes: ['cleric'], ritual: true },
@@ -14081,7 +14081,7 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
         },
         spells: {
           priority: ['healingWord', 'faerieFire', 'dissonantWhispers'], // Essential bard spells
-          good: ['cureWounds', 'charmPerson', 'sleep', 'thunderwave', 'tashasHideousLaughter', 'heroism', 'bane']
+          good: ['cureWounds', 'charmPerson', 'sleep', 'thunderwave', 'hideousLaughter', 'heroism', 'bane']
         }
       },
       // CLERIC: Healer/Support with domain flexibility
@@ -14173,7 +14173,7 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
         subclassPriority: {
           fiend: { spells: ['burningHands', 'hellishRebuke', 'armorOfAgathys'] },
           archfey: { spells: ['faerieFire', 'charmPerson', 'sleep'] },
-          greatOldOne: { spells: ['dissonantWhispers', 'tashasHideousLaughter', 'detectThoughts'] }
+          greatOldOne: { spells: ['dissonantWhispers', 'hideousLaughter', 'detectThoughts'] }
         }
       },
       // WIZARD: Versatile, school-focused
@@ -14191,7 +14191,7 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
           abjuration: { spells: ['shield', 'mageArmor', 'protectionFromEvilAndGood'] },
           divination: { spells: ['detectMagic', 'identify', 'comprehendLanguages'], cantrips: ['guidance'] },
           illusion: { spells: ['disguiseSelf', 'silentImage', 'colorSpray'], cantrips: ['minorIllusion'] },
-          enchantment: { spells: ['charmPerson', 'sleep', 'tashasHideousLaughter'] },
+          enchantment: { spells: ['charmPerson', 'sleep', 'hideousLaughter'] },
           necromancy: { spells: ['falseLife', 'rayOfSickness', 'causeFear'], cantrips: ['chillTouch'] },
           conjuration: { spells: ['findFamiliar', 'fogCloud', 'grease'] },
           transmutation: { spells: ['featherFall', 'longstrider', 'expeditiousRetreat'] }
@@ -17602,6 +17602,9 @@ export default function AetherNames() {
               <button onClick={openDonation} className="mt-2 text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1 mx-auto">
                 <Heart className="w-4 h-4" /> Support this project on Ko-fi
               </button>
+              <p className="mt-3 text-xs text-slate-700 max-w-md mx-auto">
+                Character Builder is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
+              </p>
             </div>
           </div>
           </div>
