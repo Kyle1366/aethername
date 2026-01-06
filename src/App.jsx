@@ -12273,17 +12273,21 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                     Purchased ({purchasedItems.length} items)
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {purchasedItems.map((item, i) => (
-                      <span 
-                        key={i} 
-                        className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
-                        onClick={() => removeItem(i)}
-                        title="Click to refund"
-                      >
-                        {item}
-                        <X className="w-3 h-3" />
-                      </span>
-                    ))}
+                    {purchasedItems.map((item, i) => {
+                      const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
+                      return (
+                        <span 
+                          key={i} 
+                          className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
+                          onClick={() => removeItem(i)}
+                          title="Click to refund"
+                        >
+                          {item}
+                          {shopItem && <span className="text-amber-400 text-xs">({shopItem.cost}gp)</span>}
+                          <X className="w-3 h-3" />
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -12367,17 +12371,21 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                 Equipment ({purchasedItems.length} items)
               </div>
               <div className="flex flex-wrap gap-2">
-                {purchasedItems.map((item, i) => (
-                  <span 
-                    key={i} 
-                    className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
-                    onClick={() => removeItem(i)}
-                    title="Click to remove"
-                  >
-                    {item}
-                    <X className="w-3 h-3" />
-                  </span>
-                ))}
+                {purchasedItems.map((item, i) => {
+                  const shopItem = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs].find(si => si.name === item);
+                  return (
+                    <span 
+                      key={i} 
+                      className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
+                      onClick={() => removeItem(i)}
+                      title="Click to remove"
+                    >
+                      {item}
+                      {shopItem && <span className="text-amber-400 text-xs">({shopItem.cost}gp)</span>}
+                      <X className="w-3 h-3" />
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}
