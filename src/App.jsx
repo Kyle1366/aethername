@@ -9012,15 +9012,44 @@ INT: ${finalAbilities?.intelligence || 10} | WIS: ${finalAbilities?.wisdom || 10
                 Edit
               </button>
             </div>
+            {/* Legend */}
+            <div className="flex flex-wrap gap-3 mb-3 text-[10px]">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="text-slate-400">Primary</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-cyan-500"></div>
+                <span className="text-slate-400">Save</span>
+              </div>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {ABILITY_NAMES.map(a => {
                 const final = finalAbilities[a];
                 const mod = getModifier(final);
                 const bonus = racialBonuses[a] || 0;
+                const isPrimary = classData?.primaryAbility?.includes(a);
+                const isSavingThrow = classData?.savingThrows?.includes(a);
                 
                 return (
-                  <div key={a} className="text-center p-2 rounded-lg bg-slate-900/50">
-                    <div className="text-xs text-slate-500 mb-1">{ABILITY_LABELS[a].short}</div>
+                  <div 
+                    key={a} 
+                    className={`text-center p-2 rounded-lg relative ${
+                      isPrimary 
+                        ? 'bg-amber-500/10 border border-amber-500/30' 
+                        : isSavingThrow 
+                          ? 'bg-cyan-500/10 border border-cyan-500/30' 
+                          : 'bg-slate-900/50'
+                    }`}
+                  >
+                    {/* Indicator dots */}
+                    <div className="absolute top-1 right-1 flex gap-0.5">
+                      {isPrimary && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Primary Ability"></div>}
+                      {isSavingThrow && <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" title="Saving Throw"></div>}
+                    </div>
+                    <div className={`text-xs mb-1 ${isPrimary ? 'text-amber-400' : isSavingThrow ? 'text-cyan-400' : 'text-slate-500'}`}>
+                      {ABILITY_LABELS[a].short}
+                    </div>
                     <div className="text-xl font-bold text-white">{final}</div>
                     <div className={`text-sm font-medium ${mod >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {mod >= 0 ? '+' : ''}{mod}
@@ -11546,12 +11575,28 @@ const SpellSelectionStep = ({ character, updateCharacter }) => {
 // ============================================================================
 
 const EquipmentSelectionStep = ({ character, updateCharacter }) => {
-  const [method, setMethod] = useState(character.equipmentMethod || null);
+  // Check if this is a random character with pre-generated equipment
+  const hasRandomEquipment = character.equipment && Array.isArray(character.equipment) && character.equipment.length > 0 && !character.equipmentMethod;
+  
+  const [method, setMethod] = useState(() => {
+    if (character.equipmentMethod) return character.equipmentMethod;
+    if (hasRandomEquipment) return 'random'; // New method type for random character equipment
+    return null;
+  });
   const [equipmentChoices, setEquipmentChoices] = useState(character.equipmentChoices || {});
   const [gold, setGold] = useState(character.gold || 0);
-  const [totalGoldRolled, setTotalGoldRolled] = useState(0);
-  const [goldRolled, setGoldRolled] = useState(false);
-  const [purchasedItems, setPurchasedItems] = useState(character.purchasedItems || []);
+  const [totalGoldRolled, setTotalGoldRolled] = useState(character.gold || 0);
+  const [goldRolled, setGoldRolled] = useState(hasRandomEquipment || character.equipmentMethod === 'gold' || character.equipmentMethod === 'ideal');
+  const [purchasedItems, setPurchasedItems] = useState(() => {
+    if (character.purchasedItems && character.purchasedItems.length > 0) return character.purchasedItems;
+    // If random character, use the equipment array as purchased items
+    if (hasRandomEquipment) {
+      return character.equipment.map(item => 
+        typeof item === 'string' ? item.replace(/\s*\(if proficient\)/gi, '') : item
+      );
+    }
+    return [];
+  });
   const [shopCategory, setShopCategory] = useState('weapons');
 
   const classId = character.class;
@@ -11902,6 +11947,10 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
     updateCharacter('equipmentChoices', equipmentChoices);
     updateCharacter('gold', gold);
     updateCharacter('purchasedItems', purchasedItems);
+    // For random method, also sync back to equipment array
+    if (method === 'random' || method === 'gold' || method === 'ideal') {
+      updateCharacter('equipment', purchasedItems);
+    }
   }, [method, equipmentChoices, gold, purchasedItems]);
 
   const rollStartingGold = () => {
@@ -12239,6 +12288,114 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                 </div>
               )}
             </>
+          )}
+        </div>
+      )}
+      
+      {/* Random Character Equipment (pre-generated) */}
+      {method === 'random' && (
+        <div className="space-y-4">
+          <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            This equipment was generated with your random character. You can modify it below or switch to a different method.
+          </div>
+          
+          {/* Gold Display */}
+          <div className="p-4 rounded-xl bg-amber-500/10 border-amber-500/30 border">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-amber-300">Remaining Gold</div>
+                <div className="text-3xl font-bold text-amber-400">{gold} gp</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Shop Categories */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {['weapons', 'armor', 'gear', 'packs'].map(cat => (
+              <button
+                key={cat}
+                onClick={() => setShopCategory(cat)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                  shopCategory === cat
+                    ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 border'
+                    : 'bg-slate-800/50 border-slate-700/50 text-slate-400 border hover:text-slate-200'
+                }`}
+              >
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Shop Items */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+            {EQUIPMENT_SHOP[shopCategory]?.map((item, i) => (
+              <button
+                key={i}
+                onClick={() => buyItem(item)}
+                disabled={gold < item.cost}
+                className={`p-3 rounded-lg border text-left transition-all ${
+                  gold >= item.cost
+                    ? 'bg-slate-800/50 border-slate-700/50 hover:border-green-500/30'
+                    : 'bg-slate-900/30 border-slate-800/50 opacity-50 cursor-not-allowed'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="font-medium text-slate-200 text-sm">{item.name}</div>
+                  <div className="text-amber-400 text-sm font-medium">{item.cost} gp</div>
+                </div>
+                {item.damage && (
+                  <div className="text-xs text-red-400 mt-1">{item.damage}</div>
+                )}
+                {item.ac && (
+                  <div className="text-xs text-blue-400 mt-1">AC: {item.ac}</div>
+                )}
+                {item.properties && (
+                  <div className="text-xs text-slate-500 mt-1">{item.properties}</div>
+                )}
+                {item.contents && (
+                  <div className="text-xs text-slate-400 mt-1 leading-relaxed">{item.contents}</div>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Current Equipment */}
+          {purchasedItems.length > 0 && (
+            <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+              <div className="text-sm font-medium text-green-300 mb-3">
+                Equipment ({purchasedItems.length} items)
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {purchasedItems.map((item, i) => (
+                  <span 
+                    key={i} 
+                    className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-200 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-200 transition-colors"
+                    onClick={() => removeItem(i)}
+                    title="Click to remove"
+                  >
+                    {item}
+                    <X className="w-3 h-3" />
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Background Equipment */}
+          {backgroundEquipment && (
+            <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+              <div className="text-sm font-medium text-purple-300 mb-3">
+                From Background ({BACKGROUNDS[character.background]?.name})
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {backgroundEquipment.map((item, i) => (
+                  <span key={i} className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-200 text-sm">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
