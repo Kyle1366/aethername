@@ -15360,6 +15360,221 @@ const CharacterCreator = ({
 // DEV TOOLS (Only shows on dev.aether-names.com)
 // ============================================================================
 
+// ============================================================================
+// FUN LAB (Available on all versions - a playful toolkit for users)
+// ============================================================================
+
+const FunLab = ({ onQuickTest, setCurrentPage }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [easterEggCount, setEasterEggCount] = useState(0);
+  const [secretUnlocked, setSecretUnlocked] = useState(false);
+  const [diceResult, setDiceResult] = useState(null);
+  const [fortuneText, setFortuneText] = useState('');
+  
+  // Secret unlock after 7 clicks on the flask
+  useEffect(() => {
+    if (easterEggCount >= 7 && !secretUnlocked) {
+      setSecretUnlocked(true);
+    }
+  }, [easterEggCount, secretUnlocked]);
+  
+  // Keyboard shortcut: Ctrl+Shift+L for Lab
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'L') {
+        e.preventDefault();
+        setIsOpen(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const fortunes = [
+    "Your next natural 20 awaits you... patience, adventurer.",
+    "The dice gods smile upon you today. Roll with confidence!",
+    "Beware the mimic. That treasure chest looks suspicious.",
+    "Your backstory is about to become relevant. Talk to the DM.",
+    "A mysterious stranger will offer you a quest. Accept wisely.",
+    "Your party's bard will cause exactly 47% of today's problems.",
+    "The dragon is not sleeping. It's waiting.",
+    "That NPC you ignored? Main villain. Called it.",
+    "Your character's tragic past? It's about to get more tragic.",
+    "Roll perception. Actually, never mind. You don't want to know.",
+    "The tavern keeper knows more than they're letting on.",
+    "Your deity is watching. They're also disappointed.",
+    "Trust the ranger's gut. Except about the mushrooms.",
+    "The real treasure was the XP we earned along the way.",
+    "Your carefully crafted plan will survive exactly 0.5 rounds.",
+  ];
+  
+  const rollD20 = () => {
+    const result = Math.floor(Math.random() * 20) + 1;
+    setDiceResult(result);
+    // Clear after animation
+    setTimeout(() => setDiceResult(null), 3000);
+  };
+  
+  const getFortune = () => {
+    setFortuneText(fortunes[Math.floor(Math.random() * fortunes.length)]);
+  };
+  
+  const quickRandomizers = [
+    {
+      name: '🎲 Roll a D20',
+      description: 'Quick fate check',
+      action: rollD20,
+      color: 'indigo'
+    },
+    {
+      name: '🔮 Fortune',
+      description: 'Adventurer\'s wisdom',
+      action: getFortune,
+      color: 'purple'
+    },
+    {
+      name: '⚔️ Quick Character',
+      description: 'Instant random build',
+      action: () => {
+        onQuickTest && onQuickTest('random');
+        setCurrentPage && setCurrentPage('character');
+      },
+      color: 'cyan'
+    },
+  ];
+  
+  const funStats = [
+    { label: 'Names Generated', value: localStorage.getItem('aethername_total_generated') || '0' },
+    { label: 'Favorites Saved', value: (() => {
+      try {
+        const favs = JSON.parse(localStorage.getItem('aethername_favorites') || '[]');
+        return favs.length;
+      } catch { return 0; }
+    })() },
+    { label: 'Characters Created', value: localStorage.getItem('aethername_characters_created') || '0' },
+  ];
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50">
+      {isOpen && (
+        <div className="mb-2 bg-slate-900/95 backdrop-blur-xl border border-purple-500/50 rounded-2xl p-4 shadow-2xl shadow-purple-500/20 max-w-sm max-h-[70vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🧪</span>
+              <h3 className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                The Lab
+              </h3>
+              {secretUnlocked && <span className="text-xs">✨</span>}
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Dice Result Display */}
+          {diceResult !== null && (
+            <div className={`mb-4 p-4 rounded-xl text-center animate-pulse ${
+              diceResult === 20 ? 'bg-gradient-to-r from-yellow-500/30 to-amber-500/30 border border-yellow-500' :
+              diceResult === 1 ? 'bg-gradient-to-r from-red-500/30 to-red-600/30 border border-red-500' :
+              'bg-slate-800/50 border border-slate-700'
+            }`}>
+              <div className="text-4xl font-black mb-1">{diceResult}</div>
+              <div className={`text-sm font-medium ${
+                diceResult === 20 ? 'text-yellow-400' :
+                diceResult === 1 ? 'text-red-400' :
+                'text-slate-400'
+              }`}>
+                {diceResult === 20 ? '🎉 CRITICAL SUCCESS!' :
+                 diceResult === 1 ? '💀 Critical Fail...' :
+                 diceResult >= 15 ? 'Nice roll!' :
+                 diceResult >= 10 ? 'Not bad!' :
+                 'Could be worse...'}
+              </div>
+            </div>
+          )}
+          
+          {/* Fortune Display */}
+          {fortuneText && (
+            <div className="mb-4 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
+              <div className="text-sm text-purple-300 italic">"{fortuneText}"</div>
+              <button 
+                onClick={() => setFortuneText('')}
+                className="text-xs text-purple-500 mt-2 hover:text-purple-400"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+          
+          {/* Quick Actions */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {quickRandomizers.map((item) => (
+              <button
+                key={item.name}
+                onClick={item.action}
+                className={`p-3 rounded-xl bg-${item.color}-500/10 hover:bg-${item.color}-500/20 border border-${item.color}-500/30 hover:border-${item.color}-500/50 transition-all text-center`}
+              >
+                <div className="text-lg mb-1">{item.name.split(' ')[0]}</div>
+                <div className="text-[10px] text-slate-500">{item.description}</div>
+              </button>
+            ))}
+          </div>
+          
+          {/* Your Stats */}
+          <div className="mb-4 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <div className="text-[10px] uppercase text-slate-500 font-semibold mb-2">Your Journey</div>
+            <div className="grid grid-cols-3 gap-2">
+              {funStats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-xl font-bold text-white">{stat.value}</div>
+                  <div className="text-[10px] text-slate-500">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Secret Section */}
+          {secretUnlocked && (
+            <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+              <div className="text-xs text-amber-400 font-semibold mb-2">🏆 Secret Unlocked!</div>
+              <div className="text-[10px] text-slate-400">
+                You found the hidden achievement! You're clearly someone who clicks things repeatedly. 
+                The devs appreciate your dedication to chaos.
+              </div>
+            </div>
+          )}
+          
+          {/* Keyboard Hint */}
+          <div className="text-center">
+            <kbd className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-[10px] font-mono text-slate-500">
+              Ctrl+Shift+L
+            </kbd>
+          </div>
+        </div>
+      )}
+      
+      <button
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setEasterEggCount(prev => prev + 1);
+        }}
+        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white p-3 rounded-full shadow-lg shadow-purple-500/30 transition-all group relative"
+        title="The Lab (Ctrl+Shift+L)"
+      >
+        <FlaskConical className="w-5 h-5" />
+      </button>
+    </div>
+  );
+};
+
+// ============================================================================
+// DEV TOOLS (Only on dev subdomain)
+// ============================================================================
+
 const DevTools = ({ onQuickTest }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showLocalStorage, setShowLocalStorage] = useState(false);
@@ -15721,6 +15936,12 @@ export default function AetherNames() {
         return newHistory.slice(-10);
       });
       setHistoryIndex(prev => Math.min(prev + 1, 9));
+      
+      // Track total names generated for fun stats
+      try {
+        const currentTotal = parseInt(localStorage.getItem('aethername_total_generated') || '0', 10);
+        localStorage.setItem('aethername_total_generated', String(currentTotal + names.length));
+      } catch (e) { /* ignore storage errors */ }
       
       setGeneratedNames(names);
       setIsGenerating(false);
@@ -16996,6 +17217,15 @@ export default function AetherNames() {
           // Set a flag or pass test type
           setCharacterImportName(`DEV_TEST:${testType}`);
         }}
+      />
+      
+      {/* Fun Lab - Available to all users */}
+      <FunLab 
+        onQuickTest={(testType) => {
+          setCurrentPage('character');
+          setCharacterImportName(`DEV_TEST:${testType}`);
+        }}
+        setCurrentPage={setCurrentPage}
       />
       
       {/* Floating Dice Roller - Available on all pages */}
