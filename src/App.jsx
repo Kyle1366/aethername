@@ -9335,10 +9335,15 @@ INT: ${finalAbilities?.intelligence || 10} | WIS: ${finalAbilities?.wisdom || 10
                     <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] border border-indigo-500/30">Level {lvl}</span>
                     {choice.type === 'asi' ? (
                       <div className="text-xs text-slate-300">
-                        ASI: +{choice.boost1} {ABILITY_LABELS[choice.ability1]?.short}
-                        {choice.ability2 && choice.boost2 ? (
-                          <span> • +{choice.boost2} {ABILITY_LABELS[choice.ability2]?.short}</span>
-                        ) : null}
+                        {choice.asiType === 'single' && choice.singleAbility ? (
+                          `ASI: +2 ${ABILITY_LABELS[choice.singleAbility]?.short || choice.singleAbility}`
+                        ) : choice.asiType === 'double' && choice.doubleAbilities ? (
+                          `ASI: +1 ${ABILITY_LABELS[choice.doubleAbilities[0]]?.short || choice.doubleAbilities[0]} • +1 ${ABILITY_LABELS[choice.doubleAbilities[1]]?.short || choice.doubleAbilities[1]}`
+                        ) : choice.abilityIncreases && Object.keys(choice.abilityIncreases).length > 0 ? (
+                          `ASI: ${Object.entries(choice.abilityIncreases).map(([ab, val]) => `+${val} ${ABILITY_LABELS[ab]?.short || ab}`).join(' • ')}`
+                        ) : (
+                          'ASI: Not configured'
+                        )}
                       </div>
                     ) : choice.type === 'feat' && FEATS[choice.feat] ? (
                       <Tooltip content={FEATS[choice.feat].description}>
@@ -13463,17 +13468,25 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
     const chooseASI = Math.random() < 0.6;
     
     if (chooseASI) {
-      // Pick top 2 abilities to boost
+      // Pick top 2 abilities to boost based on class priority
       const topTwo = priority.slice(0, 2);
       const boostOne = Math.random() < 0.5; // 50% chance to boost one ability by +2 vs two by +1
       
-      asiChoices[asiLevel] = {
-        type: 'asi',
-        ability1: topTwo[0],
-        boost1: boostOne ? 2 : 1,
-        ability2: boostOne ? null : topTwo[1],
-        boost2: boostOne ? 0 : 1
-      };
+      if (boostOne) {
+        // +2 to single ability (primary stat)
+        asiChoices[asiLevel] = {
+          type: 'asi',
+          asiType: 'single',
+          singleAbility: topTwo[0]
+        };
+      } else {
+        // +1 to two abilities (primary and secondary)
+        asiChoices[asiLevel] = {
+          type: 'asi',
+          asiType: 'double',
+          doubleAbilities: [topTwo[0], topTwo[1]]
+        };
+      }
     } else {
       // Pick a feat appropriate for the class
       const featsByClass = {
