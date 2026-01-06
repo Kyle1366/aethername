@@ -4961,26 +4961,64 @@ const EQUIPMENT_SHOP = {
     { name: 'Shield', cost: 10, ac: '+2', type: 'Shield', stealth: '—', goodFor: ['fighter', 'paladin', 'cleric', 'druid'] }
   ],
   gear: [
+    // Adventuring Gear
     { name: 'Backpack', cost: 2, goodFor: ['all'] },
     { name: 'Bedroll', cost: 1, goodFor: ['all'] },
+    { name: 'Blanket', cost: 0.5, goodFor: ['all'] },
     { name: 'Rope, 50 ft', cost: 1, goodFor: ['all'] },
+    { name: 'Silk Rope, 50 ft', cost: 10, goodFor: ['all'] },
     { name: 'Torch (10)', cost: 0.1, goodFor: ['all'] },
     { name: 'Rations (10 days)', cost: 5, goodFor: ['all'] },
     { name: 'Waterskin', cost: 0.2, goodFor: ['all'] },
     { name: 'Tinderbox', cost: 0.5, goodFor: ['all'] },
+    { name: 'Crowbar', cost: 2, goodFor: ['all'] },
+    { name: 'Hammer', cost: 1, goodFor: ['all'] },
+    { name: 'Shovel', cost: 2, goodFor: ['all'] },
+    { name: 'Iron Pot', cost: 2, goodFor: ['all'] },
+    { name: 'Hunting Trap', cost: 5, goodFor: ['ranger'] },
+    { name: 'Lantern', cost: 5, goodFor: ['all'] },
+    { name: 'Oil Flask', cost: 0.1, goodFor: ['all'] },
+    { name: 'Ink Bottle', cost: 10, goodFor: ['all'] },
+    { name: 'Quill', cost: 0.02, goodFor: ['all'] },
+    { name: 'Parchment (10)', cost: 1, goodFor: ['all'] },
+    // Ammunition
     { name: 'Arrows (20)', cost: 1, goodFor: ['ranger', 'fighter'] },
     { name: 'Bolts (20)', cost: 1, goodFor: ['rogue', 'fighter'] },
+    // Spellcasting Focuses
     { name: 'Component Pouch', cost: 25, goodFor: ['wizard', 'sorcerer', 'warlock', 'bard'] },
     { name: 'Arcane Focus', cost: 10, goodFor: ['wizard', 'sorcerer', 'warlock'] },
     { name: 'Druidic Focus', cost: 5, goodFor: ['druid'] },
     { name: 'Holy Symbol', cost: 5, goodFor: ['cleric', 'paladin'] },
     { name: 'Spellbook', cost: 50, goodFor: ['wizard'] },
+    // Kits & Tools
     { name: 'Thieves\' Tools', cost: 25, goodFor: ['rogue'] },
     { name: 'Healer\'s Kit', cost: 5, goodFor: ['cleric', 'druid', 'paladin', 'ranger'] },
-    { name: 'Musical Instrument', cost: 25, goodFor: ['bard'] },
     { name: 'Disguise Kit', cost: 25, goodFor: ['rogue', 'bard'] },
     { name: 'Forgery Kit', cost: 15, goodFor: ['rogue'] },
-    { name: 'Herbalism Kit', cost: 5, goodFor: ['druid', 'ranger'] }
+    { name: 'Herbalism Kit', cost: 5, goodFor: ['druid', 'ranger'] },
+    { name: 'Artisan\'s Tools', cost: 15, goodFor: ['all'] },
+    { name: 'Navigator\'s Tools', cost: 25, goodFor: ['all'] },
+    { name: 'Gaming Set', cost: 1, goodFor: ['all'] },
+    // Musical Instruments
+    { name: 'Lute', cost: 35, goodFor: ['bard'] },
+    { name: 'Flute', cost: 2, goodFor: ['bard'] },
+    { name: 'Drum', cost: 6, goodFor: ['bard'] },
+    { name: 'Harp', cost: 35, goodFor: ['bard'] },
+    { name: 'Viol', cost: 30, goodFor: ['bard'] },
+    { name: 'Musical Instrument', cost: 25, goodFor: ['bard'] },
+    // Clothing
+    { name: 'Common Clothes', cost: 0.5, goodFor: ['all'] },
+    { name: 'Fine Clothes', cost: 15, goodFor: ['all'] },
+    { name: 'Traveler\'s Clothes', cost: 2, goodFor: ['all'] },
+    { name: 'Costume', cost: 5, goodFor: ['bard'] },
+    { name: 'Robes', cost: 1, goodFor: ['wizard', 'cleric', 'monk'] },
+    // Containers
+    { name: 'Chest', cost: 5, goodFor: ['all'] },
+    { name: 'Scroll Case', cost: 1, goodFor: ['wizard'] },
+    { name: 'Pouch', cost: 0.5, goodFor: ['all'] },
+    // Misc
+    { name: 'Signet Ring', cost: 5, goodFor: ['all'] },
+    { name: 'Sealing Wax', cost: 0.5, goodFor: ['all'] }
   ],
   packs: [
     { name: 'Burglar\'s Pack', cost: 16, contents: 'Backpack, ball bearings, string, bell, 5 candles, crowbar, hammer, 10 pitons, lantern, 2 oil flasks, rations, tinderbox, waterskin, 50 ft rope', goodFor: ['rogue'] },
@@ -11622,6 +11660,38 @@ const getItemCost = (itemName) => {
     'light crossbow': 'light crossbow',
     'hand crossbow': 'hand crossbow',
     'heavy crossbow': 'heavy crossbow',
+    // Musical instruments
+    'musical instrument': 'musical instrument',
+    'lute': 'lute',
+    'flute': 'flute',
+    'drum': 'drum',
+    'harp': 'harp',
+    'viol': 'viol',
+    // Clothing variations
+    'fine clothes': 'fine clothes',
+    'common clothes': 'common clothes',
+    'traveler\'s clothes': 'traveler\'s clothes',
+    'costume': 'costume',
+    'robes': 'robes',
+    // Tools & Kits
+    'disguise kit': 'disguise kit',
+    'forgery kit': 'forgery kit',
+    'herbalism kit': 'herbalism kit',
+    'thieves\' tools': 'thieves\' tools',
+    'artisan\'s tools': 'artisan\'s tools',
+    'navigator\'s tools': 'navigator\'s tools',
+    'gaming set': 'gaming set',
+    // Misc items
+    'crowbar': 'crowbar',
+    'shovel': 'shovel',
+    'iron pot': 'iron pot',
+    'hunting trap': 'hunting trap',
+    'signet ring': 'signet ring',
+    'blanket': 'blanket',
+    'winter blanket': 'blanket',
+    '50 feet silk rope': 'silk rope, 50 ft',
+    'staff': 'quarterstaff',
+    'small knife': 'dagger',
   };
   
   // Try variation lookup
@@ -11740,6 +11810,21 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
   const classEquipment = classId ? STARTING_EQUIPMENT[classId] : null;
   const classGold = classId ? STARTING_GOLD[classId] : null;
   const backgroundEquipment = character.background ? BACKGROUNDS[character.background]?.equipment : null;
+  
+  // Get background item names (without gold items) for highlighting
+  const backgroundItemNames = backgroundEquipment 
+    ? backgroundEquipment.filter(item => !item.match(/^\d+\s*gp$/i)).map(item => item.toLowerCase())
+    : [];
+  
+  // Check if an item is from background
+  const isBackgroundItem = (itemName) => {
+    const normalizedItem = itemName.toLowerCase();
+    return backgroundItemNames.some(bgItem => 
+      normalizedItem === bgItem || 
+      normalizedItem.includes(bgItem) || 
+      bgItem.includes(normalizedItem)
+    );
+  };
 
   const autoSelectEquipment = () => {
     if (!classEquipment) return;
@@ -12545,18 +12630,28 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
               {/* Item List */}
               <div className="space-y-1 max-h-48 overflow-y-auto mb-3">
                 {purchasedItems.map((item, i) => {
-                  const itemCost = getItemCost(item);
+                  const fromBackground = isBackgroundItem(item);
+                  const itemCost = fromBackground ? null : getItemCost(item);
                   return (
                     <div 
                       key={i} 
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-900/50 hover:bg-red-500/10 group cursor-pointer transition-colors"
+                      className={`flex items-center justify-between p-2 rounded-lg group cursor-pointer transition-colors ${
+                        fromBackground 
+                          ? 'bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20' 
+                          : 'bg-slate-900/50 hover:bg-red-500/10'
+                      }`}
                       onClick={() => removeItem(i)}
                       title="Click to remove"
                     >
-                      <span className="text-sm text-slate-200 truncate flex-1 mr-2">{item}</span>
+                      <div className="flex items-center gap-2 flex-1 mr-2">
+                        <span className={`text-sm truncate ${fromBackground ? 'text-purple-200' : 'text-slate-200'}`}>{item}</span>
+                        {fromBackground && (
+                          <span className="text-xs text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded">BG</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {itemCost !== null && <span className="text-amber-400 text-sm font-medium">{formatGold(itemCost)} gp</span>}
-                        <X className="w-3.5 h-3.5 text-slate-500 group-hover:text-red-400 transition-colors" />
+                        <X className={`w-3.5 h-3.5 transition-colors ${fromBackground ? 'text-purple-400 group-hover:text-red-400' : 'text-slate-500 group-hover:text-red-400'}`} />
                       </div>
                     </div>
                   );
@@ -12569,22 +12664,6 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
                   <span className="text-slate-400">Gold Remaining:</span>
                   <span className="text-amber-400 font-bold text-lg">{formatGold(gold)} gp</span>
                 </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Background Equipment */}
-          {backgroundEquipment && (
-            <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
-              <div className="text-sm font-medium text-purple-300 mb-3">
-                From Background ({BACKGROUNDS[character.background]?.name})
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {backgroundEquipment.map((item, i) => (
-                  <span key={i} className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-200 text-sm">
-                    {item}
-                  </span>
-                ))}
               </div>
             </div>
           )}
