@@ -3308,6 +3308,14 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
     // Check if name has spaces (for spaced/title style)
     const hasSpaces = name.includes(' ');
     
+    // Helper to verify stored parts match actual name
+    const partsMatchName = (parts) => {
+      if (!parts || parts.length === 0) return false;
+      const reconstructed = parts.map(p => p.text || '').join('').toLowerCase();
+      const cleanName = name.toLowerCase().replace(/[^a-z]/g, '');
+      return reconstructed === cleanName;
+    };
+    
     if (hasSpaces) {
       // Split by spaces and treat each word as a part
       const words = name.split(' ').filter(w => w.length > 0);
@@ -3318,7 +3326,7 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
         region: metadata?.selectedRegion || 'neutral',
         isTitle: word.toLowerCase() === 'the'
       }));
-    } else if (metadata?.method === 'syllable' && metadata.syllables?.length > 0) {
+    } else if (metadata?.method === 'syllable' && metadata.syllables?.length > 0 && partsMatchName(metadata.syllables)) {
       return metadata.syllables.map((s, i) => ({
         id: `syl-${i}`,
         text: s.text,
@@ -3326,11 +3334,14 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
         region: s.region
       }));
     } else if (metadata?.method === 'elements' && metadata.elements?.start) {
-      return [
+      const elementParts = [
         { id: 'el-start', text: metadata.elements.start, type: 'element', region: metadata.elements.startRegion },
         { id: 'el-end', text: metadata.elements.end, type: 'element', region: metadata.elements.endRegion }
       ];
-    } else if (metadata?.method === 'mixed' && metadata.parts?.length > 0) {
+      if (partsMatchName(elementParts)) {
+        return elementParts;
+      }
+    } else if (metadata?.method === 'mixed' && metadata.parts?.length > 0 && partsMatchName(metadata.parts)) {
       return metadata.parts.map((p, i) => ({
         id: `mix-${i}`,
         text: p.text,
@@ -3338,20 +3349,23 @@ const TweakPopover = ({ name, metadata, onTweak, isOpen, setIsOpen }) => {
         region: p.region
       }));
     } else if (metadata?.method === 'type-elements' && metadata.elements?.start) {
-      return [
+      const typeParts = [
         { id: 'type-start', text: metadata.elements.start, type: 'type-prefix', region: metadata?.selectedRegion },
         { id: 'type-end', text: metadata.elements.end, type: 'type-suffix', region: metadata?.selectedRegion }
       ];
-    } else {
-      // Fallback: break into syllables manually
-      const syllables = breakIntoSyllables(name);
-      return syllables.map((s, i) => ({
-        id: `auto-${i}`,
-        text: s,
-        type: 'syllable',
-        region: metadata?.selectedRegion || 'neutral'
-      }));
+      if (partsMatchName(typeParts)) {
+        return typeParts;
+      }
     }
+    
+    // Fallback: break into syllables manually
+    const syllables = breakIntoSyllables(name);
+    return syllables.map((s, i) => ({
+      id: `auto-${i}`,
+      text: s,
+      type: 'syllable',
+      region: metadata?.selectedRegion || 'neutral'
+    }));
   }, [name, metadata]);
 
   const parts = getParts();
