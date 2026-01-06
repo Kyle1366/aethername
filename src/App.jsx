@@ -4972,9 +4972,15 @@ const EQUIPMENT_SHOP = {
     { name: 'Bolts (20)', cost: 1, goodFor: ['rogue', 'fighter'] },
     { name: 'Component Pouch', cost: 25, goodFor: ['wizard', 'sorcerer', 'warlock', 'bard'] },
     { name: 'Arcane Focus', cost: 10, goodFor: ['wizard', 'sorcerer', 'warlock'] },
+    { name: 'Druidic Focus', cost: 5, goodFor: ['druid'] },
     { name: 'Holy Symbol', cost: 5, goodFor: ['cleric', 'paladin'] },
+    { name: 'Spellbook', cost: 50, goodFor: ['wizard'] },
     { name: 'Thieves\' Tools', cost: 25, goodFor: ['rogue'] },
-    { name: 'Healer\'s Kit', cost: 5, goodFor: ['cleric', 'druid', 'paladin', 'ranger'] }
+    { name: 'Healer\'s Kit', cost: 5, goodFor: ['cleric', 'druid', 'paladin', 'ranger'] },
+    { name: 'Musical Instrument', cost: 25, goodFor: ['bard'] },
+    { name: 'Disguise Kit', cost: 25, goodFor: ['rogue', 'bard'] },
+    { name: 'Forgery Kit', cost: 15, goodFor: ['rogue'] },
+    { name: 'Herbalism Kit', cost: 5, goodFor: ['druid', 'ranger'] }
   ],
   packs: [
     { name: 'Burglar\'s Pack', cost: 16, contents: 'Backpack, ball bearings, string, bell, 5 candles, crowbar, hammer, 10 pitons, lantern, 2 oil flasks, rations, tinderbox, waterskin, 50 ft rope', goodFor: ['rogue'] },
@@ -11580,12 +11586,53 @@ const getItemCost = (itemName) => {
   
   const allShopItems = [...EQUIPMENT_SHOP.weapons, ...EQUIPMENT_SHOP.armor, ...EQUIPMENT_SHOP.gear, ...EQUIPMENT_SHOP.packs];
   
+  // Normalize item name for comparison
+  const normalizedName = itemName.toLowerCase().trim();
+  
   // Direct match (case insensitive)
-  const directMatch = allShopItems.find(si => si.name.toLowerCase() === itemName.toLowerCase());
+  const directMatch = allShopItems.find(si => si.name.toLowerCase() === normalizedName);
   if (directMatch) return directMatch.cost;
   
+  // Handle common naming variations
+  const nameVariations = {
+    // Armor - "X armor" → shop name
+    'leather armor': 'leather',
+    'padded armor': 'padded',
+    'studded leather armor': 'studded leather',
+    'hide armor': 'hide',
+    'chain shirt armor': 'chain shirt',
+    'breastplate armor': 'breastplate',
+    'plate armor': 'plate',
+    'chain mail': 'chain mail',
+    'scale mail': 'scale mail',
+    // Focus/Symbol items
+    'holy symbol': 'holy symbol',
+    'component pouch': 'component pouch',
+    // Packs
+    'dungeoneer\'s pack': 'dungeoneer\'s pack',
+    'explorer\'s pack': 'explorer\'s pack',
+    'priest\'s pack': 'priest\'s pack',
+    'scholar\'s pack': 'scholar\'s pack',
+    'entertainer\'s pack': 'entertainer\'s pack',
+    'diplomat\'s pack': 'diplomat\'s pack',
+    'burglar\'s pack': 'burglar\'s pack',
+    // Weapons
+    'shortbow': 'shortbow',
+    'longbow': 'longbow',
+    'light crossbow': 'light crossbow',
+    'hand crossbow': 'hand crossbow',
+    'heavy crossbow': 'heavy crossbow',
+  };
+  
+  // Try variation lookup
+  const variation = nameVariations[normalizedName];
+  if (variation) {
+    const varMatch = allShopItems.find(si => si.name.toLowerCase() === variation);
+    if (varMatch) return varMatch.cost;
+  }
+  
   // Handle "Two X" or "2 X" patterns
-  const twoMatch = itemName.match(/^two\s+(.+)s?$/i) || itemName.match(/^2\s+(.+)s?$/i);
+  const twoMatch = normalizedName.match(/^two\s+(.+)s?$/i) || normalizedName.match(/^2\s+(.+)s?$/i);
   if (twoMatch) {
     const baseName = twoMatch[1].replace(/s$/, ''); // Remove trailing 's'
     const baseItem = allShopItems.find(si => si.name.toLowerCase() === baseName.toLowerCase() || 
@@ -11599,9 +11646,9 @@ const getItemCost = (itemName) => {
     let total = 0;
     let found = false;
     for (const part of parts) {
-      const partItem = allShopItems.find(si => si.name.toLowerCase() === part.toLowerCase());
-      if (partItem) {
-        total += partItem.cost;
+      const partCost = getItemCost(part);
+      if (partCost !== null) {
+        total += partCost;
         found = true;
       }
     }
@@ -11624,20 +11671,18 @@ const getItemCost = (itemName) => {
   }
   
   // Handle "20 arrows" → "Arrows (20)"
-  const ammoMatch = itemName.match(/^(\d+)\s+(.+)$/i);
+  const ammoMatch = normalizedName.match(/^(\d+)\s+(arrows|bolts)$/i);
   if (ammoMatch) {
     const count = parseInt(ammoMatch[1]);
-    const ammoName = ammoMatch[2];
-    const shopAmmo = allShopItems.find(si => si.name.toLowerCase().includes(ammoName.toLowerCase()));
+    const ammoType = ammoMatch[2].charAt(0).toUpperCase() + ammoMatch[2].slice(1);
+    const shopAmmo = allShopItems.find(si => si.name.includes(ammoType) && si.name.includes('(20)'));
     if (shopAmmo) {
-      // Most ammo is sold in packs of 20
-      const packSize = shopAmmo.name.match(/\((\d+)\)/)?.[1] || 20;
-      return shopAmmo.cost * (count / parseInt(packSize));
+      return shopAmmo.cost * (count / 20);
     }
   }
   
   // Handle "5 javelins" type patterns
-  const multiMatch = itemName.match(/^(\d+)\s+(.+)$/i);
+  const multiMatch = normalizedName.match(/^(\d+)\s+(.+)$/i);
   if (multiMatch) {
     const count = parseInt(multiMatch[1]);
     const baseName = multiMatch[2].replace(/s$/, ''); // Remove trailing 's'
@@ -11645,10 +11690,10 @@ const getItemCost = (itemName) => {
     if (baseItem) return baseItem.cost * count;
   }
   
-  // Partial match as fallback
+  // Partial match as fallback - try to find item name within the string
   const partialMatch = allShopItems.find(si => 
-    si.name.toLowerCase().includes(itemName.toLowerCase()) || 
-    itemName.toLowerCase().includes(si.name.toLowerCase())
+    normalizedName.includes(si.name.toLowerCase()) || 
+    si.name.toLowerCase().includes(normalizedName)
   );
   if (partialMatch) return partialMatch.cost;
   
@@ -12419,15 +12464,18 @@ const EquipmentSelectionStep = ({ character, updateCharacter }) => {
         <div className="space-y-4">
           <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            This equipment was generated with your random character. You can modify it below or switch to a different method.
+            This equipment was generated with your random character using class starting equipment.
           </div>
           
-          {/* Gold Display */}
+          {/* Gold Display - shows where gold came from */}
           <div className="p-4 rounded-xl bg-amber-500/10 border-amber-500/30 border">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-amber-300">Remaining Gold</div>
+                <div className="text-sm font-medium text-amber-300">Starting Gold</div>
                 <div className="text-3xl font-bold text-amber-400">{formatGold(gold)} gp</div>
+                <div className="text-xs text-slate-400 mt-1">
+                  From {BACKGROUNDS[character.background]?.name || 'Background'} background
+                </div>
               </div>
             </div>
           </div>
@@ -14448,20 +14496,23 @@ const generateRandomCharacter = (importedName = '', enableMulticlass = false, ta
     });
   }
   
-  // Add background equipment
+  // Add background equipment (but extract gold from it)
+  let backgroundGold = 0;
   if (selectedBackground.equipment) {
-    equipment.push(...selectedBackground.equipment);
+    selectedBackground.equipment.forEach(item => {
+      // Check if this item is gold (like "15 gp", "25 gp")
+      const goldMatch = item.match(/^(\d+)\s*gp$/i);
+      if (goldMatch) {
+        backgroundGold += parseInt(goldMatch[1]);
+      } else {
+        equipment.push(item);
+      }
+    });
   }
   
-  // Roll starting gold
-  const goldDice = STARTING_GOLD[classId];
-  let startingGold = 0;
-  if (goldDice) {
-    for (let i = 0; i < goldDice.dice; i++) {
-      startingGold += Math.floor(Math.random() * goldDice.sides) + 1;
-    }
-    startingGold *= goldDice.multiplier;
-  }
+  // Starting gold = background gold only (since we're taking starting equipment, not rolling)
+  // In D&D 5e RAW, you either take starting equipment OR roll for gold, not both
+  const startingGold = backgroundGold;
   
   // Random Physical Characteristics
   const ages = ['18', '25', '30', '45', '60', '120', '200'];
