@@ -1261,7 +1261,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
 // RANDOMIZER POPOVER COMPONENT
 // ============================================================================
 
-const RandomizerPopover = ({ onRandomize, currentLevel = 1 }) => {
+const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [levelRange, setLevelRange] = useState([1, 5]);
   const [enableMulticlass, setEnableMulticlass] = useState(false);
@@ -1299,23 +1299,31 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1 }) => {
         {/* Main random button */}
         <button
           onClick={handleQuickRandom}
-          className="px-4 py-2.5 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-l-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2 text-sm md:text-base"
+          className={`bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-l-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-1.5 ${
+            compact 
+              ? 'px-2 py-1.5 text-xs' 
+              : 'px-4 py-2.5 md:py-2 text-sm md:text-base gap-2'
+          }`}
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className={compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
           <span className="hidden sm:inline">Random</span>
         </button>
         {/* Options dropdown toggle */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="px-2 py-2.5 md:py-2 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-r-lg font-medium hover:from-pink-600 hover:to-pink-700 transition-all border-l border-pink-400/30"
+          className={`bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-r-lg font-medium hover:from-pink-600 hover:to-pink-700 transition-all border-l border-pink-400/30 ${
+            compact ? 'px-1.5 py-1.5' : 'px-2 py-2.5 md:py-2'
+          }`}
         >
-          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
       </div>
       
       {/* Popover */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+          style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
+        >
           <div className="space-y-4">
             <div className="text-sm font-medium text-white flex items-center gap-2">
               <Settings className="w-4 h-4 text-purple-400" />
@@ -3079,15 +3087,22 @@ const Tooltip = ({ content, children }) => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
       
       let left = rect.right + 10;
       let top = rect.top;
       let strategy = 'side';
 
+      // On mobile or if tooltip would overflow right, position below
       if (screenWidth < 768 || left + 250 > screenWidth) {
         strategy = 'bottom';
-        left = 16;
+        left = Math.max(16, Math.min(rect.left, screenWidth - 280));
         top = rect.bottom + 10;
+        
+        // If tooltip would overflow bottom, position above instead
+        if (top + 150 > screenHeight) {
+          top = Math.max(10, rect.top - 160);
+        }
       }
 
       setCoords({ left, top, strategy });
@@ -3119,10 +3134,34 @@ const Tooltip = ({ content, children }) => {
   useEffect(() => {
     if (isMobile && show) {
       const handleOutsideClick = () => setShow(false);
-      document.addEventListener('click', handleOutsideClick);
-      return () => document.removeEventListener('click', handleOutsideClick);
+      // Small delay to prevent immediate close
+      const timer = setTimeout(() => {
+        document.addEventListener('click', handleOutsideClick);
+      }, 10);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('click', handleOutsideClick);
+      };
     }
   }, [isMobile, show]);
+
+  // Close on scroll for mobile
+  useEffect(() => {
+    if (isMobile && show) {
+      const handleScroll = () => setShow(false);
+      window.addEventListener('scroll', handleScroll, true);
+      return () => window.removeEventListener('scroll', handleScroll, true);
+    }
+  }, [isMobile, show]);
+
+  // Close on resize
+  useEffect(() => {
+    if (show) {
+      const handleResize = () => setShow(false);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [show]);
 
   return (
     <>
@@ -3137,23 +3176,26 @@ const Tooltip = ({ content, children }) => {
       </div>
       {show && createPortal(
         <div 
+          onClick={(e) => { e.stopPropagation(); setShow(false); }}
           className="fixed p-3 text-sm bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl text-slate-300 animate-in fade-in zoom-in-95 duration-200" 
           style={{ 
             zIndex: 99999,
             left: coords.left,
             top: coords.top,
-            width: coords.strategy === 'bottom' ? 'calc(100vw - 32px)' : 'max-content',
+            width: coords.strategy === 'bottom' ? `min(calc(100vw - 32px), 20rem)` : 'max-content',
             maxWidth: '20rem',
-            pointerEvents: 'none' 
+            maxHeight: 'calc(100vh - 100px)',
+            overflow: 'auto'
           }}
         >
-          <div 
-            className={`absolute w-3 h-3 bg-slate-900 border-l border-b border-slate-700/50 transform rotate-45 ${
-              coords.strategy === 'bottom' 
-                ? '-top-1.5 left-6 border-l-0 border-b-0 border-t border-l bg-slate-900'
-                : '-left-1.5 top-3'
-            }`} 
-          />
+          {isMobile && (
+            <button 
+              onClick={() => setShow(false)}
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-700/50 text-slate-400 hover:text-white"
+            >
+              ×
+            </button>
+          )}
           {content}
         </div>,
         document.body
@@ -14796,14 +14838,36 @@ const CharacterCreator = ({
             <span className="md:hidden">5e CC</span>
             <span className="hidden md:inline">5e-Compatible Character Creator</span>
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2">
+            {/* Templates */}
             <button
               onClick={() => setShowTemplates(true)}
-              className="px-2.5 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-medium hover:bg-indigo-500/30 transition-all flex items-center gap-1.5"
+              className="px-2 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-medium hover:bg-indigo-500/30 transition-all flex items-center gap-1"
               title="Build Templates"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Templates</span>
+            </button>
+            {/* Random - Compact on mobile */}
+            <RandomizerPopover 
+              onRandomize={(level, multiclass) => {
+                const nameToUse = character.name || importedName || '';
+                const randomChar = generateRandomCharacter(nameToUse, multiclass, level);
+                randomChar.playerName = character.playerName || '';
+                setCharacter(randomChar);
+                setCurrentStep(steps.length - 1);
+              }}
+              currentLevel={character.level || 1}
+              compact={true}
+            />
+            {/* Clear/New */}
+            <button
+              onClick={resetCharacter}
+              className="px-2 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-medium hover:bg-red-500/20 transition-all flex items-center gap-1"
+              title="Start New Character"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Clear</span>
             </button>
             <span className="text-xs md:text-sm text-slate-400 ml-1">
               Step {currentStep + 1} of {steps.length}
@@ -14915,20 +14979,7 @@ const CharacterCreator = ({
       <div ref={stepContentRef} className="bg-slate-900/50 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-slate-800/50 min-h-[400px] md:min-h-[500px] overflow-x-hidden">
         {currentStep === 0 && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white">Basic Information</h3>
-              <RandomizerPopover 
-                onRandomize={(level, multiclass) => {
-                  // Preserve existing character name, or use imported name
-                  const nameToUse = character.name || importedName || '';
-                  const randomChar = generateRandomCharacter(nameToUse, multiclass, level);
-                  randomChar.playerName = character.playerName || '';
-                  setCharacter(randomChar);
-                  setCurrentStep(steps.length - 1);
-                }}
-                currentLevel={character.level || 1}
-              />
-            </div>
+            <h3 className="text-xl font-bold text-white">Basic Information</h3>
             
             {/* Character Name */}
             <div>
