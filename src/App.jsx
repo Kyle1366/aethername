@@ -1263,34 +1263,81 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, currentPage, setCurrentPa
 
 const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [levelRange, setLevelRange] = useState([1, 5]);
-  const [enableMulticlass, setEnableMulticlass] = useState(false);
   const popoverRef = useRef(null);
+  const portalRef = useRef(null);
   
-  // Close on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+  // Load persisted settings from localStorage
+  const [levelRange, setLevelRange] = useState(() => {
+    const saved = localStorage.getItem('aethername_randomizer_settings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.levelRange || [1, 5];
+      } catch { return [1, 5]; }
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+    return [1, 5];
+  });
+  
+  const [enableMulticlass, setEnableMulticlass] = useState(() => {
+    const saved = localStorage.getItem('aethername_randomizer_settings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.enableMulticlass || false;
+      } catch { return false; }
+    }
+    return false;
+  });
+  
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('aethername_randomizer_settings', JSON.stringify({
+      levelRange,
+      enableMulticlass
+    }));
+  }, [levelRange, enableMulticlass]);
   
   const handleQuickRandom = () => {
     // Quick random with current settings
     const randomLevel = Math.floor(Math.random() * (levelRange[1] - levelRange[0] + 1)) + levelRange[0];
     onRandomize(randomLevel, enableMulticlass && randomLevel >= 2);
-    setIsOpen(false);
   };
   
-  const handleRandomWithOptions = () => {
+  const handleRandomWithOptions = (e) => {
+    e.stopPropagation();
     const randomLevel = Math.floor(Math.random() * (levelRange[1] - levelRange[0] + 1)) + levelRange[0];
     onRandomize(randomLevel, enableMulticlass && randomLevel >= 2);
     setIsOpen(false);
+  };
+  
+  const handleClose = (e) => {
+    e?.stopPropagation();
+    setIsOpen(false);
+  };
+  
+  const updateLevelMin = (e) => {
+    e.stopPropagation();
+    const min = parseInt(e.target.value);
+    const newRange = [min, Math.max(min, levelRange[1])];
+    setLevelRange(newRange);
+    if (min < 2) setEnableMulticlass(false);
+  };
+  
+  const updateLevelMax = (e) => {
+    e.stopPropagation();
+    const max = parseInt(e.target.value);
+    setLevelRange([Math.min(levelRange[0], max), max]);
+  };
+  
+  const selectPreset = (preset, e) => {
+    e.stopPropagation();
+    setLevelRange(preset.range);
+    if (preset.range[0] < 2) setEnableMulticlass(false);
+  };
+  
+  const toggleMulticlass = (e) => {
+    e.stopPropagation();
+    setEnableMulticlass(e.target.checked);
   };
   
   return (
@@ -1323,8 +1370,9 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) =
       {isOpen && createPortal(
         <>
           {/* Backdrop to close on outside click */}
-          <div className="fixed inset-0 z-[80]" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-[80]" onClick={handleClose} />
           <div 
+            ref={portalRef}
             className="fixed bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-4 z-[85] animate-in fade-in zoom-in-95 duration-200"
             style={{ 
               top: popoverRef.current ? popoverRef.current.getBoundingClientRect().bottom + 8 : '50%',
@@ -1335,103 +1383,106 @@ const RandomizerPopover = ({ onRandomize, currentLevel = 1, compact = false }) =
               maxHeight: 'calc(100vh - 150px)', 
               overflowY: 'auto' 
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-          <div className="space-y-4">
-            <div className="text-sm font-medium text-white flex items-center gap-2">
-              <Settings className="w-4 h-4 text-purple-400" />
-              Random Character Options
-            </div>
-            
-            {/* Level Range */}
-            <div>
-              <label className="block text-xs text-slate-400 mb-2">
-                Level Range: {levelRange[0]} - {levelRange[1]}
-              </label>
-              <div className="flex items-center gap-2">
-                <select
-                  value={levelRange[0]}
-                  onChange={(e) => {
-                    const min = parseInt(e.target.value);
-                    setLevelRange([min, Math.max(min, levelRange[1])]);
-                    if (min < 2) setEnableMulticlass(false);
-                  }}
-                  className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+            <div className="space-y-4">
+              {/* Header with close button */}
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-white flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-purple-400" />
+                  Random Character Options
+                </div>
+                <button 
+                  onClick={handleClose}
+                  className="p-1 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors"
                 >
-                  {[...Array(10)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>{i + 1}</option>
-                  ))}
-                </select>
-                <span className="text-slate-500">to</span>
-                <select
-                  value={levelRange[1]}
-                  onChange={(e) => {
-                    const max = parseInt(e.target.value);
-                    setLevelRange([Math.min(levelRange[0], max), max]);
-                  }}
-                  className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
-                >
-                  {[...Array(10)].map((_, i) => (
-                    <option key={i + 1} value={i + 1} disabled={i + 1 < levelRange[0]}>{i + 1}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            {/* Quick Level Presets */}
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                { label: 'Lvl 1', range: [1, 1] },
-                { label: '1-5', range: [1, 5] },
-                { label: '5-10', range: [5, 10] },
-              ].map(preset => (
-                <button
-                  key={preset.label}
-                  onClick={() => {
-                    setLevelRange(preset.range);
-                    if (preset.range[0] < 2) setEnableMulticlass(false);
-                  }}
-                  className={`px-2 py-1 text-xs rounded-md transition-all ${
-                    levelRange[0] === preset.range[0] && levelRange[1] === preset.range[1]
-                      ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
-                      : 'bg-slate-800/50 text-slate-400 hover:text-slate-200 border border-slate-700/50 hover:border-slate-600'
-                  }`}
-                >
-                  {preset.label}
+                  <X className="w-4 h-4" />
                 </button>
-              ))}
-            </div>
-            
-            {/* Multiclass Option */}
-            <label className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${
-              levelRange[0] >= 2 
-                ? 'bg-slate-800/30 border-slate-700/50 hover:bg-slate-800/50' 
-                : 'bg-slate-800/20 border-slate-800 opacity-50 cursor-not-allowed'
-            }`}>
-              <input
-                type="checkbox"
-                checked={enableMulticlass}
-                onChange={(e) => setEnableMulticlass(e.target.checked)}
-                disabled={levelRange[0] < 2}
-                className="rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
-              />
-              <div>
-                <span className="text-sm text-slate-300">Enable Multiclass</span>
-                {levelRange[0] < 2 && (
-                  <span className="block text-[10px] text-slate-500">Requires level 2+</span>
-                )}
               </div>
-            </label>
-            
-            {/* Generate Button */}
-            <button
-              onClick={handleRandomWithOptions}
-              className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-500 hover:to-pink-500 transition-all flex items-center justify-center gap-2"
-            >
-              <Dices className="w-4 h-4" />
-              Generate Character
-            </button>
+              
+              {/* Level Range */}
+              <div>
+                <label className="block text-xs text-slate-400 mb-2">
+                  Level Range: {levelRange[0]} - {levelRange[1]}
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={levelRange[0]}
+                    onChange={updateLevelMin}
+                    className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                  >
+                    {[...Array(10)].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1}</option>
+                    ))}
+                  </select>
+                  <span className="text-slate-500">to</span>
+                  <select
+                    value={levelRange[1]}
+                    onChange={updateLevelMax}
+                    className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                  >
+                    {[...Array(10)].map((_, i) => (
+                      <option key={i + 1} value={i + 1} disabled={i + 1 < levelRange[0]}>{i + 1}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              {/* Quick Level Presets */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: 'Lvl 1', range: [1, 1] },
+                  { label: '1-5', range: [1, 5] },
+                  { label: '5-10', range: [5, 10] },
+                ].map(preset => (
+                  <button
+                    key={preset.label}
+                    onClick={(e) => selectPreset(preset, e)}
+                    className={`px-2 py-1 text-xs rounded-md transition-all ${
+                      levelRange[0] === preset.range[0] && levelRange[1] === preset.range[1]
+                        ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
+                        : 'bg-slate-800/50 text-slate-400 hover:text-slate-200 border border-slate-700/50 hover:border-slate-600'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Multiclass Option */}
+              <label 
+                className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${
+                  levelRange[0] >= 2 
+                    ? 'bg-slate-800/30 border-slate-700/50 hover:bg-slate-800/50' 
+                    : 'bg-slate-800/20 border-slate-800 opacity-50 cursor-not-allowed'
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <input
+                  type="checkbox"
+                  checked={enableMulticlass}
+                  onChange={toggleMulticlass}
+                  disabled={levelRange[0] < 2}
+                  className="rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
+                />
+                <div>
+                  <span className="text-sm text-slate-300">Enable Multiclass</span>
+                  {levelRange[0] < 2 && (
+                    <span className="block text-[10px] text-slate-500">Requires level 2+</span>
+                  )}
+                </div>
+              </label>
+              
+              {/* Generate Button */}
+              <button
+                onClick={handleRandomWithOptions}
+                className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-500 hover:to-pink-500 transition-all flex items-center justify-center gap-2"
+              >
+                <Dices className="w-4 h-4" />
+                Generate Character
+              </button>
+            </div>
           </div>
-        </div>
         </>,
         document.body
       )}
